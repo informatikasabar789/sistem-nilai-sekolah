@@ -622,7 +622,7 @@
                 <input type="text" id="login-username" placeholder="Masukkan Username" onkeydown="checkEnter(event, processLogin)">
             </div>
             <div class="form-group" id="login-password-group">
-                <label>Password:</label>
+                <label id="login-password-label">Password:</label>
                 <input type="password" id="login-password" placeholder="Masukkan Password" onkeydown="checkEnter(event, processLogin)">
             </div>
         </div>
@@ -752,7 +752,7 @@
 
         <div id="tab-admin-murid" class="tab-content card hidden">
             <h2>Manajemen Master Data Murid (CRUD & Import CSV)</h2>
-            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Tambah atau atur data murid secara langsung tanpa terikat pada guru pengajar tertentu.</p>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Tambah atau atur data murid beserta Password akses siswa.</p>
             
             <div class="form-inline">
                 <div class="input-wrapper">
@@ -763,6 +763,7 @@
                 </div>
                 <input type="text" id="admin-student-name" placeholder="Nama Lengkap Murid*" onkeydown="checkEnter(event, addStudentByAdmin)">
                 <input type="text" id="admin-student-class" placeholder="Kelas (misal: 10 IPA 1)*" style="width: 180px;" onkeydown="checkEnter(event, addStudentByAdmin)">
+                <input type="password" id="admin-student-password" placeholder="Password Siswa*" style="width: 150px;" onkeydown="checkEnter(event, addStudentByAdmin)">
                 <button onclick="addStudentByAdmin()">+ Tambah Murid Baru</button>
             </div>
 
@@ -770,11 +771,11 @@
 
             <h3>Import Banyak Murid via CSV / Template</h3>
             <p style="font-size: 13px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">
-                Format CSV: <strong>NISN (10 Digit Unik), Nama Murid, Kelas</strong>.
+                Format CSV: <strong>NISN (10 Digit Unik), Nama Murid, Kelas, Password (Opsional)</strong>.
             </p>
             
             <div class="form-inline">
-                <button class="btn-success" onclick="downloadTemplate()">📥 Unduh Template CSV</button>
+                <button class="btn-success" onclick="downloadTemplate()">📥 Unduh Template CSV Siswa</button>
             </div>
 
             <div class="import-box">
@@ -804,6 +805,7 @@
                             <th>NISN</th>
                             <th>Nama Murid</th>
                             <th>Kelas</th>
+                            <th>Password</th>
                             <th>Aksi Admin</th>
                         </tr>
                     </thead>
@@ -1276,6 +1278,21 @@
     </div>
 </div>
 
+<div id="reset-student-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="reset-student-title">Reset Password Siswa</h3>
+        <input type="hidden" id="reset-student-id">
+        <div class="form-group">
+            <label>Password Siswa Baru</label>
+            <input type="password" id="reset-student-new-pass" placeholder="Masukkan Password Baru" onkeydown="checkEnter(event, saveStudentPasswordReset)">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeResetStudentModal()">Batal</button>
+            <button class="btn-success" onclick="saveStudentPasswordReset()">Simpan Password Baru</button>
+        </div>
+    </div>
+</div>
+
 <div id="edit-guru-modal" class="modal hidden">
     <div class="modal-content">
         <h3>Edit Data Guru</h3>
@@ -1339,6 +1356,10 @@
         <div class="form-group">
             <label>Kelas</label>
             <input type="text" id="admin-edit-student-class">
+        </div>
+        <div class="form-group">
+            <label>Password Siswa Baru (Opsional)</label>
+            <input type="password" id="admin-edit-student-pass" placeholder="Biarkan kosong jika tidak diubah">
         </div>
         <div class="modal-actions">
             <button class="btn-secondary" onclick="closeAdminEditStudentModal()">Batal</button>
@@ -1411,10 +1432,16 @@
         '10 IPA 1', '10 IPA 2', '10 IPA 3', '10 IPS 1', '10 IPS 2'
     ];
 
-    let masterStudents = JSON.parse(localStorage.getItem('portal_master_students_v23')) || [
-        { id: 1001, nisn: '0012345678', name: 'Budi Santoso', className: '10 IPA 1' },
-        { id: 1002, nisn: '0087654321', name: 'Siti Rahma', className: '10 IPA 2' }
+    let rawMasterStudents = JSON.parse(localStorage.getItem('portal_master_students_v23')) || [
+        { id: 1001, nisn: '0012345678', name: 'Budi Santoso', className: '10 IPA 1', password: '123' },
+        { id: 1002, nisn: '0087654321', name: 'Siti Rahma', className: '10 IPA 2', password: '123' }
     ];
+
+    // Migrasi data siswa agar memiliki password jika belum ada
+    let masterStudents = rawMasterStudents.map(s => {
+        if (!s.password) s.password = '123';
+        return s;
+    });
 
     let gurus = JSON.parse(localStorage.getItem('portal_gurus_v23')) || [
         { id: 'g1', name: 'Budi Hartono, S.Pd', subject: 'Matematika', username: 'guru1', password: '123', assignedClasses: ['10 IPA 1', '10 IPA 2'] },
@@ -1713,7 +1740,7 @@
 
     function exportAdminBackupJSON() {
         const backupData = {
-            version: '2.3',
+            version: '2.4',
             timestamp: new Date().toISOString(),
             appProfile: appProfile,
             masterClasses: masterClasses,
@@ -1761,7 +1788,12 @@
                 if (confirm('APAKAH ANDA YAKIN? Restore database akan menimpa seluruh data sistem saat ini!')) {
                     if (data.appProfile) appProfile = data.appProfile;
                     if (data.masterClasses) masterClasses = data.masterClasses;
-                    if (data.masterStudents) masterStudents = data.masterStudents;
+                    if (data.masterStudents) {
+                        masterStudents = data.masterStudents.map(s => {
+                            if (!s.password) s.password = '123';
+                            return s;
+                        });
+                    }
                     if (data.gurus) gurus = data.gurus;
 
                     if (data.guruDataStore) {
@@ -2138,6 +2170,7 @@
         const role = document.getElementById('login-role').value;
         const passGroup = document.getElementById('login-password-group');
         const userLabel = document.getElementById('login-username-label');
+        const passLabel = document.getElementById('login-password-label');
         const userInput = document.getElementById('login-username');
         const passInput = document.getElementById('login-password');
         const forgotLink = document.getElementById('forgot-admin-link');
@@ -2147,19 +2180,25 @@
 
         if (role === 'siswa') {
             userLabel.innerText = 'Nomor NISN Siswa (10 Digit):';
+            passLabel.innerText = 'Password Siswa:';
             userInput.placeholder = 'Masukkan NISN Anda';
+            passInput.placeholder = 'Masukkan Password Siswa';
             userInput.maxLength = 10;
-            passGroup.classList.add('hidden');
+            passGroup.classList.remove('hidden');
             forgotLink.classList.add('hidden');
         } else if (role === 'admin') {
             userLabel.innerText = 'Username Admin:';
+            passLabel.innerText = 'Password Admin:';
             userInput.placeholder = 'Masukkan Username';
+            passInput.placeholder = 'Masukkan Password';
             userInput.removeAttribute('maxlength');
             passGroup.classList.remove('hidden');
             forgotLink.classList.remove('hidden');
         } else {
             userLabel.innerText = 'Username / ID Guru:';
+            passLabel.innerText = 'Password Guru:';
             userInput.placeholder = 'Masukkan Username';
+            passInput.placeholder = 'Masukkan Password';
             userInput.removeAttribute('maxlength');
             passGroup.classList.remove('hidden');
             forgotLink.classList.add('hidden');
@@ -2193,13 +2232,21 @@
             if (!validateNISN(u)) {
                 return alert('Harap masukkan 10 digit NISN yang valid!');
             }
+            if (!p) {
+                return alert('Harap masukkan Password Siswa!');
+            }
             const foundStudent = masterStudents.find(s => s.nisn === u);
             if (foundStudent) {
-                currentRole = 'siswa';
-                currentLoggedInStudent = foundStudent;
-                localStorage.setItem('portal_logged_student_v23', JSON.stringify(foundStudent));
-                saveData();
-                openSiswaView();
+                const studentPass = foundStudent.password || '123';
+                if (p === studentPass) {
+                    currentRole = 'siswa';
+                    currentLoggedInStudent = foundStudent;
+                    localStorage.setItem('portal_logged_student_v23', JSON.stringify(foundStudent));
+                    saveData();
+                    openSiswaView();
+                } else {
+                    alert('Login Siswa gagal! Password Anda salah.');
+                }
             } else {
                 alert(`Siswa dengan NISN "${u}" tidak ditemukan di sistem!`);
             }
@@ -2314,6 +2361,7 @@
         const nisn = nisnInput.value.trim();
         const name = document.getElementById('admin-student-name').value.trim();
         const className = document.getElementById('admin-student-class').value.trim();
+        const password = document.getElementById('admin-student-password').value.trim() || '123';
 
         if (!nisn || !name || !className) return alert('Harap isi lengkap NISN, Nama, dan Kelas!');
         if (!validateNISN(nisn)) {
@@ -2330,13 +2378,14 @@
             masterClasses.sort();
         }
 
-        masterStudents.push({ id: Date.now(), nisn, name, className });
+        masterStudents.push({ id: Date.now(), nisn, name, className, password });
         saveData();
 
         nisnInput.value = '';
         nisnInput.classList.remove('input-success', 'input-error');
         document.getElementById('admin-student-name').value = '';
         document.getElementById('admin-student-class').value = '';
+        document.getElementById('admin-student-password').value = '';
 
         renderAdminView();
         alert('Murid berhasil ditambahkan!');
@@ -2356,9 +2405,10 @@
                 const line = lines[i].trim();
                 if (line) {
                     const cols = line.split(',');
-                    const nisn = cols[0] ? cols[0].trim() : '';
-                    const name = cols[1] ? cols[1].trim() : '';
-                    const className = cols[2] ? cols[2].trim() : '';
+                    const nisn = cols[0] ? cols[0].trim().replace(/^"|"$/g, '') : '';
+                    const name = cols[1] ? cols[1].trim().replace(/^"|"$/g, '') : '';
+                    const className = cols[2] ? cols[2].trim().replace(/^"|"$/g, '') : '';
+                    const password = cols[3] ? cols[3].trim().replace(/^"|"$/g, '') : '123';
 
                     if (nisn && name && className && validateNISN(nisn)) {
                         if (isGlobalNISNExists(nisn) || masterStudents.some(s => s.name.toLowerCase() === name.toLowerCase())) {
@@ -2369,7 +2419,7 @@
                             }
                             masterStudents.push({
                                 id: Date.now() + Math.floor(Math.random() * 1000),
-                                nisn, name, className
+                                nisn, name, className, password
                             });
                             count++;
                         }
@@ -2451,7 +2501,7 @@
         const filtered = masterStudents.filter(s => filterClass === 'ALL' || s.className === filterClass);
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Belum ada data murid.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">Belum ada data murid.</td></tr>`;
             return;
         }
 
@@ -2462,8 +2512,10 @@
                     <td>${s.nisn}</td>
                     <td><strong>${s.name}</strong></td>
                     <td>${s.className}</td>
+                    <td><code>${s.password || '123'}</code></td>
                     <td>
                         <div class="action-btns">
+                            <button class="btn-info btn-sm" onclick="openResetStudentModal(${s.id})">🔑 Reset Pass</button>
                             <button class="btn-warning btn-sm" onclick="openAdminEditStudentModal(${s.id})">Edit</button>
                             <button class="btn-danger btn-sm" onclick="deleteStudentByAdmin(${s.id})">Hapus</button>
                         </div>
@@ -2473,6 +2525,34 @@
         });
     }
 
+    function openResetStudentModal(studentId) {
+        const student = masterStudents.find(s => s.id === studentId);
+        if (!student) return;
+        document.getElementById('reset-student-id').value = student.id;
+        document.getElementById('reset-student-title').innerText = `Reset Password: ${student.name}`;
+        document.getElementById('reset-student-new-pass').value = '';
+        document.getElementById('reset-student-modal').classList.remove('hidden');
+    }
+
+    function closeResetStudentModal() {
+        document.getElementById('reset-student-modal').classList.add('hidden');
+    }
+
+    function saveStudentPasswordReset() {
+        const studentId = parseInt(document.getElementById('reset-student-id').value);
+        const newPass = document.getElementById('reset-student-new-pass').value.trim();
+        if (!newPass) return alert('Password baru tidak boleh kosong!');
+
+        const student = masterStudents.find(s => s.id === studentId);
+        if (student) {
+            student.password = newPass;
+            saveData();
+            closeResetStudentModal();
+            renderAdminStudentCrudTable();
+            alert(`Password untuk murid "${student.name}" berhasil direset!`);
+        }
+    }
+
     function openAdminEditStudentModal(studentId) {
         const student = masterStudents.find(s => s.id === studentId);
         if (!student) return;
@@ -2480,6 +2560,7 @@
         document.getElementById('admin-edit-student-nisn').value = student.nisn;
         document.getElementById('admin-edit-student-name').value = student.name;
         document.getElementById('admin-edit-student-class').value = student.className;
+        document.getElementById('admin-edit-student-pass').value = '';
         document.getElementById('admin-edit-student-modal').classList.remove('hidden');
     }
 
@@ -2492,6 +2573,7 @@
         const nisn = document.getElementById('admin-edit-student-nisn').value.trim();
         const name = document.getElementById('admin-edit-student-name').value.trim();
         const className = document.getElementById('admin-edit-student-class').value.trim();
+        const newPass = document.getElementById('admin-edit-student-pass').value.trim();
 
         if (!nisn || !name || !className) return alert('Semua data wajib diisi!');
         if (!validateNISN(nisn)) return alert('NISN harus 10 digit angka!');
@@ -2507,6 +2589,7 @@
             student.nisn = nisn;
             student.name = name;
             student.className = className;
+            if (newPass) student.password = newPass;
             closeAdminEditStudentModal();
             saveData();
             renderAdminView();
@@ -3077,7 +3160,7 @@
     }
 
     function downloadTemplate() {
-        const csvContent = "NISN,Nama Murid,Kelas\n0012345671,Ahmad Dahlan,10 IPA 1\n0012345672,Dewi Sartika,10 IPA 2\n";
+        const csvContent = "NISN,Nama Murid,Kelas,Password\n0012345671,Ahmad Dahlan,10 IPA 1,123\n0012345672,Dewi Sartika,10 IPA 2,123\n";
         downloadCSV(csvContent, "template_data_murid.csv");
     }
 
