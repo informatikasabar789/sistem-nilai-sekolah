@@ -1,0 +1,3678 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Sistem Manajemen Nilai & Kehadiran Sekolah</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .school-logo {
+            max-height: 50px;
+            max-width: 120px;
+            object-fit: contain;
+        }
+
+        .header-titles h1 {
+            font-size: 20px;
+            color: #1e293b;
+        }
+
+        .header-titles p {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .user-session-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .role-badge {
+            background: #2563eb;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .login-box {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .login-box h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1e293b;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #475569;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #cbd5e1;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 18px;
+            background-color: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .tab-btn:hover {
+            background-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .tab-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-error {
+            border: 2px solid #ef4444 !important;
+            background-color: #fef2f2 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .input-success {
+            border: 2px solid #10b981 !important;
+            background-color: #f0fdf4 !important;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 11px;
+            font-weight: bold;
+            display: none;
+            margin-top: 2px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #1d4ed8; }
+        .btn-warning { background-color: #f59e0b; }
+        .btn-warning:hover { background-color: #d97706; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-secondary { background-color: #64748b; }
+        .btn-secondary:hover { background-color: #475569; }
+        .btn-success { background-color: #10b981; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-info { background-color: #0284c7; }
+        .btn-info:hover { background-color: #0369a1; }
+        .btn-purple { background-color: #8b5cf6; }
+        .btn-purple:hover { background-color: #7c3aed; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
+
+        .forgot-link {
+            display: block;
+            margin-top: 10px;
+            text-align: right;
+            font-size: 12px;
+            color: #2563eb;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .forgot-link:hover { text-decoration: underline; }
+
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1e293b;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .dashboard-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .dashboard-icon {
+            font-size: 32px;
+            background: #f1f5f9;
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard-info h4 {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .dashboard-info .dash-num {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .form-inline {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .setting-box {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .import-box {
+            border: 2px dashed #cbd5e1;
+            padding: 15px;
+            border-radius: 8px;
+            background: #ffffff;
+            margin-top: 10px;
+        }
+
+        .backup-box {
+            border: 2px dashed #8b5cf6;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f5f3ff;
+            margin-top: 15px;
+        }
+
+        .teacher-note-box {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #78350f;
+        }
+
+        .info-alert-box {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #0369a1;
+        }
+
+        .attendance-summary-box {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .attendance-stat-pill {
+            background: #ffffff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background-color: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #10b981;
+            transition: width 0.3s ease;
+        }
+
+        .table-scroll-container, .table-scroll-container-lg {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #ffffff;
+        }
+
+        .table-scroll-container-lg {
+            max-height: 500px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .sortable-header:hover {
+            background-color: #e2e8f0;
+        }
+
+        .input-score { width: 65px; text-align: center; }
+        .input-note { width: 180px; }
+        .hidden { display: none !important; }
+        .action-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+
+        .class-badge {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 4px;
+            margin-bottom: 2px;
+        }
+
+        .sub-item-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin: 3px;
+        }
+
+        .badge-visible {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .badge-hidden {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .badge-att-h { background-color: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+        .badge-att-t { background-color: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+        .badge-att-d { background-color: #f3e8ff; color: #6b21a8; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+        .badge-att-i { background-color: #e0f2fe; color: #075985; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+        .badge-att-s { background-color: #ffedd5; color: #9a3412; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+        .badge-att-a { background-color: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+
+        .checkbox-group-container {
+            max-height: 160px;
+            overflow-y: auto;
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            border-radius: 6px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 4px 6px;
+            cursor: pointer;
+            border-bottom: 1px dotted #e2e8f0;
+        }
+
+        .checkbox-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-item input {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .logo-preview-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        .logo-preview-img {
+            max-height: 60px;
+            max-width: 120px;
+            object-fit: contain;
+            border: 1px dashed #cbd5e1;
+            padding: 2px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 420px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 { margin-bottom: 15px; }
+        .modal-content label { display: block; font-size: 12px; margin-bottom: 4px; font-weight: bold; }
+        .modal-content input, .modal-content select { width: 100%; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; }
+
+        @media print {
+            body { background: white; padding: 0; color: black; }
+            .container { max-width: 100%; box-shadow: none; padding: 0; }
+            .nav-tabs, button, input, select, .user-session-bar, .forgot-link, .backup-box, .import-box, .filter-container, .dashboard-grid, .no-print {
+                display: none !important;
+            }
+            .card { border: none; padding: 0; margin: 0; background: none; }
+            .table-scroll-container, .table-scroll-container-lg { max-height: none !important; overflow: visible !important; border: none; }
+            table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { border: 1px solid #000 !important; color: #000 !important; padding: 6px 8px; font-size: 11px; }
+            th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; }
+            .input-score, .input-note { border: none !important; background: transparent !important; }
+        }
+
+        @media screen and (max-width: 600px) {
+            body { padding: 8px; }
+            .container { padding: 12px; }
+            header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .header-brand { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .tab-btn { flex: 1 1 100%; text-align: center; padding: 8px 12px; font-size: 13px; }
+            .form-inline { flex-direction: column; width: 100%; }
+            .form-inline input, .form-inline select, .form-inline button { width: 100% !important; }
+            .login-box { margin: 10px auto; padding: 18px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-brand">
+            <img id="header-logo" src="https://via.placeholder.com/100x50?text=LOGO" alt="Logo Sekolah" class="school-logo">
+            <div class="header-titles">
+                <h1 id="header-app-name">Portal Nilai & Kehadiran Sekolah</h1>
+                <p id="header-school-name">SMA Negeri 1 Indonesia</p>
+            </div>
+        </div>
+
+        <div id="user-session-container" class="user-session-bar hidden">
+            <span id="user-display-info"><strong>Admin</strong></span>
+            <span id="user-role-badge" class="role-badge">ADMIN</span>
+            <button class="btn-danger btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <div id="view-login" class="login-box">
+        <h2>Pintu Masuk Portal</h2>
+        <div class="form-group">
+            <label>Pilih Mode Akses / User:</label>
+            <select id="login-role" onchange="toggleLoginInputs()">
+                <option value="guru">Guru (Admin Kelas)</option>
+                <option value="admin">Admin Utama (Sistem)</option>
+                <option value="siswa">Siswa (Lihat Nilai & Presensi)</option>
+            </select>
+        </div>
+
+        <div id="login-auth-fields">
+            <div class="form-group">
+                <label id="login-username-label">Username / ID Guru:</label>
+                <input type="text" id="login-username" placeholder="Masukkan Username" onkeydown="checkEnter(event, processLogin)">
+            </div>
+            <div class="form-group" id="login-password-group">
+                <label>Password:</label>
+                <input type="password" id="login-password" placeholder="Masukkan Password" onkeydown="checkEnter(event, processLogin)">
+            </div>
+        </div>
+
+        <button style="width: 100%; margin-top: 10px;" onclick="processLogin()">Masuk Portal</button>
+        <a id="forgot-admin-link" class="forgot-link hidden" onclick="openForgotAdminModal()">Lupa Password Admin?</a>
+    </div>
+
+    <!-- HALAMAN ADMIN -->
+    <div id="view-admin" class="hidden">
+        <div class="dashboard-grid no-print">
+            <div class="dashboard-card">
+                <div class="dashboard-icon">👨‍🎓</div>
+                <div class="dashboard-info">
+                    <h4>Total Siswa</h4>
+                    <div class="dash-num" id="dash-admin-students">0</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">👨‍🏫</div>
+                <div class="dashboard-info">
+                    <h4>Total Guru</h4>
+                    <div class="dash-num" id="dash-admin-gurus">0</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">🏫</div>
+                <div class="dashboard-info">
+                    <h4>Total Kelas</h4>
+                    <div class="dash-num" id="dash-admin-classes">0</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">📊</div>
+                <div class="dashboard-info">
+                    <h4>Data Nilai Terinput</h4>
+                    <div class="dash-num" id="dash-admin-scores">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchAdminTab('tab-admin-guru', this)">1. Kelola Akun Guru & Kelas</button>
+            <button class="tab-btn" onclick="switchAdminTab('tab-admin-murid', this)">2. Kelola Data Murid (Admin CRUD)</button>
+            <button class="tab-btn" onclick="switchAdminTab('tab-admin-rekap', this)">3. Monitoring Seluruh Siswa</button>
+            <button class="tab-btn" onclick="switchAdminTab('tab-admin-profile', this)">⚙️ 4. Pengaturan & Backup Data System</button>
+        </div>
+
+        <div id="tab-admin-guru" class="tab-content card">
+            <h2>1. CRUD Master Pilihan Kelas</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Kelola daftar kelas yang akan muncul pada opsi pilihan kelas di sistem.</p>
+            
+            <div class="form-inline">
+                <input type="text" id="add-class-input" placeholder="Nama Kelas Baru (misal: 10 IPA 1)*" onkeydown="checkEnter(event, addMasterClass)">
+                <button class="btn-success" onclick="addMasterClass()">+ Tambah Kelas</button>
+            </div>
+
+            <div class="table-scroll-container" style="max-height: 180px; margin-bottom: 20px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 70%;">Nama Kelas</th>
+                            <th style="width: 30%;">Aksi Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="master-class-table-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <h2>2. Manajemen Akun Guru & Alokasi Kelas</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Tambah guru secara manual atau upload dalam jumlah banyak sekaligus menggunakan file CSV.</p>
+
+            <div class="form-inline">
+                <input type="text" id="add-guru-name" placeholder="Nama Guru Lengkap*">
+                <input type="text" id="add-guru-subject" placeholder="Mata Pelajaran*">
+                <input type="text" id="add-guru-user" placeholder="Username*">
+                <input type="password" id="add-guru-pass" placeholder="Password*">
+            </div>
+
+            <div class="form-group" style="max-width: 500px; margin-bottom: 15px;">
+                <label>Pilih Kelas Diampu (Dari Inputan Data Admin):</label>
+                <div id="add-guru-classes-checkboxes" class="checkbox-group-container">
+                </div>
+            </div>
+
+            <button onclick="addGuruAccount()">+ Tambah Guru Baru</button>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <h3>Import Banyak Akun Guru via CSV / Template</h3>
+            <p style="font-size: 13px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">
+                Format CSV: <strong>Nama Guru, Mata Pelajaran, Username, Password, Kelas Diampu (Dipisah koma/titik koma)</strong>
+            </p>
+
+            <div class="form-inline">
+                <button class="btn-success" onclick="downloadGuruTemplate()">📥 Unduh Template CSV Guru</button>
+            </div>
+
+            <div class="import-box">
+                <div class="form-inline" style="margin-bottom:0;">
+                    <input type="file" id="admin-guru-csv-file-input" accept=".csv, .txt">
+                    <button class="btn-secondary" onclick="importGurusFromCSV()">Upload & Import Data Guru</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 25px;">Daftar Guru & Kelas yang Diampu</h3>
+            <div class="table-scroll-container" style="margin-top: 10px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Guru</th>
+                            <th>Nama Guru</th>
+                            <th>Mata Pelajaran</th>
+                            <th>Kelas Diampu</th>
+                            <th>Username</th>
+                            <th>Aksi Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guru-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-admin-murid" class="tab-content card hidden">
+            <h2>Manajemen Master Data Murid (CRUD & Import CSV)</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Tambah atau atur data murid secara langsung tanpa terikat pada guru pengajar tertentu.</p>
+            
+            <div class="form-inline">
+                <div class="input-wrapper">
+                    <input type="text" id="admin-student-nisn" placeholder="NISN (10 Digit)*" maxlength="10" style="width: 140px;" 
+                           oninput="handleNISNInput(this, 'admin-student-nisn-err')" 
+                           onkeydown="checkEnter(event, addStudentByAdmin)">
+                    <span id="admin-student-nisn-err" class="error-message">Wajib 10 digit!</span>
+                </div>
+                <input type="text" id="admin-student-name" placeholder="Nama Lengkap Murid*" onkeydown="checkEnter(event, addStudentByAdmin)">
+                <input type="text" id="admin-student-class" placeholder="Kelas (misal: 10 IPA 1)*" style="width: 180px;" onkeydown="checkEnter(event, addStudentByAdmin)">
+                <button onclick="addStudentByAdmin()">+ Tambah Murid Baru</button>
+            </div>
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <h3>Import Banyak Murid via CSV / Template</h3>
+            <p style="font-size: 13px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">
+                Format CSV: <strong>NISN (10 Digit Unik), Nama Murid, Kelas</strong>.
+            </p>
+            
+            <div class="form-inline">
+                <button class="btn-success" onclick="downloadTemplate()">📥 Unduh Template CSV</button>
+            </div>
+
+            <div class="import-box">
+                <div class="form-inline" style="margin-bottom:0;">
+                    <input type="file" id="admin-csv-file-input" accept=".csv, .txt">
+                    <button class="btn-secondary" onclick="importStudentsFromCSVByAdmin()">Upload & Import Data Murid</button>
+                </div>
+            </div>
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                <h3>Daftar Seluruh Murid</h3>
+                <div class="filter-container" style="margin-bottom: 0;">
+                    <label for="admin-filter-class"><strong>Filter Kelas:</strong></label>
+                    <select id="admin-filter-class" onchange="renderAdminStudentCrudTable()">
+                        <option value="ALL">-- Semua Kelas --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NISN</th>
+                            <th>Nama Murid</th>
+                            <th>Kelas</th>
+                            <th>Aksi Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-student-crud-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-admin-rekap" class="tab-content card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
+                <h2>Monitoring Rekap Data Seluruh Siswa</h2>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <div class="filter-container" style="margin-bottom: 0;">
+                        <label for="admin-rekap-filter-class"><strong>Filter Kelas:</strong></label>
+                        <select id="admin-rekap-filter-class" onchange="renderAdminRekapTable()">
+                            <option value="ALL">-- Semua Kelas --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-container" style="margin-bottom: 0;">
+                        <label for="admin-rekap-sort-by"><strong>Urutkan Berdasarkan:</strong></label>
+                        <select id="admin-rekap-sort-by" onchange="renderAdminRekapTable()">
+                            <option value="className">Kelas (A-Z)</option>
+                            <option value="guruName">Guru Pengajar (A-Z)</option>
+                            <option value="subject">Mata Pelajaran (A-Z)</option>
+                            <option value="nisn">NISN Siswa</option>
+                            <option value="studentName">Nama Siswa (A-Z)</option>
+                            <option value="attendance">Kehadiran (%) Tertinggi</option>
+                            <option value="finalScore">Nilai Akhir Tertinggi</option>
+                        </select>
+                    </div>
+
+                    <div class="action-btns no-print">
+                        <button class="btn-success btn-sm" onclick="exportAdminRekapCSV()">📊 Export Excel/CSV</button>
+                        <button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak / PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+                *Klik pada judul kolom tabel (Header) di bawah ini untuk mengurutkan secara langsung.
+            </p>
+
+            <div class="table-scroll-container-lg">
+                <table id="admin-rekap-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('guruName')">Guru Pengajar <span id="sort-icon-guruName">↕️</span></th>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('subject')">Mata Pelajaran <span id="sort-icon-subject">↕️</span></th>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('nisn')">NISN <span id="sort-icon-nisn">↕️</span></th>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('studentName')">Nama Siswa <span id="sort-icon-studentName">↕️</span></th>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('className')">Kelas <span id="sort-icon-className">↕️</span></th>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('attendance')">Kehadiran (%) <span id="sort-icon-attendance">↕️</span></th>
+                            <th class="sortable-header" onclick="sortAdminRekapBy('finalScore')">Nilai Akhir <span id="sort-icon-finalScore">↕️</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-rekap-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-admin-profile" class="tab-content card hidden">
+            <h2>⚙️ Pengaturan Profil, Keamanan & Backup Data System</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Ubah identitas aplikasi, nama sekolah, logo, password Admin, serta unduh/pulihkan seluruh database sistem.</p>
+
+            <div class="form-grid">
+                <div>
+                    <h3>1. Identitas Aplikasi & Sekolah</h3>
+                    <br>
+                    <div class="form-group">
+                        <label>Nama Aplikasi / Judul Portal:</label>
+                        <input type="text" id="setting-app-name" placeholder="misal: Portal Nilai Sekolah">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nama Sekolah / Lembaga:</label>
+                        <input type="text" id="setting-school-name" placeholder="misal: SMA Negeri 1 Indonesia">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Upload Logo Sekolah (Format Gambar):</label>
+                        <input type="file" id="setting-logo-file" accept="image/*" onchange="previewSelectedLogo(event)">
+                        <div class="logo-preview-box">
+                            <img id="logo-preview" src="https://via.placeholder.com/100x50?text=LOGO" class="logo-preview-img" alt="Preview Logo">
+                            <span style="font-size: 12px; color: #64748b;">Preview Logo Terpasang</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-success" onclick="saveAppIdentitySettings()" style="margin-top: 10px;">💾 Simpan Profil Aplikasi</button>
+                    
+                    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+                    <h3>📦 Backup & Restore Database Utama Admin</h3>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 4px; margin-bottom: 10px;">Ekspor atau Impor seluruh basis data aplikasi (Master Kelas, Murid, Akun Guru, Nilai, Presensi & Profil) dalam format file JSON.</p>
+                    
+                    <div class="backup-box">
+                        <h4 style="font-size: 13px; color: #6b21a8; margin-bottom: 8px;">1. Backup Database System</h4>
+                        <button class="btn-purple" onclick="exportAdminBackupJSON()">📥 Backup / Download Database System (.JSON)</button>
+
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #cbd5e1;">
+
+                        <h4 style="font-size: 13px; color: #6b21a8; margin-bottom: 8px;">2. Restore Database System</h4>
+                        <div class="form-inline" style="margin-bottom: 0;">
+                            <input type="file" id="admin-restore-json-file" accept=".json">
+                            <button class="btn-warning" onclick="importAdminRestoreJSON()">📤 Restore Database System</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
+                    <h3>2. Keamanan & Akun Admin Utama</h3>
+                    <br>
+                    <div class="form-group">
+                        <label>Username Admin:</label>
+                        <input type="text" id="setting-admin-username" readonly value="admin" style="background: #e2e8f0; cursor: not-allowed;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password Admin Baru:</label>
+                        <input type="password" id="setting-admin-new-pass" placeholder="Masukkan Password Baru">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Konfirmasi Password Baru:</label>
+                        <input type="password" id="setting-admin-confirm-pass" placeholder="Ulangi Password Baru">
+                    </div>
+
+                    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+                    <h4 style="font-size: 14px; margin-bottom: 10px;">🛡️ Pertanyaan Keamanan (Untuk Lupa Password)</h4>
+
+                    <div class="form-group">
+                        <label>Pilih Pertanyaan Keamanan:</label>
+                        <select id="setting-sec-question">
+                            <option value="Apa nama hewan peliharaan pertama Anda?">Apa nama hewan peliharaan pertama Anda?</option>
+                            <option value="Di kota mana Anda dilahirkan?">Di kota mana Anda dilahirkan?</option>
+                            <option value="Apa nama SD pertama Anda?">Apa nama SD pertama Anda?</option>
+                            <option value="Siapa nama guru favorit masa kecil Anda?">Siapa nama guru favorit masa kecil Anda?</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Jawaban Rahasia (Tidak Beda Huruf Besar/Kecil):</label>
+                        <input type="text" id="setting-sec-answer" placeholder="Masukkan Jawaban Rahasia">
+                    </div>
+
+                    <button class="btn-warning" onclick="saveAdminPasswordSettings()" style="margin-top: 10px;">🔐 Ubah Keamanan & Password Admin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HALAMAN GURU -->
+    <div id="view-guru" class="hidden">
+        <div class="dashboard-grid no-print">
+            <div class="dashboard-card">
+                <div class="dashboard-icon">🏫</div>
+                <div class="dashboard-info">
+                    <h4>Kelas Diampu</h4>
+                    <div class="dash-num" id="dash-guru-classes">0</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">👨‍🎓</div>
+                <div class="dashboard-info">
+                    <h4>Siswa Diampu</h4>
+                    <div class="dash-num" id="dash-guru-students">0</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">📅</div>
+                <div class="dashboard-info">
+                    <h4>Sesi Presensi Diisi</h4>
+                    <div class="dash-num" id="dash-guru-att-sessions">0</div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-icon">📊</div>
+                <div class="dashboard-info">
+                    <h4>Nilai Terinput</h4>
+                    <div class="dash-num" id="dash-guru-scores">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-kategori', this)">1. Kelola Kategori & Visibilitas</button>
+            <button class="tab-btn" onclick="switchTab('tab-murid', this)">2. Daftar Murid Anda</button>
+            <button class="tab-btn" onclick="switchTab('tab-nilai', this)">3. Input & Rekap Nilai Murid</button>
+            <button class="tab-btn" onclick="switchTab('tab-absensi', this)">📅 4. Absensi & Kehadiran Pertemuan</button>
+        </div>
+
+        <div id="tab-kategori" class="tab-content card">
+            <h2>1. Kelola Kategori Nilai & Bobot Kehadiran Siswa</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Tambahkan kategori penilaian (Tugas, Ulangan, UTS, UAS) dan atur persentase bobot kehadiran yang dimasukkan ke dalam Nilai Akhir.</p>
+
+            <div class="form-inline">
+                <input type="text" id="cat-name" placeholder="Kategori Utama (misal: Ulangan, Tugas)" onkeydown="checkEnter(event, addCategory)">
+                <input type="number" id="cat-weight" placeholder="Bobot (%)" style="width: 100px;" onkeydown="checkEnter(event, addCategory)">
+                <button onclick="addCategory()">+ Tambah Kategori Akademik</button>
+            </div>
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <h3>📅 Pengaturan Bobot Kehadiran / Presensi</h3>
+            <div class="form-inline" style="margin-top: 10px; background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <label style="align-self: center; font-size: 13px; font-weight: bold;">Bobot Nilai Kehadiran (%) Dalam Nilai Akhir:</label>
+                <input type="number" id="att-weight-input" min="0" max="100" style="width: 100px;" placeholder="10">
+                <button class="btn-success btn-sm" onclick="saveAttendanceWeight()">💾 Simpan Bobot Kehadiran</button>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <div class="setting-box">
+                    <input type="checkbox" id="show-weight-checkbox" onchange="toggleShowWeight(this.checked)">
+                    <label for="show-weight-checkbox"><strong>Tampilkan Kolom Bobot (%) di Portal Siswa</strong></label>
+                </div>
+
+                <div class="setting-box">
+                    <input type="checkbox" id="show-att-detail-checkbox" onchange="toggleShowAttDetail(this.checked)">
+                    <label for="show-att-detail-checkbox"><strong>Tampilkan Rincian Detail Kehadiran (H, T, D, I, S, A) di Portal Siswa</strong></label>
+                </div>
+
+                <div class="setting-box">
+                    <input type="checkbox" id="show-att-history-checkbox" onchange="toggleShowAttHistory(this.checked)">
+                    <label for="show-att-history-checkbox"><strong>Tampilkan Riwayat Tanggal Pertemuan Kehadiran di Portal Siswa</strong></label>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">Tabel Kategori Penilaian Akademik</h3>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kategori Utama</th>
+                            <th>Bobot (%)</th>
+                            <th>Visibilitas Kategori</th>
+                            <th>Rincian Sub-Item / Ulangan (CRUD Sub-Item)</th>
+                            <th>Aksi Kategori</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-table-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="backup-box" style="margin-top: 25px;">
+                <h3 style="color: #6b21a8; font-size: 16px; margin-bottom: 6px;">📦 Backup & Restore Data Guru (Mata Pelajaran Ini)</h3>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Simpan cadangan data nilai, presensi, dan kategori Anda ke file JSON atau pulihkan dari file backup.</p>
+                
+                <div class="form-inline" style="margin-bottom:0;">
+                    <button class="btn-purple" onclick="exportGuruBackupJSON()">📥 Download Backup Data Guru (.JSON)</button>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="file" id="guru-restore-json-file" accept=".json" style="max-width: 240px;">
+                        <button class="btn-warning" onclick="importGuruRestoreJSON()">📤 Restore Data Guru</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-murid" class="tab-content card hidden">
+            <h2>2. Daftar Murid Anda (Berdasarkan Kelas yang Dibagikan Admin)</h2>
+            <div class="info-alert-box">
+                ℹ️ <strong>Kelas Diampu Anda:</strong> <span id="guru-allocated-classes-display" style="font-weight: bold;">-</span><br>
+                <em>Data murid berikut disaring otomatis sesuai dengan alokasi kelas yang diberikan oleh Admin.</em>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px; gap: 10px;">
+                <div class="form-inline" style="margin-bottom: 0;">
+                    <input type="text" id="guru-search-student" placeholder="Cari Nama / NISN..." onkeyup="renderStudentCrudTable()" style="width: 220px;">
+                </div>
+
+                <div class="filter-container" style="margin-bottom: 0;">
+                    <label for="filter-class-crud"><strong>Filter Kelas Diampu:</strong></label>
+                    <select id="filter-class-crud" onchange="renderStudentCrudTable()">
+                        <option value="ALL">-- Semua Kelas Diampu --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NISN</th>
+                            <th>Nama Murid</th>
+                            <th>Kelas</th>
+                            <th>Status Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-crud-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-nilai" class="tab-content card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px; gap: 10px;">
+                <h2>3. Input & Rekap Nilai Murid</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="guru-search-score-student" placeholder="Cari Nama / NISN..." onkeyup="renderTeacherTable()" style="width: 200px;">
+                    <div class="filter-container" style="margin-bottom: 0;">
+                        <label for="filter-class-score"><strong>Filter Kelas:</strong></label>
+                        <select id="filter-class-score" onchange="renderTeacherTable()">
+                            <option value="ALL">-- Semua Kelas Diampu --</option>
+                        </select>
+                    </div>
+
+                    <div class="action-btns no-print">
+                        <button class="btn-success btn-sm" onclick="exportGuruScoresCSV()">📊 Export Excel/CSV</button>
+                        <button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak / PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">*Kolom <strong>Persentase Kehadiran (%)</strong> terhitung otomatis dari pengisian presensi di Tab 4 dan ikut dihitung dalam Nilai Akhir berdasarkan bobot kehadiran.</p>
+            
+            <div class="table-scroll-container-lg">
+                <table id="teacher-table">
+                    <thead>
+                        <tr id="teacher-table-head">
+                            <th>NISN</th>
+                            <th>Nama Murid</th>
+                            <th>Kelas</th>
+                            <th>Nilai Akhir</th>
+                            <th>Catatan Khusus / Keterangan Guru</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-absensi" class="tab-content card hidden">
+            <h2>📅 4. Isi Kehadiran Murid Pertemuan Kelas</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Pilih kelas dan tanggal masuk untuk mengisi atau memperbarui daftar kehadiran murid di kelas Anda.</p>
+
+            <div class="form-inline" style="background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                <div>
+                    <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Pilih Kelas Diampu:</label>
+                    <select id="attendance-class-select" onchange="renderAttendanceForm()"></select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Tanggal Pertemuan:</label>
+                    <input type="date" id="attendance-date-input" onchange="renderAttendanceForm()">
+                </div>
+                <div style="align-self: flex-end;">
+                    <button class="btn-success" onclick="saveCurrentAttendanceSession()">💾 Simpan Presensi Pertemuan Ini</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">Pengisian Presensi Siswa</h3>
+            <div class="table-scroll-container" style="max-height: 350px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NISN</th>
+                            <th>Nama Murid</th>
+                            <th>Kelas</th>
+                            <th>Status Kehadiran Hari Ini</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-form-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h3>📊 Rekapan Persentase Kehadiran Murid</h3>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="filter-container" style="margin-bottom:0;">
+                        <label for="filter-class-att-rekap"><strong>Filter Kelas Rekap:</strong></label>
+                        <select id="filter-class-att-rekap" onchange="renderAttendanceSummaryTable()"></select>
+                    </div>
+
+                    <div class="action-btns no-print">
+                        <button class="btn-success btn-sm" onclick="exportGuruAttendanceCSV()">📊 Export Excel/CSV</button>
+                        <button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak Presensi</button>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size: 12px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">
+                *Bobot Kehadiran: Hadir / Rapat Organisasi (100%), Terlambat (75%), Izin / Sakit (50%), Alpa (0%).
+            </p>
+
+            <div class="table-scroll-container">
+                <table id="attendance-summary-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NISN</th>
+                            <th>Nama Murid</th>
+                            <th>Kelas</th>
+                            <th>Total Pertemuan</th>
+                            <th>Hadir (H)</th>
+                            <th>Terlambat (T)</th>
+                            <th>Rapat / Dispen (D)</th>
+                            <th>Izin (I)</th>
+                            <th>Sakit (S)</th>
+                            <th>Alpa (A)</th>
+                            <th>Persentase (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-summary-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- HALAMAN SISWA -->
+    <div id="view-siswa" class="hidden">
+        <div class="card">
+            <h2 id="student-display-name">Transkrip Nilai Siswa</h2>
+            <p id="student-info-detail" style="font-size: 14px; color: #64748b; margin-bottom: 15px;"></p>
+            
+            <div id="student-subject-tabs" class="nav-tabs">
+            </div>
+
+            <div id="student-subject-content">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div id="forgot-admin-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Reset Password Admin</h3>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Jawab Pertanyaan Keamanan di bawah ini untuk membuat Password Admin baru.</p>
+        
+        <div class="form-group">
+            <label>Pertanyaan Keamanan:</label>
+            <input type="text" id="forgot-question-display" readonly style="background: #f1f5f9; font-weight: bold;">
+        </div>
+        <div class="form-group">
+            <label>Jawaban Rahasia Anda:</label>
+            <input type="text" id="forgot-answer-input" placeholder="Masukkan Jawaban Anda">
+        </div>
+        <div class="form-group">
+            <label>Password Admin Baru:</label>
+            <input type="password" id="forgot-new-pass" placeholder="Masukkan Password Baru">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeForgotAdminModal()">Batal</button>
+            <button class="btn-success" onclick="processAdminPasswordReset()">Reset Password</button>
+        </div>
+    </div>
+</div>
+
+<div id="reset-guru-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="reset-guru-title">Reset Password Guru</h3>
+        <input type="hidden" id="reset-guru-id">
+        <div class="form-group">
+            <label>Password Baru</label>
+            <input type="password" id="reset-guru-new-pass" placeholder="Masukkan Password Baru" onkeydown="checkEnter(event, saveGuruPasswordReset)">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeResetGuruModal()">Batal</button>
+            <button onclick="saveGuruPasswordReset()">Simpan Password Baru</button>
+        </div>
+    </div>
+</div>
+
+<div id="edit-guru-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Edit Data Guru</h3>
+        <input type="hidden" id="edit-guru-id">
+        <div class="form-group">
+            <label>Nama Guru</label>
+            <input type="text" id="edit-guru-name">
+        </div>
+        <div class="form-group">
+            <label>Mata Pelajaran</label>
+            <input type="text" id="edit-guru-subject">
+        </div>
+        <div class="form-group">
+            <label>Pilih Kelas Diampu (Centang dari Pilihan Kelas):</label>
+            <div id="edit-guru-classes-checkboxes" class="checkbox-group-container">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="edit-guru-user">
+        </div>
+        <div class="form-group">
+            <label>Password Baru (Opsional)</label>
+            <input type="password" id="edit-guru-pass" placeholder="Biarkan kosong jika tidak diubah">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeEditGuruModal()">Batal</button>
+            <button onclick="saveGuruEdit()">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div id="classes-guru-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="classes-guru-title">Alokasi Kelas Guru</h3>
+        <input type="hidden" id="classes-guru-id">
+        <div class="form-group">
+            <label>Centang Kelas yang Diampu Guru Ini:</label>
+            <div id="modal-guru-classes-checkboxes" class="checkbox-group-container">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeClassesGuruModal()">Batal</button>
+            <button onclick="saveGuruClassesAllocation()">Simpan Alokasi Kelas</button>
+        </div>
+    </div>
+</div>
+
+<div id="admin-edit-student-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Edit Data Murid</h3>
+        <input type="hidden" id="admin-edit-student-id">
+        <div class="form-group">
+            <label>NISN (10 Digit Angka)</label>
+            <input type="text" id="admin-edit-student-nisn" maxlength="10">
+        </div>
+        <div class="form-group">
+            <label>Nama Murid</label>
+            <input type="text" id="admin-edit-student-name">
+        </div>
+        <div class="form-group">
+            <label>Kelas</label>
+            <input type="text" id="admin-edit-student-class">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeAdminEditStudentModal()">Batal</button>
+            <button onclick="saveAdminStudentEdit()">Simpan Perubahan</button>
+        </div>
+    </div>
+</div>
+
+<div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Edit Kategori</h3>
+        <input type="hidden" id="edit-cat-id">
+        <div class="form-group">
+            <label>Nama Kategori</label>
+            <input type="text" id="edit-cat-name" onkeydown="checkEnter(event, saveCategoryEdit)">
+        </div>
+        <div class="form-group">
+            <label>Bobot (%)</label>
+            <input type="number" id="edit-cat-weight" onkeydown="checkEnter(event, saveCategoryEdit)">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeEditModal()">Batal</button>
+            <button onclick="saveCategoryEdit()">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div id="subitem-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="subitem-modal-title">Tambah Sub-Item / Ulangan</h3>
+        <input type="hidden" id="subitem-cat-id">
+        <div class="form-group">
+            <label>Nama Sub-Item (misal: Ulangan Harian 1)</label>
+            <input type="text" id="subitem-name" onkeydown="checkEnter(event, saveSubItem)">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeSubItemModal()">Batal</button>
+            <button onclick="saveSubItem()">Tambah Sub-Item</button>
+        </div>
+    </div>
+</div>
+
+<div id="edit-subitem-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Edit Nama Sub-Item / Ulangan</h3>
+        <input type="hidden" id="edit-subitem-cat-id">
+        <input type="hidden" id="edit-subitem-id">
+        <div class="form-group">
+            <label>Nama Sub-Item</label>
+            <input type="text" id="edit-subitem-name" onkeydown="checkEnter(event, saveSubItemEdit)">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeEditSubItemModal()">Batal</button>
+            <button onclick="saveSubItemEdit()">Simpan Perubahan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let appProfile = JSON.parse(localStorage.getItem('portal_app_profile_v23')) || {
+        appName: 'Portal Nilai & Kehadiran Sekolah',
+        schoolName: 'SMA Negeri 1 Indonesia',
+        logoUrl: 'https://via.placeholder.com/100x50?text=LOGO',
+        adminPassword: 'admin123',
+        secQuestion: 'Apa nama hewan peliharaan pertama Anda?',
+        secAnswer: 'kucing'
+    };
+
+    let masterClasses = JSON.parse(localStorage.getItem('portal_master_classes_v23')) || [
+        '10 IPA 1', '10 IPA 2', '10 IPA 3', '10 IPS 1', '10 IPS 2'
+    ];
+
+    let masterStudents = JSON.parse(localStorage.getItem('portal_master_students_v23')) || [
+        { id: 1001, nisn: '0012345678', name: 'Budi Santoso', className: '10 IPA 1' },
+        { id: 1002, nisn: '0087654321', name: 'Siti Rahma', className: '10 IPA 2' }
+    ];
+
+    let gurus = JSON.parse(localStorage.getItem('portal_gurus_v23')) || [
+        { id: 'g1', name: 'Budi Hartono, S.Pd', subject: 'Matematika', username: 'guru1', password: '123', assignedClasses: ['10 IPA 1', '10 IPA 2'] },
+        { id: 'g2', name: 'Siti Aminah, M.Pd', subject: 'Bahasa Indonesia', username: 'guru2', password: '123', assignedClasses: ['10 IPA 2', '10 IPA 3'] }
+    ];
+
+    let currentGuruId = localStorage.getItem('portal_active_guru_v23') || 'g1';
+    let currentRole = localStorage.getItem('portal_active_role_v23') || 'none';
+    let currentLoggedInStudent = JSON.parse(localStorage.getItem('portal_logged_student_v23')) || null;
+    let activeSiswaSubjectTab = 'ALL';
+    let tempLogoDataUrl = null;
+
+    let adminRekapSortKey = 'className';
+    let adminRekapSortAsc = true;
+
+    let categories = JSON.parse(localStorage.getItem(`portal_cat_${currentGuruId}`)) || [
+        { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
+        { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
+        { id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
+    ];
+
+    let attendanceWeight = localStorage.getItem(`portal_att_wgt_${currentGuruId}`) !== null 
+        ? parseFloat(localStorage.getItem(`portal_att_wgt_${currentGuruId}`)) 
+        : 10;
+
+    let teacherScoresData = JSON.parse(localStorage.getItem(`portal_scores_${currentGuruId}`)) || {
+        1001: { note: 'Belum Ulangan 1', scores: { "sub_101": 85 } },
+        1002: { note: '', scores: { "sub_101": 90 } }
+    };
+
+    let teacherAttendanceData = JSON.parse(localStorage.getItem(`portal_att_${currentGuruId}`)) || [];
+
+    let showWeightToStudent = localStorage.getItem(`portal_wgt_${currentGuruId}`) !== null 
+        ? JSON.parse(localStorage.getItem(`portal_wgt_${currentGuruId}`)) 
+        : true;
+
+    let showAttDetailToStudent = localStorage.getItem(`portal_att_dtl_${currentGuruId}`) !== null 
+        ? JSON.parse(localStorage.getItem(`portal_att_dtl_${currentGuruId}`)) 
+        : true;
+
+    let showAttHistoryToStudent = localStorage.getItem(`portal_att_hst_${currentGuruId}`) !== null 
+        ? JSON.parse(localStorage.getItem(`portal_att_hst_${currentGuruId}`)) 
+        : true;
+
+    function renderDashboards() {
+        const adminStudentCount = masterStudents.length;
+        const adminGuruCount = gurus.length;
+        const adminClassCount = masterClasses.length;
+        
+        let totalAdminScoresCount = 0;
+        gurus.forEach(g => {
+            const scoresData = JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {};
+            Object.values(scoresData).forEach(st => {
+                if (st.scores) {
+                    totalAdminScoresCount += Object.keys(st.scores).length;
+                }
+            });
+        });
+
+        const elAdminStu = document.getElementById('dash-admin-students');
+        const elAdminGuru = document.getElementById('dash-admin-gurus');
+        const elAdminCls = document.getElementById('dash-admin-classes');
+        const elAdminScr = document.getElementById('dash-admin-scores');
+
+        if (elAdminStu) elAdminStu.innerText = adminStudentCount;
+        if (elAdminGuru) elAdminGuru.innerText = adminGuruCount;
+        if (elAdminCls) elAdminCls.innerText = adminClassCount;
+        if (elAdminScr) elAdminScr.innerText = totalAdminScoresCount;
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const guruClassCount = assignedClasses.length > 0 ? assignedClasses.length : masterClasses.length;
+        
+        const guruStudentsCount = masterStudents.filter(s => isStudentInAssignedClasses(s.className, assignedClasses)).length;
+        const guruAttSessionCount = teacherAttendanceData.length;
+
+        let totalGuruScoresCount = 0;
+        Object.values(teacherScoresData).forEach(st => {
+            if (st.scores) {
+                totalGuruScoresCount += Object.keys(st.scores).length;
+            }
+        });
+
+        const elGuruCls = document.getElementById('dash-guru-classes');
+        const elGuruStu = document.getElementById('dash-guru-students');
+        const elGuruAtt = document.getElementById('dash-guru-att-sessions');
+        const elGuruScr = document.getElementById('dash-guru-scores');
+
+        if (elGuruCls) elGuruCls.innerText = guruClassCount;
+        if (elGuruStu) elGuruStu.innerText = guruStudentsCount;
+        if (elGuruAtt) elGuruAtt.innerText = guruAttSessionCount;
+        if (elGuruScr) elGuruScr.innerText = totalGuruScoresCount;
+    }
+
+    function printCurrentView() {
+        window.print();
+    }
+
+    function downloadCSV(csvContent, fileName) {
+        const BOM = "\uFEFF";
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (navigator.msSaveBlob) {
+            navigator.msSaveBlob(blob, fileName);
+        } else {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    function getAdminRekapData() {
+        const filterClass = document.getElementById('admin-rekap-filter-class') ? document.getElementById('admin-rekap-filter-class').value : 'ALL';
+        let rekapList = [];
+
+        gurus.forEach(g => {
+            const cats = JSON.parse(localStorage.getItem(`portal_cat_${g.id}`)) || [];
+            const attWgt = localStorage.getItem(`portal_att_wgt_${g.id}`) !== null 
+                ? parseFloat(localStorage.getItem(`portal_att_wgt_${g.id}`)) 
+                : 10;
+            const scoresData = JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {};
+            const attData = JSON.parse(localStorage.getItem(`portal_att_${g.id}`)) || [];
+
+            const assignedClasses = g.assignedClasses || [];
+            const filteredStus = masterStudents.filter(s => {
+                const isAssigned = (assignedClasses.length === 0 || assignedClasses.includes(s.className));
+                const matchClassFilter = (filterClass === 'ALL' || s.className === filterClass);
+                return isAssigned && matchClassFilter;
+            });
+
+            filteredStus.forEach(s => {
+                const studentScores = scoresData[s.id] ? scoresData[s.id].scores : {};
+                let attCalc = calculateStudentAttendanceStats(s.id, s.className, attData);
+                let finalScore = calculateFinalScoreAdmin(s.id, s.className, studentScores, cats, attWgt, attData);
+
+                rekapList.push({
+                    guruId: g.id,
+                    guruName: g.name,
+                    subject: g.subject,
+                    studentId: s.id,
+                    nisn: s.nisn,
+                    studentName: s.name,
+                    className: s.className,
+                    attendancePercentage: parseFloat(attCalc.percentage) || 0,
+                    attendanceRatio: `${attCalc.hadir}/${attCalc.total}`,
+                    finalScore: parseFloat(finalScore) || 0
+                });
+            });
+        });
+
+        const sortKey = adminRekapSortKey;
+        const isAsc = adminRekapSortAsc;
+
+        rekapList.sort((a, b) => {
+            let valA = a[sortKey];
+            let valB = b[sortKey];
+
+            if (typeof valA === 'string') {
+                valA = valA.toLowerCase();
+                valB = valB.toLowerCase();
+            }
+
+            if (valA < valB) return isAsc ? -1 : 1;
+            if (valA > valB) return isAsc ? 1 : -1;
+
+            return a.studentName.localeCompare(b.studentName);
+        });
+
+        return rekapList;
+    }
+
+    function exportAdminRekapCSV() {
+        const dataList = getAdminRekapData();
+        const filterClass = document.getElementById('admin-rekap-filter-class').value;
+
+        let csv = "Guru Pengajar,Mata Pelajaran,NISN,Nama Siswa,Kelas,Persentase Kehadiran (%),Hadir/Total Pertemuan,Nilai Akhir\n";
+
+        dataList.forEach(item => {
+            csv += `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"\n`;
+        });
+
+        downloadCSV(csv, `rekap_monitoring_siswa_kelas_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+
+    function sortAdminRekapBy(columnKey) {
+        if (adminRekapSortKey === columnKey) {
+            adminRekapSortAsc = !adminRekapSortAsc;
+        } else {
+            adminRekapSortKey = columnKey;
+            adminRekapSortAsc = (columnKey === 'attendance' || columnKey === 'finalScore') ? false : true;
+        }
+
+        const selectSort = document.getElementById('admin-rekap-sort-by');
+        if (selectSort) {
+            if (columnKey === 'attendance') selectSort.value = 'attendance';
+            else if (columnKey === 'finalScore') selectSort.value = 'finalScore';
+            else selectSort.value = columnKey;
+        }
+
+        renderAdminRekapTable();
+    }
+
+    function updateAdminSortIcons() {
+        const keys = ['guruName', 'subject', 'nisn', 'studentName', 'className', 'attendance', 'finalScore'];
+        keys.forEach(k => {
+            const el = document.getElementById(`sort-icon-${k}`);
+            if (el) {
+                if (adminRekapSortKey === k) {
+                    el.innerText = adminRekapSortAsc ? '🔼' : '🔽';
+                } else {
+                    el.innerText = '↕️';
+                }
+            }
+        });
+    }
+
+    function exportGuruScoresCSV() {
+        const filterClass = document.getElementById('filter-class-score').value;
+        const currentGuru = gurus.find(g => g.id === currentGuruId);
+        const subjectName = currentGuru ? currentGuru.subject : 'Nilai';
+
+        let headers = ["NISN", "Nama Murid", "Kelas", `Kehadiran (${attendanceWeight}%)`];
+        
+        categories.forEach(c => {
+            if (c.subItems && c.subItems.length > 0) {
+                c.subItems.forEach(s => headers.push(s.name));
+                headers.push(`Rata-rata ${c.name}`);
+            } else {
+                headers.push(`${c.name} (${c.weight}%)`);
+            }
+        });
+        headers.push("Nilai Akhir");
+        headers.push("Catatan Guru");
+
+        let csv = headers.map(h => `"${h}"`).join(",") + "\n";
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            return matchAssignedClass && matchFilterDropdown;
+        });
+
+        filteredStudents.forEach(student => {
+            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+
+            let row = [`"'${student.nisn}"`, `"${student.name}"`, `"${student.className}"`, `"${attCalc.percentage}%"`];
+
+            categories.forEach(cat => {
+                if (cat.subItems && cat.subItems.length > 0) {
+                    cat.subItems.forEach(s => {
+                        const val = sData.scores[`sub_${s.id}`] !== undefined ? sData.scores[`sub_${s.id}`] : '';
+                        row.push(`"${val}"`);
+                    });
+                    const avgCat = getCategoryScore(student.id, cat, false);
+                    row.push(`"${avgCat !== null ? avgCat.toFixed(1) : '-'}"`);
+                } else {
+                    const val = sData.scores[`cat_${cat.id}`] !== undefined ? sData.scores[`cat_${cat.id}`] : '';
+                    row.push(`"${val}"`);
+                }
+            });
+
+            row.push(`"${calculateFinalScore(student.id, student.className, false)}"`);
+            row.push(`"${sData.note || ''}"`);
+
+            csv += row.join(",") + "\n";
+        });
+
+        downloadCSV(csv, `rekap_nilai_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+
+    function exportGuruAttendanceCSV() {
+        const filterClass = document.getElementById('filter-class-att-rekap').value;
+        const currentGuru = gurus.find(g => g.id === currentGuruId);
+        const subjectName = currentGuru ? currentGuru.subject : 'Presensi';
+
+        let csv = "No,NISN,Nama Murid,Kelas,Total Pertemuan,Hadir (H),Terlambat (T),Rapat/Dispen (D),Izin (I),Sakit (S),Alpa (A),Persentase (%)\n";
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilter = (filterClass === 'ALL' || s.className === filterClass);
+            return matchAssignedClass && matchFilter;
+        });
+
+        filteredStudents.forEach((student, index) => {
+            const stats = calculateStudentAttendanceStats(student.id, student.className);
+            csv += `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"\n`;
+        });
+
+        downloadCSV(csv, `rekap_presensi_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+
+    function exportAdminBackupJSON() {
+        const backupData = {
+            version: '2.3',
+            timestamp: new Date().toISOString(),
+            appProfile: appProfile,
+            masterClasses: masterClasses,
+            masterStudents: masterStudents,
+            gurus: gurus,
+            guruDataStore: {}
+        };
+
+        gurus.forEach(g => {
+            backupData.guruDataStore[g.id] = {
+                categories: JSON.parse(localStorage.getItem(`portal_cat_${g.id}`)) || [],
+                attendanceWeight: localStorage.getItem(`portal_att_wgt_${g.id}`) || '10',
+                scoresData: JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {},
+                attendanceData: JSON.parse(localStorage.getItem(`portal_att_${g.id}`)) || [],
+                showWeight: localStorage.getItem(`portal_wgt_${g.id}`) !== null ? JSON.parse(localStorage.getItem(`portal_wgt_${g.id}`)) : true,
+                showAttDetail: localStorage.getItem(`portal_att_dtl_${g.id}`) !== null ? JSON.parse(localStorage.getItem(`portal_att_dtl_${g.id}`)) : true,
+                showAttHistory: localStorage.getItem(`portal_att_hst_${g.id}`) !== null ? JSON.parse(localStorage.getItem(`portal_att_hst_${g.id}`)) : true
+            };
+        });
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const fileName = `backup_portal_sekolah_${new Date().toISOString().split('T')[0]}.json`;
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importAdminRestoreJSON() {
+        const fileInput = document.getElementById('admin-restore-json-file');
+        const file = fileInput.files[0];
+        if (!file) return alert('Pilih file backup JSON terlebih dahulu!');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                if (!data.masterClasses || !data.masterStudents || !data.gurus) {
+                    return alert('File JSON tidak valid atau struktur tidak cocok!');
+                }
+
+                if (confirm('APAKAH ANDA YAKIN? Restore database akan menimpa seluruh data sistem saat ini!')) {
+                    if (data.appProfile) appProfile = data.appProfile;
+                    if (data.masterClasses) masterClasses = data.masterClasses;
+                    if (data.masterStudents) masterStudents = data.masterStudents;
+                    if (data.gurus) gurus = data.gurus;
+
+                    if (data.guruDataStore) {
+                        Object.keys(data.guruDataStore).forEach(gId => {
+                            const store = data.guruDataStore[gId];
+                            localStorage.setItem(`portal_cat_${gId}`, JSON.stringify(store.categories || []));
+                            localStorage.setItem(`portal_att_wgt_${gId}`, (store.attendanceWeight || 10).toString());
+                            localStorage.setItem(`portal_scores_${gId}`, JSON.stringify(store.scoresData || {}));
+                            localStorage.setItem(`portal_att_${gId}`, JSON.stringify(store.attendanceData || []));
+                            localStorage.setItem(`portal_wgt_${gId}`, JSON.stringify(store.showWeight ?? true));
+                            localStorage.setItem(`portal_att_dtl_${gId}`, JSON.stringify(store.showAttDetail ?? true));
+                            localStorage.setItem(`portal_att_hst_${gId}`, JSON.stringify(store.showAttHistory ?? true));
+                        });
+                    }
+
+                    saveData();
+                    fileInput.value = '';
+                    renderAdminView();
+                    alert('Restore Database System Berhasil! Data portal telah diperbarui sepenuhnya.');
+                }
+            } catch (err) {
+                alert('Gagal membaca file JSON! Pastikan format file sesuai.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function exportGuruBackupJSON() {
+        const currentGuru = gurus.find(g => g.id === currentGuruId);
+        const guruName = currentGuru ? currentGuru.name.replace(/\s+/g, '_') : 'guru';
+
+        const guruBackup = {
+            guruId: currentGuruId,
+            subject: currentGuru ? currentGuru.subject : '',
+            timestamp: new Date().toISOString(),
+            categories: categories,
+            attendanceWeight: attendanceWeight,
+            scoresData: teacherScoresData,
+            attendanceData: teacherAttendanceData,
+            showWeight: showWeightToStudent,
+            showAttDetail: showAttDetailToStudent,
+            showAttHistory: showAttHistoryToStudent
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(guruBackup, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const fileName = `backup_guru_${guruName}_${new Date().toISOString().split('T')[0]}.json`;
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", fileName);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importGuruRestoreJSON() {
+        const fileInput = document.getElementById('guru-restore-json-file');
+        const file = fileInput.files[0];
+        if (!file) return alert('Pilih file backup JSON guru terlebih dahulu!');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                if (!data.categories || data.attendanceWeight === undefined || !data.scoresData) {
+                    return alert('File JSON backup guru tidak valid!');
+                }
+
+                if (confirm('Restore data akan menimpa nilai dan presensi mata pelajaran Anda saat ini. Lanjutkan?')) {
+                    categories = data.categories;
+                    attendanceWeight = data.attendanceWeight;
+                    teacherScoresData = data.scoresData;
+                    teacherAttendanceData = data.attendanceData || [];
+                    if (data.showWeight !== undefined) showWeightToStudent = data.showWeight;
+                    if (data.showAttDetail !== undefined) showAttDetailToStudent = data.showAttDetail;
+                    if (data.showAttHistory !== undefined) showAttHistoryToStudent = data.showAttHistory;
+
+                    saveData();
+                    fileInput.value = '';
+                    renderTeacherView();
+                    alert('Restore Data Guru Berhasil!');
+                }
+            } catch (err) {
+                alert('Gagal memproses file JSON backup!');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function applyAppProfile() {
+        document.getElementById('header-app-name').innerText = appProfile.appName;
+        document.getElementById('header-school-name').innerText = appProfile.schoolName;
+        document.getElementById('header-logo').src = appProfile.logoUrl;
+        document.getElementById('page-title').innerText = appProfile.appName;
+
+        const inputAppName = document.getElementById('setting-app-name');
+        const inputSchoolName = document.getElementById('setting-school-name');
+        const logoPreview = document.getElementById('logo-preview');
+        const secQuestionSelect = document.getElementById('setting-sec-question');
+        const secAnswerInput = document.getElementById('setting-sec-answer');
+
+        if (inputAppName) inputAppName.value = appProfile.appName;
+        if (inputSchoolName) inputSchoolName.value = appProfile.schoolName;
+        if (logoPreview) logoPreview.src = appProfile.logoUrl;
+        if (secQuestionSelect && appProfile.secQuestion) secQuestionSelect.value = appProfile.secQuestion;
+        if (secAnswerInput && appProfile.secAnswer) secAnswerInput.value = appProfile.secAnswer;
+    }
+
+    function previewSelectedLogo(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempLogoDataUrl = e.target.result;
+                document.getElementById('logo-preview').src = tempLogoDataUrl;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function saveAppIdentitySettings() {
+        const appName = document.getElementById('setting-app-name').value.trim();
+        const schoolName = document.getElementById('setting-school-name').value.trim();
+
+        if (!appName || !schoolName) {
+            return alert('Nama aplikasi dan nama sekolah tidak boleh kosong!');
+        }
+
+        appProfile.appName = appName;
+        appProfile.schoolName = schoolName;
+
+        if (tempLogoDataUrl) {
+            appProfile.logoUrl = tempLogoDataUrl;
+            tempLogoDataUrl = null;
+        }
+
+        saveData();
+        applyAppProfile();
+        alert('Profil aplikasi dan sekolah berhasil disimpan!');
+    }
+
+    function saveAdminPasswordSettings() {
+        const newPass = document.getElementById('setting-admin-new-pass').value.trim();
+        const confirmPass = document.getElementById('setting-admin-confirm-pass').value.trim();
+        const secQuestion = document.getElementById('setting-sec-question').value;
+        const secAnswer = document.getElementById('setting-sec-answer').value.trim();
+
+        if (newPass) {
+            if (newPass !== confirmPass) {
+                return alert('Password baru dan Konfirmasi Password tidak cocok!');
+            }
+            appProfile.adminPassword = newPass;
+        }
+
+        if (!secAnswer) {
+            return alert('Jawaban Rahasia tidak boleh kosong untuk fitur Lupa Password!');
+        }
+
+        appProfile.secQuestion = secQuestion;
+        appProfile.secAnswer = secAnswer.toLowerCase();
+
+        saveData();
+
+        document.getElementById('setting-admin-new-pass').value = '';
+        document.getElementById('setting-admin-confirm-pass').value = '';
+
+        alert('Pengaturan Keamanan & Password Admin berhasil diperbarui!');
+    }
+
+    function openForgotAdminModal() {
+        document.getElementById('forgot-question-display').value = appProfile.secQuestion || 'Pertanyaan belum diset oleh Admin';
+        document.getElementById('forgot-answer-input').value = '';
+        document.getElementById('forgot-new-pass').value = '';
+        document.getElementById('forgot-admin-modal').classList.remove('hidden');
+    }
+
+    function closeForgotAdminModal() {
+        document.getElementById('forgot-admin-modal').classList.add('hidden');
+    }
+
+    function processAdminPasswordReset() {
+        const answerInput = document.getElementById('forgot-answer-input').value.trim().toLowerCase();
+        const newPass = document.getElementById('forgot-new-pass').value.trim();
+
+        if (!answerInput) return alert('Harap isi jawaban pertanyaan keamanan!');
+        if (!newPass) return alert('Harap masukkan Password Admin baru!');
+
+        const validAnswer = (appProfile.secAnswer || 'kucing').toLowerCase();
+
+        if (answerInput === validAnswer) {
+            appProfile.adminPassword = newPass;
+            saveData();
+            closeForgotAdminModal();
+            alert('Password Admin berhasil direset! Silakan login dengan password baru Anda.');
+        } else {
+            alert('Jawaban Rahasia Salah! Silakan coba lagi.');
+        }
+    }
+
+    function addMasterClass() {
+        const input = document.getElementById('add-class-input');
+        const className = input.value.trim();
+
+        if (!className) return alert('Nama kelas tidak boleh kosong!');
+        if (masterClasses.some(c => c.toLowerCase() === className.toLowerCase())) {
+            return alert(`Kelas "${className}" sudah ada!`);
+        }
+
+        masterClasses.push(className);
+        masterClasses.sort();
+        saveData();
+        input.value = '';
+        renderAdminView();
+        alert(`Kelas "${className}" berhasil ditambahkan!`);
+    }
+
+    function editMasterClass(oldClassName) {
+        const newClassName = prompt(`Ubah nama kelas "${oldClassName}" menjadi:`, oldClassName);
+        if (newClassName && newClassName.trim() !== '' && newClassName.trim() !== oldClassName) {
+            const trimmed = newClassName.trim();
+            if (masterClasses.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+                return alert(`Kelas "${trimmed}" sudah ada!`);
+            }
+
+            const idx = masterClasses.indexOf(oldClassName);
+            if (idx !== -1) {
+                masterClasses[idx] = trimmed;
+                
+                masterStudents.forEach(s => {
+                    if (s.className === oldClassName) s.className = trimmed;
+                });
+                gurus.forEach(g => {
+                    if (g.assignedClasses) {
+                        g.assignedClasses = g.assignedClasses.map(c => c === oldClassName ? trimmed : c);
+                    }
+                });
+
+                saveData();
+                renderAdminView();
+                alert(`Nama kelas berhasil diubah!`);
+            }
+        }
+    }
+
+    function deleteMasterClass(className) {
+        if (confirm(`Hapus kelas "${className}" dari master pilihan?`)) {
+            masterClasses = masterClasses.filter(c => c !== className);
+            gurus.forEach(g => {
+                if (g.assignedClasses) {
+                    g.assignedClasses = g.assignedClasses.filter(c => c !== className);
+                }
+            });
+            saveData();
+            renderAdminView();
+        }
+    }
+
+    function renderMasterClassTable() {
+        const tbody = document.getElementById('master-class-table-body');
+        tbody.innerHTML = '';
+
+        if (masterClasses.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#888;">Belum ada master kelas.</td></tr>`;
+            return;
+        }
+
+        masterClasses.forEach(cls => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${cls}</strong></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-warning btn-sm" onclick="editMasterClass('${cls}')">Edit</button>
+                            <button class="btn-danger btn-sm" onclick="deleteMasterClass('${cls}')">Hapus</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderClassCheckboxes(containerId, selectedClasses = [], prefix = 'chk_') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (masterClasses.length === 0) {
+            container.innerHTML = '<span style="color:#aaa; font-size:12px;">Belum ada master kelas. Tambahkan pada tabel CRUD di atas.</span>';
+            return;
+        }
+
+        masterClasses.forEach((cls, idx) => {
+            const isChecked = selectedClasses.includes(cls) ? 'checked' : '';
+            const checkId = `${prefix}_${idx}_${cls.replace(/\s+/g, '_')}`;
+            container.innerHTML += `
+                <label class="checkbox-item" for="${checkId}">
+                    <input type="checkbox" id="${checkId}" value="${cls}" ${isChecked} class="class-checkbox-input">
+                    <span><strong>${cls}</strong></span>
+                </label>
+            `;
+        });
+    }
+
+    function getSelectedClassesFromContainer(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+        const checkboxes = container.querySelectorAll('.class-checkbox-input:checked');
+        const selected = [];
+        checkboxes.forEach(cb => selected.push(cb.value));
+        return selected;
+    }
+
+    function sortMasterStudents() {
+        masterStudents.sort((a, b) => {
+            const classA = (a.className || '').toLowerCase();
+            const classB = (b.className || '').toLowerCase();
+            if (classA < classB) return -1;
+            if (classA > classB) return 1;
+
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+
+            return 0;
+        });
+    }
+
+    function loadGuruData(guruId) {
+        currentGuruId = guruId;
+        localStorage.setItem('portal_active_guru_v23', guruId);
+        categories = JSON.parse(localStorage.getItem(`portal_cat_${guruId}`)) || [
+            { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
+            { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
+            { id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
+        ];
+        attendanceWeight = localStorage.getItem(`portal_att_wgt_${guruId}`) !== null 
+            ? parseFloat(localStorage.getItem(`portal_att_wgt_${guruId}`)) 
+            : 10;
+        teacherScoresData = JSON.parse(localStorage.getItem(`portal_scores_${guruId}`)) || {};
+        teacherAttendanceData = JSON.parse(localStorage.getItem(`portal_att_${guruId}`)) || [];
+        showWeightToStudent = localStorage.getItem(`portal_wgt_${guruId}`) !== null 
+            ? JSON.parse(localStorage.getItem(`portal_wgt_${guruId}`)) 
+            : true;
+        showAttDetailToStudent = localStorage.getItem(`portal_att_dtl_${guruId}`) !== null 
+            ? JSON.parse(localStorage.getItem(`portal_att_dtl_${guruId}`)) 
+            : true;
+        showAttHistoryToStudent = localStorage.getItem(`portal_att_hst_${guruId}`) !== null 
+            ? JSON.parse(localStorage.getItem(`portal_att_hst_${guruId}`)) 
+            : true;
+    }
+
+    function saveData() {
+        sortMasterStudents();
+        localStorage.setItem('portal_app_profile_v23', JSON.stringify(appProfile));
+        localStorage.setItem('portal_master_classes_v23', JSON.stringify(masterClasses));
+        localStorage.setItem('portal_master_students_v23', JSON.stringify(masterStudents));
+        localStorage.setItem('portal_gurus_v23', JSON.stringify(gurus));
+        localStorage.setItem('portal_active_role_v23', currentRole);
+        if (currentGuruId) {
+            localStorage.setItem(`portal_cat_${currentGuruId}`, JSON.stringify(categories));
+            localStorage.setItem(`portal_att_wgt_${currentGuruId}`, attendanceWeight.toString());
+            localStorage.setItem(`portal_scores_${currentGuruId}`, JSON.stringify(teacherScoresData));
+            localStorage.setItem(`portal_att_${currentGuruId}`, JSON.stringify(teacherAttendanceData));
+            localStorage.setItem(`portal_wgt_${currentGuruId}`, JSON.stringify(showWeightToStudent));
+            localStorage.setItem(`portal_att_dtl_${currentGuruId}`, JSON.stringify(showAttDetailToStudent));
+            localStorage.setItem(`portal_att_hst_${currentGuruId}`, JSON.stringify(showAttHistoryToStudent));
+        }
+        renderDashboards();
+    }
+
+    function toggleLoginInputs() {
+        const role = document.getElementById('login-role').value;
+        const passGroup = document.getElementById('login-password-group');
+        const userLabel = document.getElementById('login-username-label');
+        const userInput = document.getElementById('login-username');
+        const passInput = document.getElementById('login-password');
+        const forgotLink = document.getElementById('forgot-admin-link');
+
+        userInput.value = '';
+        passInput.value = '';
+
+        if (role === 'siswa') {
+            userLabel.innerText = 'Nomor NISN Siswa (10 Digit):';
+            userInput.placeholder = 'Masukkan NISN Anda';
+            userInput.maxLength = 10;
+            passGroup.classList.add('hidden');
+            forgotLink.classList.add('hidden');
+        } else if (role === 'admin') {
+            userLabel.innerText = 'Username Admin:';
+            userInput.placeholder = 'Masukkan Username';
+            userInput.removeAttribute('maxlength');
+            passGroup.classList.remove('hidden');
+            forgotLink.classList.remove('hidden');
+        } else {
+            userLabel.innerText = 'Username / ID Guru:';
+            userInput.placeholder = 'Masukkan Username';
+            userInput.removeAttribute('maxlength');
+            passGroup.classList.remove('hidden');
+            forgotLink.classList.add('hidden');
+        }
+    }
+
+    function processLogin() {
+        const role = document.getElementById('login-role').value;
+        const u = document.getElementById('login-username').value.trim();
+        const p = document.getElementById('login-password').value.trim();
+
+        if (role === 'admin') {
+            if (u === 'admin' && p === appProfile.adminPassword) {
+                currentRole = 'admin';
+                saveData();
+                openAdminView();
+            } else {
+                alert('Login Admin gagal! Username atau Password salah.');
+            }
+        } else if (role === 'guru') {
+            const foundGuru = gurus.find(g => g.username === u && g.password === p);
+            if (foundGuru) {
+                currentRole = 'guru';
+                loadGuruData(foundGuru.id);
+                saveData();
+                openGuruView(foundGuru);
+            } else {
+                alert('Login Guru gagal! Username atau Password tidak ditemukan.');
+            }
+        } else {
+            if (!validateNISN(u)) {
+                return alert('Harap masukkan 10 digit NISN yang valid!');
+            }
+            const foundStudent = masterStudents.find(s => s.nisn === u);
+            if (foundStudent) {
+                currentRole = 'siswa';
+                currentLoggedInStudent = foundStudent;
+                localStorage.setItem('portal_logged_student_v23', JSON.stringify(foundStudent));
+                saveData();
+                openSiswaView();
+            } else {
+                alert(`Siswa dengan NISN "${u}" tidak ditemukan di sistem!`);
+            }
+        }
+    }
+
+    function logout() {
+        currentRole = 'none';
+        currentLoggedInStudent = null;
+        localStorage.removeItem('portal_active_role_v23');
+        localStorage.removeItem('portal_logged_student_v23');
+        document.getElementById('view-login').classList.remove('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
+        document.getElementById('view-guru').classList.add('hidden');
+        document.getElementById('view-siswa').classList.add('hidden');
+        document.getElementById('user-session-container').classList.add('hidden');
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+    }
+
+    function openAdminView() {
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-admin').classList.remove('hidden');
+        document.getElementById('view-guru').classList.add('hidden');
+        document.getElementById('view-siswa').classList.add('hidden');
+        
+        document.getElementById('user-session-container').classList.remove('hidden');
+        document.getElementById('user-display-info').innerText = `Admin Sistem`;
+        document.getElementById('user-role-badge').innerText = `ADMIN`;
+
+        renderAdminView();
+    }
+
+    function openGuruView(guru) {
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
+        document.getElementById('view-guru').classList.remove('hidden');
+        document.getElementById('view-siswa').classList.add('hidden');
+        
+        document.getElementById('user-session-container').classList.remove('hidden');
+        document.getElementById('user-display-info').innerText = `${guru.name} (${guru.subject})`;
+        document.getElementById('user-role-badge').innerText = `GURU`;
+
+        renderTeacherView();
+    }
+
+    function openSiswaView() {
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
+        document.getElementById('view-guru').classList.add('hidden');
+        document.getElementById('view-siswa').classList.remove('hidden');
+
+        document.getElementById('user-session-container').classList.remove('hidden');
+        document.getElementById('user-display-info').innerText = `${currentLoggedInStudent.name} (${currentLoggedInStudent.className})`;
+        document.getElementById('user-role-badge').innerText = `SISWA`;
+
+        activeSiswaSubjectTab = 'ALL';
+        renderSiswaSubjectTabs();
+        renderStudentView();
+    }
+
+    function switchAdminTab(tabId, btnElement) {
+        const tabContents = document.querySelectorAll('#view-admin .tab-content');
+        tabContents.forEach(content => content.classList.add('hidden'));
+
+        const tabBtns = document.querySelectorAll('#view-admin .tab-btn');
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+
+        document.getElementById(tabId).classList.remove('hidden');
+        btnElement.classList.add('active');
+    }
+
+    function renderAdminView() {
+        renderDashboards();
+        renderMasterClassTable();
+        renderClassCheckboxes('add-guru-classes-checkboxes', [], 'add_guru_chk');
+        renderGuruTable();
+        populateAdminClassFilterDropdown();
+        renderAdminStudentCrudTable();
+        renderAdminRekapTable();
+        applyAppProfile();
+    }
+
+    function populateAdminClassFilterDropdown() {
+        const selectFilter = document.getElementById('admin-filter-class');
+        const rekapSelectFilter = document.getElementById('admin-rekap-filter-class');
+
+        let options = '<option value="ALL">-- Semua Kelas --</option>';
+        masterClasses.forEach(c => {
+            options += `<option value="${c}">${c}</option>`;
+        });
+
+        if (selectFilter) {
+            const curVal = selectFilter.value;
+            selectFilter.innerHTML = options;
+            selectFilter.value = curVal && Array.from(selectFilter.options).some(o => o.value === curVal) ? curVal : "ALL";
+        }
+
+        if (rekapSelectFilter) {
+            const curRekapVal = rekapSelectFilter.value;
+            rekapSelectFilter.innerHTML = options;
+            rekapSelectFilter.value = curRekapVal && Array.from(rekapSelectFilter.options).some(o => o.value === curRekapVal) ? curRekapVal : "ALL";
+        }
+    }
+
+    function isGlobalNISNExists(nisn, excludeStudentId = null) {
+        return masterStudents.some(s => s.nisn === nisn && s.id !== excludeStudentId);
+    }
+
+    function addStudentByAdmin() {
+        const nisnInput = document.getElementById('admin-student-nisn');
+        const nisn = nisnInput.value.trim();
+        const name = document.getElementById('admin-student-name').value.trim();
+        const className = document.getElementById('admin-student-class').value.trim();
+
+        if (!nisn || !name || !className) return alert('Harap isi lengkap NISN, Nama, dan Kelas!');
+        if (!validateNISN(nisn)) {
+            nisnInput.classList.add('input-error');
+            return alert('NISN wajib 10 digit angka!');
+        }
+        if (isGlobalNISNExists(nisn)) {
+            nisnInput.classList.add('input-error');
+            return alert(`NISN "${nisn}" sudah terdaftar di sistem!`);
+        }
+
+        if (!masterClasses.includes(className)) {
+            masterClasses.push(className);
+            masterClasses.sort();
+        }
+
+        masterStudents.push({ id: Date.now(), nisn, name, className });
+        saveData();
+
+        nisnInput.value = '';
+        nisnInput.classList.remove('input-success', 'input-error');
+        document.getElementById('admin-student-name').value = '';
+        document.getElementById('admin-student-class').value = '';
+
+        renderAdminView();
+        alert('Murid berhasil ditambahkan!');
+    }
+
+    function importStudentsFromCSVByAdmin() {
+        const fileInput = document.getElementById('admin-csv-file-input');
+        const file = fileInput.files[0];
+        if (!file) return alert('Silakan pilih file CSV!');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split(/\r\n|\n/);
+            let count = 0, invalidCount = 0, duplicateCount = 0;
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const cols = line.split(',');
+                    const nisn = cols[0] ? cols[0].trim() : '';
+                    const name = cols[1] ? cols[1].trim() : '';
+                    const className = cols[2] ? cols[2].trim() : '';
+
+                    if (nisn && name && className && validateNISN(nisn)) {
+                        if (isGlobalNISNExists(nisn) || masterStudents.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+                            duplicateCount++;
+                        } else {
+                            if (!masterClasses.includes(className)) {
+                                masterClasses.push(className);
+                            }
+                            masterStudents.push({
+                                id: Date.now() + Math.floor(Math.random() * 1000),
+                                nisn, name, className
+                            });
+                            count++;
+                        }
+                    } else invalidCount++;
+                }
+            }
+
+            masterClasses.sort();
+            fileInput.value = '';
+            saveData();
+            renderAdminView();
+            alert(`Import selesai!\n- Berhasil: ${count}\n- Duplikat dilewati: ${duplicateCount}\n- Format salah dilewati: ${invalidCount}`);
+        };
+        reader.readAsText(file);
+    }
+
+    function downloadGuruTemplate() {
+        const csvContent = "Nama Guru,Mata Pelajaran,Username,Password,Kelas Diampu\nBudi Hartono S.Pd,Matematika,guru1,123,\"10 IPA 1, 10 IPA 2\"\nSiti Aminah M.Pd,Bahasa Indonesia,guru2,123,\"10 IPA 2, 10 IPA 3\"\n";
+        downloadCSV(csvContent, "template_data_guru.csv");
+    }
+
+    function importGurusFromCSV() {
+        const fileInput = document.getElementById('admin-guru-csv-file-input');
+        const file = fileInput.files[0];
+        if (!file) return alert('Silakan pilih file CSV guru!');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split(/\r\n|\n/);
+            let count = 0, invalidCount = 0, duplicateCount = 0;
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line) {
+                    const delimiter = line.includes(';') ? ';' : ',';
+                    const cols = line.split(delimiter);
+
+                    const name = cols[0] ? cols[0].trim().replace(/^"|"$/g, '') : '';
+                    const subject = cols[1] ? cols[1].trim().replace(/^"|"$/g, '') : '';
+                    const username = cols[2] ? cols[2].trim().replace(/^"|"$/g, '') : '';
+                    const password = cols[3] ? cols[3].trim().replace(/^"|"$/g, '') : '';
+                    const rawClasses = cols[4] ? cols[4].trim().replace(/^"|"$/g, '') : '';
+
+                    if (name && subject && username && password) {
+                        if (gurus.some(g => g.username.toLowerCase() === username.toLowerCase())) {
+                            duplicateCount++;
+                        } else {
+                            const assignedClasses = rawClasses ? rawClasses.split(/[,|]/).map(c => c.trim()).filter(c => c !== '') : [];
+
+                            assignedClasses.forEach(cls => {
+                                if (!masterClasses.includes(cls)) {
+                                    masterClasses.push(cls);
+                                }
+                            });
+
+                            gurus.push({
+                                id: 'g_' + (Date.now() + Math.floor(Math.random() * 1000)),
+                                name, subject, username, password, assignedClasses
+                            });
+                            count++;
+                        }
+                    } else invalidCount++;
+                }
+            }
+
+            masterClasses.sort();
+            fileInput.value = '';
+            saveData();
+            renderAdminView();
+            alert(`Import Data Guru selesai!\n- Berhasil: ${count}\n- Username Duplikat: ${duplicateCount}\n- Tidak Lengkap: ${invalidCount}`);
+        };
+        reader.readAsText(file);
+    }
+
+    function renderAdminStudentCrudTable() {
+        const tbody = document.getElementById('admin-student-crud-table-body');
+        tbody.innerHTML = '';
+        const filterClass = document.getElementById('admin-filter-class').value;
+        const filtered = masterStudents.filter(s => filterClass === 'ALL' || s.className === filterClass);
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Belum ada data murid.</td></tr>`;
+            return;
+        }
+
+        filtered.forEach((s, idx) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${s.nisn}</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.className}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-warning btn-sm" onclick="openAdminEditStudentModal(${s.id})">Edit</button>
+                            <button class="btn-danger btn-sm" onclick="deleteStudentByAdmin(${s.id})">Hapus</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openAdminEditStudentModal(studentId) {
+        const student = masterStudents.find(s => s.id === studentId);
+        if (!student) return;
+        document.getElementById('admin-edit-student-id').value = student.id;
+        document.getElementById('admin-edit-student-nisn').value = student.nisn;
+        document.getElementById('admin-edit-student-name').value = student.name;
+        document.getElementById('admin-edit-student-class').value = student.className;
+        document.getElementById('admin-edit-student-modal').classList.remove('hidden');
+    }
+
+    function closeAdminEditStudentModal() {
+        document.getElementById('admin-edit-student-modal').classList.add('hidden');
+    }
+
+    function saveAdminStudentEdit() {
+        const studentId = parseInt(document.getElementById('admin-edit-student-id').value);
+        const nisn = document.getElementById('admin-edit-student-nisn').value.trim();
+        const name = document.getElementById('admin-edit-student-name').value.trim();
+        const className = document.getElementById('admin-edit-student-class').value.trim();
+
+        if (!nisn || !name || !className) return alert('Semua data wajib diisi!');
+        if (!validateNISN(nisn)) return alert('NISN harus 10 digit angka!');
+        if (isGlobalNISNExists(nisn, studentId)) return alert(`NISN "${nisn}" sudah terdaftar pada murid lain!`);
+
+        if (!masterClasses.includes(className)) {
+            masterClasses.push(className);
+            masterClasses.sort();
+        }
+
+        const student = masterStudents.find(s => s.id === studentId);
+        if (student) {
+            student.nisn = nisn;
+            student.name = name;
+            student.className = className;
+            closeAdminEditStudentModal();
+            saveData();
+            renderAdminView();
+            alert('Data murid berhasil diperbarui!');
+        }
+    }
+
+    function deleteStudentByAdmin(studentId) {
+        if (confirm('Hapus data murid ini dari sistem?')) {
+            masterStudents = masterStudents.filter(s => s.id !== studentId);
+            saveData();
+            renderAdminView();
+        }
+    }
+
+    function addGuruAccount() {
+        const name = document.getElementById('add-guru-name').value.trim();
+        const subject = document.getElementById('add-guru-subject').value.trim();
+        const user = document.getElementById('add-guru-user').value.trim();
+        const pass = document.getElementById('add-guru-pass').value.trim();
+        const selectedClasses = getSelectedClassesFromContainer('add-guru-classes-checkboxes');
+
+        if (!name || !subject || !user || !pass) return alert('Lengkapi seluruh data akun guru!');
+        if (gurus.some(g => g.username === user)) return alert('Username sudah digunakan guru lain!');
+
+        gurus.push({
+            id: 'g_' + Date.now(),
+            name, subject, assignedClasses: selectedClasses, username: user, password: pass
+        });
+        saveData();
+
+        document.getElementById('add-guru-name').value = '';
+        document.getElementById('add-guru-subject').value = '';
+        document.getElementById('add-guru-user').value = '';
+        document.getElementById('add-guru-pass').value = '';
+        
+        renderAdminView();
+        alert('Akun Guru & Alokasi Kelas berhasil ditambahkan!');
+    }
+
+    function renderGuruTable() {
+        const tbody = document.getElementById('guru-table-body');
+        tbody.innerHTML = '';
+        gurus.forEach(g => {
+            const classBadges = (g.assignedClasses && g.assignedClasses.length > 0)
+                ? g.assignedClasses.map(c => `<span class="class-badge">${c}</span>`).join('')
+                : `<span style="color:#aaa; font-size:12px;">Belum ada kelas</span>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${g.id}</td>
+                    <td><strong>${g.name}</strong></td>
+                    <td>${g.subject}</td>
+                    <td>${classBadges}</td>
+                    <td>${g.username}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-success btn-sm" onclick="openClassesGuruModal('${g.id}')">Alokasi Kelas</button>
+                            <button class="btn-info btn-sm" onclick="openResetGuruModal('${g.id}')">Reset Pass</button>
+                            <button class="btn-warning btn-sm" onclick="openEditGuruModal('${g.id}')">Edit</button>
+                            <button class="btn-danger btn-sm" onclick="deleteGuru('${g.id}')">Hapus</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openClassesGuruModal(guruId) {
+        const g = gurus.find(x => x.id === guruId);
+        if (!g) return;
+        document.getElementById('classes-guru-id').value = g.id;
+        document.getElementById('classes-guru-title').innerText = `Alokasi Kelas: ${g.name}`;
+        renderClassCheckboxes('modal-guru-classes-checkboxes', g.assignedClasses || [], 'modal_guru_chk');
+        document.getElementById('classes-guru-modal').classList.remove('hidden');
+    }
+
+    function closeClassesGuruModal() {
+        document.getElementById('classes-guru-modal').classList.add('hidden');
+    }
+
+    function saveGuruClassesAllocation() {
+        const guruId = document.getElementById('classes-guru-id').value;
+        const selectedClasses = getSelectedClassesFromContainer('modal-guru-classes-checkboxes');
+        const g = gurus.find(x => x.id === guruId);
+        if (g) {
+            g.assignedClasses = selectedClasses;
+            saveData();
+            closeClassesGuruModal();
+            renderAdminView();
+            alert(`Alokasi kelas untuk Guru "${g.name}" berhasil diperbarui!`);
+        }
+    }
+
+    function openResetGuruModal(guruId) {
+        const g = gurus.find(x => x.id === guruId);
+        if (!g) return;
+        document.getElementById('reset-guru-id').value = g.id;
+        document.getElementById('reset-guru-title').innerText = `Reset Password: ${g.name}`;
+        document.getElementById('reset-guru-new-pass').value = '';
+        document.getElementById('reset-guru-modal').classList.remove('hidden');
+    }
+
+    function closeResetGuruModal() {
+        document.getElementById('reset-guru-modal').classList.add('hidden');
+    }
+
+    function saveGuruPasswordReset() {
+        const guruId = document.getElementById('reset-guru-id').value;
+        const newPass = document.getElementById('reset-guru-new-pass').value.trim();
+        if (!newPass) return alert('Password baru tidak boleh kosong!');
+
+        const g = gurus.find(x => x.id === guruId);
+        if (g) {
+            g.password = newPass;
+            saveData();
+            closeResetGuruModal();
+            alert(`Password untuk guru "${g.name}" berhasil direset!`);
+        }
+    }
+
+    function openEditGuruModal(guruId) {
+        const g = gurus.find(x => x.id === guruId);
+        if (!g) return;
+        document.getElementById('edit-guru-id').value = g.id;
+        document.getElementById('edit-guru-name').value = g.name;
+        document.getElementById('edit-guru-subject').value = g.subject;
+        document.getElementById('edit-guru-user').value = g.username;
+        document.getElementById('edit-guru-pass').value = '';
+        renderClassCheckboxes('edit-guru-classes-checkboxes', g.assignedClasses || [], 'edit_guru_chk');
+        document.getElementById('edit-guru-modal').classList.remove('hidden');
+    }
+
+    function closeEditGuruModal() {
+        document.getElementById('edit-guru-modal').classList.add('hidden');
+    }
+
+    function saveGuruEdit() {
+        const id = document.getElementById('edit-guru-id').value;
+        const name = document.getElementById('edit-guru-name').value.trim();
+        const subject = document.getElementById('edit-guru-subject').value.trim();
+        const user = document.getElementById('edit-guru-user').value.trim();
+        const pass = document.getElementById('edit-guru-pass').value.trim();
+        const selectedClasses = getSelectedClassesFromContainer('edit-guru-classes-checkboxes');
+
+        const g = gurus.find(x => x.id === id);
+        if (g) {
+            g.name = name;
+            g.subject = subject;
+            g.assignedClasses = selectedClasses;
+            g.username = user;
+            if (pass) g.password = pass;
+            saveData();
+            closeEditGuruModal();
+            renderAdminView();
+        }
+    }
+
+    function deleteGuru(guruId) {
+        if (confirm('Hapus akun guru ini? Semua data nilai dan absensi guru ini akan terhapus.')) {
+            gurus = gurus.filter(g => g.id !== guruId);
+            localStorage.removeItem(`portal_cat_${guruId}`);
+            localStorage.removeItem(`portal_att_wgt_${guruId}`);
+            localStorage.removeItem(`portal_scores_${guruId}`);
+            localStorage.removeItem(`portal_att_${guruId}`);
+            localStorage.removeItem(`portal_wgt_${guruId}`);
+            localStorage.removeItem(`portal_att_dtl_${guruId}`);
+            localStorage.removeItem(`portal_att_hst_${guruId}`);
+            saveData();
+            renderAdminView();
+        }
+    }
+
+    function renderAdminRekapTable() {
+        const tbody = document.getElementById('admin-rekap-body');
+        const selectSort = document.getElementById('admin-rekap-sort-by');
+        if (selectSort) {
+            adminRekapSortKey = selectSort.value;
+        }
+
+        tbody.innerHTML = '';
+        const rekapDataList = getAdminRekapData();
+        updateAdminSortIcons();
+
+        if (rekapDataList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">Belum ada data murid yang sesuai dengan filter.</td></tr>`;
+            return;
+        }
+
+        rekapDataList.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.guruName}</td>
+                    <td><strong>${item.subject}</strong></td>
+                    <td>${item.nisn}</td>
+                    <td>${item.studentName}</td>
+                    <td><span class="class-badge">${item.className}</span></td>
+                    <td><strong>${item.attendancePercentage.toFixed(1)}%</strong> (${item.attendanceRatio})</td>
+                    <td><strong>${item.finalScore.toFixed(2)}</strong></td>
+                </tr>
+            `;
+        });
+    }
+
+    function calculateFinalScoreAdmin(studentId, studentClass, scores, catList, attWgt, attDataList) {
+        let totalWeightedScore = 0;
+        let totalActiveWeight = 0;
+
+        catList.forEach(cat => {
+            let score = null;
+            if (cat.subItems && cat.subItems.length > 0) {
+                let total = 0, count = 0;
+                cat.subItems.forEach(sub => {
+                    const val = scores ? scores[`sub_${sub.id}`] : undefined;
+                    if (val !== undefined && !isNaN(val)) {
+                        total += val; count++;
+                    }
+                });
+                score = count > 0 ? total / count : null;
+            } else {
+                score = (scores && scores[`cat_${cat.id}`] !== undefined) ? scores[`cat_${cat.id}`] : 0;
+            }
+
+            if (score !== null) {
+                totalWeightedScore += score * (cat.weight / 100);
+                totalActiveWeight += cat.weight;
+            }
+        });
+
+        if (attWgt > 0) {
+            let attCalc = calculateStudentAttendanceStats(studentId, studentClass, attDataList);
+            let attPercentage = parseFloat(attCalc.percentage) || 0;
+            totalWeightedScore += attPercentage * (attWgt / 100);
+            totalActiveWeight += attWgt;
+        }
+
+        if (totalActiveWeight === 0) return "0.00";
+        return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
+    }
+
+    function switchTab(tabId, btnElement) {
+        const tabContents = document.querySelectorAll('#view-guru .tab-content');
+        tabContents.forEach(content => content.classList.add('hidden'));
+
+        const tabBtns = document.querySelectorAll('#view-guru .tab-btn');
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+
+        document.getElementById(tabId).classList.remove('hidden');
+        btnElement.classList.add('active');
+    }
+
+    function validateNISN(nisn) {
+        return /^\d{10}$/.test(nisn);
+    }
+
+    function handleNISNInput(inputElement, errorSpanId) {
+        const val = inputElement.value.trim();
+        const errSpan = document.getElementById(errorSpanId);
+
+        if (val === '') {
+            inputElement.classList.remove('input-error', 'input-success');
+            if (errSpan) errSpan.style.display = 'none';
+        } else if (!validateNISN(val)) {
+            inputElement.classList.add('input-error');
+            inputElement.classList.remove('input-success');
+            if (errSpan) { errSpan.innerText = 'Wajib 10 digit angka!'; errSpan.style.display = 'block'; }
+        } else {
+            inputElement.classList.remove('input-error');
+            inputElement.classList.add('input-success');
+            if (errSpan) errSpan.style.display = 'none';
+        }
+    }
+
+    function checkEnter(event, callbackFunction) {
+        if (event.key === "Enter" || event.keyCode === 13) {
+            event.preventDefault();
+            callbackFunction();
+        }
+    }
+
+    function saveAttendanceWeight() {
+        const input = document.getElementById('att-weight-input');
+        const val = parseFloat(input.value);
+
+        if (isNaN(val) || val < 0 || val > 100) {
+            return alert('Harap masukkan persentase bobot kehadiran yang valid (0 - 100)%!');
+        }
+
+        attendanceWeight = val;
+        saveData();
+        renderTeacherView();
+        alert(`Bobot Kehadiran berhasil disimpan sebesar ${attendanceWeight}%!`);
+    }
+
+    function toggleShowWeight(isChecked) {
+        showWeightToStudent = isChecked;
+        saveData();
+    }
+
+    function toggleShowAttDetail(isChecked) {
+        showAttDetailToStudent = isChecked;
+        saveData();
+    }
+
+    function toggleShowAttHistory(isChecked) {
+        showAttHistoryToStudent = isChecked;
+        saveData();
+    }
+
+    function getActiveGuruAssignedClasses() {
+        const currentGuru = gurus.find(g => g.id === currentGuruId);
+        return (currentGuru && currentGuru.assignedClasses) ? currentGuru.assignedClasses : [];
+    }
+
+    function updateClassFilterDropdowns() {
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const filterCrud = document.getElementById('filter-class-crud');
+        const filterScore = document.getElementById('filter-class-score');
+        const selectAtt = document.getElementById('attendance-class-select');
+        const filterAttRekap = document.getElementById('filter-class-att-rekap');
+
+        const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
+        const currentScoreVal = filterScore ? filterScore.value : 'ALL';
+
+        let optionsHtml = `<option value="ALL">-- Semua Kelas Diampu --</option>`;
+        let selectOptionsHtml = ``;
+
+        const classList = assignedClasses.length > 0 ? assignedClasses : masterClasses;
+
+        classList.forEach(cls => {
+            optionsHtml += `<option value="${cls}">${cls}</option>`;
+            selectOptionsHtml += `<option value="${cls}">${cls}</option>`;
+        });
+
+        if (filterCrud) filterCrud.innerHTML = optionsHtml;
+        if (filterScore) filterScore.innerHTML = optionsHtml;
+        if (filterAttRekap) filterAttRekap.innerHTML = optionsHtml;
+        if (selectAtt) selectAtt.innerHTML = selectOptionsHtml;
+
+        if (filterCrud) filterCrud.value = currentCrudVal && Array.from(filterCrud.options).some(o => o.value === currentCrudVal) ? currentCrudVal : "ALL";
+        if (filterScore) filterScore.value = currentScoreVal && Array.from(filterScore.options).some(o => o.value === currentScoreVal) ? currentScoreVal : "ALL";
+
+        const classesDisplay = document.getElementById('guru-allocated-classes-display');
+        if (classesDisplay) {
+            classesDisplay.innerText = assignedClasses.length > 0 ? assignedClasses.join(', ') : 'Semua Kelas (Belum Di-Set Khusus)';
+        }
+    }
+
+    function addCategory() {
+        const nameInput = document.getElementById('cat-name');
+        const weightInput = document.getElementById('cat-weight');
+        const name = nameInput.value.trim();
+        const weight = parseFloat(weightInput.value);
+
+        if (!name || isNaN(weight)) return alert('Gagal menyimpan! Isi nama kategori dan bobot dengan benar.');
+
+        categories.push({ id: Date.now(), name: name, weight: weight, visible: true, subItems: [] });
+        saveData();
+        nameInput.value = ''; weightInput.value = '';
+        renderTeacherView();
+    }
+
+    function toggleCategoryVisibility(catId) {
+        const cat = categories.find(c => c.id === catId);
+        if (cat) { cat.visible = !cat.visible; saveData(); renderTeacherView(); }
+    }
+
+    function toggleSubItemVisibility(catId, subId) {
+        const cat = categories.find(c => c.id === catId);
+        if (cat) {
+            const sub = cat.subItems.find(s => s.id === subId);
+            if (sub) { sub.visible = !sub.visible; saveData(); renderTeacherView(); }
+        }
+    }
+
+    function renderCategoryTable() {
+        const tbody = document.getElementById('category-table-body');
+        tbody.innerHTML = '';
+        
+        const attWeightInput = document.getElementById('att-weight-input');
+        if (attWeightInput) attWeightInput.value = attendanceWeight;
+
+        document.getElementById('show-weight-checkbox').checked = showWeightToStudent;
+        document.getElementById('show-att-detail-checkbox').checked = showAttDetailToStudent;
+        document.getElementById('show-att-history-checkbox').checked = showAttHistoryToStudent;
+
+        if (categories.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Belum ada kategori akademik.</td></tr>`;
+            return;
+        }
+
+        categories.forEach(c => {
+            let subBadges = '';
+            if (c.subItems && c.subItems.length > 0) {
+                c.subItems.forEach(s => {
+                    const statusBadge = s.visible ? `<span class="badge-visible">Tampil</span>` : `<span class="badge-hidden">Sembunyi</span>`;
+                    subBadges += `
+                        <div class="sub-item-badge">
+                            <strong>${s.name}</strong> ${statusBadge}
+                            <button class="btn-warning btn-sm" onclick="openEditSubItemModal(${c.id}, ${s.id})">Edit</button>
+                            <button class="btn-secondary btn-sm" onclick="toggleSubItemVisibility(${c.id}, ${s.id})">Ubah</button>
+                            <button onclick="deleteSubItem(${c.id}, ${s.id})" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">&times;</button>
+                        </div>
+                    `;
+                });
+            } else subBadges = `<span style="color:#aaa; font-size:12px;">Tanpa sub-item</span>`;
+
+            const catStatus = c.visible ? `<span class="badge-visible">Tampil ke Siswa</span>` : `<span class="badge-hidden">Disembunyikan</span>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.weight}%</td>
+                    <td>
+                        ${catStatus} <br>
+                        <button class="btn-secondary btn-sm" style="margin-top:5px;" onclick="toggleCategoryVisibility(${c.id})">
+                            ${c.visible ? 'Sembunyikan' : 'Tampilkan'}
+                        </button>
+                    </td>
+                    <td>
+                        <div>${subBadges}</div>
+                        <button class="btn-secondary btn-sm" style="margin-top:5px;" onclick="openSubItemModal(${c.id})">+ Tambah Sub / Ulangan</button>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-warning btn-sm" onclick="openEditModal(${c.id})">Edit</button>
+                            <button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Hapus</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openEditSubItemModal(catId, subId) {
+        const cat = categories.find(c => c.id === catId);
+        if (!cat) return;
+        const sub = cat.subItems.find(s => s.id === subId);
+        if (!sub) return;
+
+        document.getElementById('edit-subitem-cat-id').value = cat.id;
+        document.getElementById('edit-subitem-id').value = sub.id;
+        document.getElementById('edit-subitem-name').value = sub.name;
+        document.getElementById('edit-subitem-modal').classList.remove('hidden');
+    }
+
+    function closeEditSubItemModal() { document.getElementById('edit-subitem-modal').classList.add('hidden'); }
+
+    function saveSubItemEdit() {
+        const catId = parseInt(document.getElementById('edit-subitem-cat-id').value);
+        const subId = parseInt(document.getElementById('edit-subitem-id').value);
+        const name = document.getElementById('edit-subitem-name').value.trim();
+
+        if (!name) return alert('Nama sub-item tidak boleh kosong!');
+
+        const cat = categories.find(c => c.id === catId);
+        if (cat) {
+            const sub = cat.subItems.find(s => s.id === subId);
+            if (sub) { sub.name = name; saveData(); closeEditSubItemModal(); renderTeacherView(); }
+        }
+    }
+
+    function openSubItemModal(catId) {
+        const cat = categories.find(c => c.id === catId);
+        if (!cat) return;
+        document.getElementById('subitem-cat-id').value = cat.id;
+        document.getElementById('subitem-modal-title').innerText = `Tambah Sub-Item untuk ${cat.name}`;
+        
+        const subInput = document.getElementById('subitem-name');
+        subInput.value = `Ulangan ${cat.subItems.length + 1}`;
+        document.getElementById('subitem-modal').classList.remove('hidden');
+        setTimeout(() => subInput.focus(), 100);
+    }
+
+    function closeSubItemModal() { document.getElementById('subitem-modal').classList.add('hidden'); }
+
+    function saveSubItem() {
+        const catId = parseInt(document.getElementById('subitem-cat-id').value);
+        const name = document.getElementById('subitem-name').value.trim();
+
+        if (!name) return alert('Nama sub-item tidak boleh kosong!');
+
+        const cat = categories.find(c => c.id === catId);
+        if (cat) {
+            cat.subItems.push({ id: Date.now(), name: name, visible: true });
+            saveData(); closeSubItemModal(); renderTeacherView();
+        }
+    }
+
+    function deleteSubItem(catId, subId) {
+        if (confirm('Hapus sub-item / ulangan ini? Nilai siswa pada kolom ini akan terhapus.')) {
+            const cat = categories.find(c => c.id === catId);
+            if (cat) {
+                cat.subItems = cat.subItems.filter(s => s.id !== subId);
+                saveData(); renderTeacherView();
+            }
+        }
+    }
+
+    function openEditModal(catId) {
+        const cat = categories.find(c => c.id === catId);
+        if (!cat) return;
+        document.getElementById('edit-cat-id').value = cat.id;
+        document.getElementById('edit-cat-name').value = cat.name;
+        document.getElementById('edit-cat-weight').value = cat.weight;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    function saveCategoryEdit() {
+        const id = parseInt(document.getElementById('edit-cat-id').value);
+        const name = document.getElementById('edit-cat-name').value.trim();
+        const weight = parseFloat(document.getElementById('edit-cat-weight').value);
+
+        if (!name || isNaN(weight)) return alert('Harap isi data dengan lengkap!');
+
+        const cat = categories.find(c => c.id === id);
+        if (cat) { cat.name = name; cat.weight = weight; saveData(); closeEditModal(); renderTeacherView(); }
+    }
+
+    function deleteCategory(catId) {
+        if (confirm('Hapus kategori ini? Semua sub-item dan nilainya akan terhapus.')) {
+            categories = categories.filter(c => c.id !== catId);
+            saveData(); renderTeacherView();
+        }
+    }
+
+    function isStudentInAssignedClasses(studentClass, assignedClasses) {
+        if (!assignedClasses || assignedClasses.length === 0) return true;
+        return assignedClasses.includes(studentClass);
+    }
+
+    function renderStudentCrudTable() {
+        const tbody = document.getElementById('student-crud-table-body');
+        tbody.innerHTML = '';
+        const filterClass = document.getElementById('filter-class-crud') ? document.getElementById('filter-class-crud').value : 'ALL';
+        const searchQuery = (document.getElementById('guru-search-student')?.value || '').toLowerCase().trim();
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            const matchSearch = !searchQuery || 
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.nisn || '').toLowerCase().includes(searchQuery);
+
+            return matchAssignedClass && matchFilterDropdown && matchSearch;
+        });
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Tidak ada data murid yang sesuai.</td></tr>`;
+            return;
+        }
+
+        filteredStudents.forEach((s, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${s.nisn || '-'}</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.className || '-'}</td>
+                    <td><span class="badge-visible">Terdaftar</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function downloadTemplate() {
+        const csvContent = "NISN,Nama Murid,Kelas\n0012345671,Ahmad Dahlan,10 IPA 1\n0012345672,Dewi Sartika,10 IPA 2\n";
+        downloadCSV(csvContent, "template_data_murid.csv");
+    }
+
+    function renderTeacherView() {
+        sortMasterStudents();
+        renderDashboards();
+        updateClassFilterDropdowns();
+        renderCategoryTable();
+        renderStudentCrudTable();
+        renderTeacherTable();
+        initAttendanceTab();
+        applyAppProfile();
+    }
+
+    function getStudentScoreObj(studentId) {
+        if (!teacherScoresData[studentId]) {
+            teacherScoresData[studentId] = { note: '', scores: {} };
+        }
+        return teacherScoresData[studentId];
+    }
+
+    function updateScore(studentId, key, value) {
+        const sData = getStudentScoreObj(studentId);
+        sData.scores[key] = parseFloat(value) || 0;
+        saveData();
+        renderTeacherTable();
+    }
+
+    function updateStudentNote(studentId, noteValue) {
+        const sData = getStudentScoreObj(studentId);
+        sData.note = noteValue.trim();
+        saveData();
+    }
+
+    function getCategoryScore(studentId, cat, onlyVisible = false, scoresOverride = null) {
+        const scores = scoresOverride !== null ? scoresOverride : (teacherScoresData[studentId] ? teacherScoresData[studentId].scores : {});
+
+        if (cat.subItems && cat.subItems.length > 0) {
+            let total = 0, count = 0;
+            cat.subItems.forEach(sub => {
+                if (!onlyVisible || sub.visible) {
+                    const val = scores[`sub_${sub.id}`];
+                    if (val !== undefined && !isNaN(val)) { total += val; count++; }
+                }
+            });
+            return count > 0 ? total / count : null;
+        } else {
+            if (onlyVisible && !cat.visible) return null;
+            return scores[`cat_${cat.id}`] !== undefined ? scores[`cat_${cat.id}`] : 0;
+        }
+    }
+
+    function calculateFinalScore(studentId, studentClass, onlyVisible = false, catList = categories, scoresOverride = null, attWgtOverride = null, attDataList = teacherAttendanceData) {
+        let totalWeightedScore = 0, totalActiveWeight = 0;
+
+        catList.forEach(cat => {
+            if (!onlyVisible || cat.visible) {
+                const score = getCategoryScore(studentId, cat, onlyVisible, scoresOverride);
+                if (score !== null) {
+                    totalWeightedScore += score * (cat.weight / 100);
+                    totalActiveWeight += cat.weight;
+                }
+            }
+        });
+
+        const activeAttWeight = attWgtOverride !== null ? attWgtOverride : attendanceWeight;
+        if (activeAttWeight > 0) {
+            let attCalc = calculateStudentAttendanceStats(studentId, studentClass, attDataList);
+            let attPercentage = parseFloat(attCalc.percentage) || 0;
+            totalWeightedScore += attPercentage * (activeAttWeight / 100);
+            totalActiveWeight += activeAttWeight;
+        }
+
+        if (totalActiveWeight === 0) return "0.00";
+        return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
+    }
+
+    function renderTeacherTable() {
+        const thead = document.getElementById('teacher-table-head');
+        const tbody = document.getElementById('teacher-table-body');
+        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
+        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
+
+        let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
+        
+        headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
+
+        categories.forEach(c => {
+            if (c.subItems && c.subItems.length > 0) {
+                c.subItems.forEach(s => {
+                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                    headerHtml += `<th style="background:#e0f2fe">${s.name}${statusText}</th>`;
+                });
+                headerHtml += `<th style="background:#bae6fd">Rata² ${c.name}</th>`;
+            } else {
+                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                headerHtml += `<th>${c.name} (${c.weight}%)${statusText}</th>`;
+            }
+        });
+        headerHtml += `<th>Nilai Akhir</th><th>Catatan Khusus / Keterangan Guru</th>`;
+        if (thead) thead.innerHTML = headerHtml;
+
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            const matchSearch = !searchQuery || 
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.nisn || '').toLowerCase().includes(searchQuery);
+
+            return matchAssignedClass && matchFilterDropdown && matchSearch;
+        });
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
+            return;
+        }
+
+        filteredStudents.forEach(student => {
+            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+
+            let row = `<tr>
+                <td>${student.nisn}</td>
+                <td><strong>${student.name}</strong></td>
+                <td>${student.className}</td>
+                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
+            `;
+
+            categories.forEach(cat => {
+                if (cat.subItems && cat.subItems.length > 0) {
+                    cat.subItems.forEach(s => {
+                        const scoreKey = `sub_${s.id}`;
+                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                        row += `<td>
+                            <input type="number" class="input-score" value="${val}" 
+                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                        </td>`;
+                    });
+                    const avgCat = getCategoryScore(student.id, cat, false);
+                    row += `<td style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
+                } else {
+                    const scoreKey = `cat_${cat.id}`;
+                    const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                    row += `<td>
+                        <input type="number" class="input-score" value="${val}" 
+                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                    </td>`;
+                }
+            });
+
+            const currentNote = sData.note || '';
+
+            row += `<td><strong>${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
+            row += `<td>
+                <input type="text" class="input-note" value="${currentNote}" 
+                placeholder="misal: Belum Tugas 1" 
+                onchange="updateStudentNote(${student.id}, this.value)" 
+                onkeydown="checkEnter(event, () => this.blur())">
+            </td></tr>`;
+
+            tbody.innerHTML += row;
+        });
+    }
+
+    function initAttendanceTab() {
+        const dateInput = document.getElementById('attendance-date-input');
+        if (dateInput && !dateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+        renderAttendanceForm();
+        renderAttendanceSummaryTable();
+    }
+
+    function renderAttendanceForm() {
+        const selectEl = document.getElementById('attendance-class-select');
+        const dateEl = document.getElementById('attendance-date-input');
+        if (!selectEl || !dateEl) return;
+
+        const selectedClass = selectEl.value;
+        const selectedDate = dateEl.value;
+        const tbody = document.getElementById('attendance-form-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (!selectedClass || !selectedDate) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Pilih kelas dan tanggal terlebih dahulu.</td></tr>`;
+            return;
+        }
+
+        const classStudents = masterStudents.filter(s => s.className === selectedClass);
+
+        if (classStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Belum ada murid di kelas ${selectedClass}.</td></tr>`;
+            return;
+        }
+
+        const existingSession = teacherAttendanceData.find(a => a.className === selectedClass && a.date === selectedDate);
+        const existingRecords = existingSession ? existingSession.records : {};
+
+        classStudents.forEach((student, index) => {
+            const status = existingRecords[student.id] || 'H';
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${student.nisn}</td>
+                    <td><strong>${student.name}</strong></td>
+                    <td>${student.className}</td>
+                    <td>
+                        <select id="att_select_${student.id}" style="width:160px; font-weight:bold;">
+                            <option value="H" ${status === 'H' ? 'selected' : ''}>Hadir (H) - 100%</option>
+                            <option value="T" ${status === 'T' ? 'selected' : ''}>Terlambat (T) - 75%</option>
+                            <option value="D" ${status === 'D' ? 'selected' : ''}>Rapat Organisasi (D) - 100%</option>
+                            <option value="I" ${status === 'I' ? 'selected' : ''}>Izin (I) - 50%</option>
+                            <option value="S" ${status === 'S' ? 'selected' : ''}>Sakit (S) - 50%</option>
+                            <option value="A" ${status === 'A' ? 'selected' : ''}>Alpa (A) - 0%</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function saveCurrentAttendanceSession() {
+        const selectedClass = document.getElementById('attendance-class-select').value;
+        const selectedDate = document.getElementById('attendance-date-input').value;
+
+        if (!selectedClass || !selectedDate) {
+            return alert('Harap pilih kelas dan tanggal pertemuan!');
+        }
+
+        const classStudents = masterStudents.filter(s => s.className === selectedClass);
+        if (classStudents.length === 0) return alert('Tidak ada murid di kelas ini.');
+
+        const records = {};
+        classStudents.forEach(student => {
+            const selectEl = document.getElementById(`att_select_${student.id}`);
+            if (selectEl) {
+                records[student.id] = selectEl.value;
+            }
+        });
+
+        const existingIdx = teacherAttendanceData.findIndex(a => a.className === selectedClass && a.date === selectedDate);
+        if (existingIdx !== -1) {
+            teacherAttendanceData[existingIdx].records = records;
+        } else {
+            teacherAttendanceData.push({
+                id: Date.now(),
+                className: selectedClass,
+                date: selectedDate,
+                records: records
+            });
+        }
+
+        saveData();
+        renderAttendanceSummaryTable();
+        renderTeacherTable();
+        alert(`Kehadiran Kelas ${selectedClass} untuk tanggal ${selectedDate} berhasil disimpan!`);
+    }
+
+    function calculateStudentAttendanceStats(studentId, studentClass, attDataList = teacherAttendanceData) {
+        const classSessions = attDataList.filter(a => a.className === studentClass);
+        classSessions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const totalSessions = classSessions.length;
+
+        let hadir = 0, terlambat = 0, dispen = 0, izin = 0, sakit = 0, alpa = 0;
+        const history = [];
+
+        classSessions.forEach(session => {
+            const status = session.records ? session.records[studentId] : 'H';
+            if (status === 'H') hadir++;
+            else if (status === 'T') terlambat++;
+            else if (status === 'D') dispen++;
+            else if (status === 'I') izin++;
+            else if (status === 'S') sakit++;
+            else if (status === 'A') alpa++;
+
+            history.push({ date: session.date, status: status });
+        });
+
+        let earnedPoints = (hadir * 1.0) + (dispen * 1.0) + (terlambat * 0.75) + (izin * 0.50) + (sakit * 0.50) + (alpa * 0);
+        const percentage = totalSessions > 0 ? ((earnedPoints / totalSessions) * 100).toFixed(1) : "100.0";
+
+        return {
+            total: totalSessions,
+            hadir, terlambat, dispen, izin, sakit, alpa, percentage, history
+        };
+    }
+
+    function renderAttendanceSummaryTable() {
+        const tbody = document.getElementById('attendance-summary-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const filterClass = document.getElementById('filter-class-att-rekap') ? document.getElementById('filter-class-att-rekap').value : 'ALL';
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilter = (filterClass === 'ALL' || s.className === filterClass);
+            return matchAssignedClass && matchFilter;
+        });
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color:#888;">Belum ada data rekapan kehadiran.</td></tr>`;
+            return;
+        }
+
+        filteredStudents.forEach((student, index) => {
+            const stats = calculateStudentAttendanceStats(student.id, student.className);
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${student.nisn}</td>
+                    <td><strong>${student.name}</strong></td>
+                    <td>${student.className}</td>
+                    <td>${stats.total} Pertemuan</td>
+                    <td><span style="color:#059669; font-weight:bold;">${stats.hadir}</span></td>
+                    <td><span style="color:#d97706; font-weight:bold;">${stats.terlambat}</span></td>
+                    <td><span style="color:#7c3aed; font-weight:bold;">${stats.dispen}</span></td>
+                    <td><span style="color:#0284c7;">${stats.izin}</span></td>
+                    <td><span style="color:#f59e0b;">${stats.sakit}</span></td>
+                    <td><span style="color:#dc2626; font-weight:bold;">${stats.alpa}</span></td>
+                    <td><strong>${stats.percentage}%</strong></td>
+                </tr>
+            `;
+        });
+    }
+
+    function getStatusBadgeHtml(status) {
+        switch(status) {
+            case 'H': return `<span class="badge-att-h">Hadir</span>`;
+            case 'T': return `<span class="badge-att-t">Terlambat</span>`;
+            case 'D': return `<span class="badge-att-d">Rapat / Dispen</span>`;
+            case 'I': return `<span class="badge-att-i">Izin</span>`;
+            case 'S': return `<span class="badge-att-s">Sakit</span>`;
+            case 'A': return `<span class="badge-att-a">Alpa</span>`;
+            default: return `-`;
+        }
+    }
+
+    function formatDateIndo(dateStr) {
+        if (!dateStr) return '-';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    function renderSiswaSubjectTabs() {
+        const tabsContainer = document.getElementById('student-subject-tabs');
+        if (!tabsContainer) return;
+        tabsContainer.innerHTML = '';
+
+        if (!currentLoggedInStudent) return;
+
+        const availableGurus = gurus.filter(g => {
+            const assignedClasses = g.assignedClasses || [];
+            return assignedClasses.length === 0 || assignedClasses.includes(currentLoggedInStudent.className);
+        });
+
+        let allActiveClass = activeSiswaSubjectTab === 'ALL' ? 'active' : '';
+        tabsContainer.innerHTML += `<button class="tab-btn ${allActiveClass}" onclick="switchSiswaSubjectTab('ALL')">📋 Semua Mapel</button>`;
+
+        availableGurus.forEach(g => {
+            let activeClass = activeSiswaSubjectTab === g.id ? 'active' : '';
+            tabsContainer.innerHTML += `<button class="tab-btn ${activeClass}" onclick="switchSiswaSubjectTab('${g.id}')">📘 ${g.subject}</button>`;
+        });
+    }
+
+    function switchSiswaSubjectTab(guruId) {
+        activeSiswaSubjectTab = guruId;
+        renderSiswaSubjectTabs();
+        renderStudentView();
+    }
+
+    function renderStudentView() {
+        if (!currentLoggedInStudent) return;
+
+        applyAppProfile();
+        document.getElementById('student-display-name').innerText = `Transkrip Nilai & Kehadiran: ${currentLoggedInStudent.name}`;
+        document.getElementById('student-info-detail').innerText = `NISN: ${currentLoggedInStudent.nisn} | Kelas: ${currentLoggedInStudent.className}`;
+
+        const container = document.getElementById('student-subject-content');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const targetGurus = gurus.filter(g => {
+            const assignedClasses = g.assignedClasses || [];
+            const matchClass = assignedClasses.length === 0 || assignedClasses.includes(currentLoggedInStudent.className);
+            const matchTab = (activeSiswaSubjectTab === 'ALL' || g.id === activeSiswaSubjectTab);
+            return matchClass && matchTab;
+        });
+
+        if (targetGurus.length === 0) {
+            container.innerHTML = `<p style="color:#888; text-align:center; padding: 20px;">Belum ada Mata Pelajaran yang tersedia untuk kelas Anda.</p>`;
+            return;
+        }
+
+        targetGurus.forEach(g => {
+            const gCats = JSON.parse(localStorage.getItem(`portal_cat_${g.id}`)) || [];
+            const gAttWgt = localStorage.getItem(`portal_att_wgt_${g.id}`) !== null 
+                ? parseFloat(localStorage.getItem(`portal_att_wgt_${g.id}`)) 
+                : 10;
+            const gScoresData = JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {};
+            const gAttData = JSON.parse(localStorage.getItem(`portal_att_${g.id}`)) || [];
+            const gShowWeight = localStorage.getItem(`portal_wgt_${g.id}`) !== null 
+                ? JSON.parse(localStorage.getItem(`portal_wgt_${g.id}`)) 
+                : true;
+            const gShowAttDetail = localStorage.getItem(`portal_att_dtl_${g.id}`) !== null 
+                ? JSON.parse(localStorage.getItem(`portal_att_dtl_${g.id}`)) 
+                : true;
+            const gShowAttHistory = localStorage.getItem(`portal_att_hst_${g.id}`) !== null 
+                ? JSON.parse(localStorage.getItem(`portal_att_hst_${g.id}`)) 
+                : true;
+
+            const sData = gScoresData[currentLoggedInStudent.id] || { note: '', scores: {} };
+            const attStats = calculateStudentAttendanceStats(currentLoggedInStudent.id, currentLoggedInStudent.className, gAttData);
+
+            let attendancePillsHtml = '';
+            let attendanceHistoryTableHtml = '';
+
+            if (gShowAttDetail) {
+                attendancePillsHtml = `
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span class="attendance-stat-pill" style="color:#2563eb;">Persentase: ${attStats.percentage}%</span>
+                        <span class="attendance-stat-pill" style="color:#059669;">Hadir: ${attStats.hadir}/${attStats.total}</span>
+                        <span class="attendance-stat-pill" style="color:#d97706;">Terlambat: ${attStats.terlambat}</span>
+                        <span class="attendance-stat-pill" style="color:#7c3aed;">Rapat/Dispen: ${attStats.dispen}</span>
+                        <span class="attendance-stat-pill" style="color:#0284c7;">Izin: ${attStats.izin}</span>
+                        <span class="attendance-stat-pill" style="color:#f59e0b;">Sakit: ${attStats.sakit}</span>
+                        <span class="attendance-stat-pill" style="color:#dc2626;">Alpa: ${attStats.alpa}</span>
+                    </div>
+                `;
+            } else {
+                attendancePillsHtml = `
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span class="attendance-stat-pill" style="color:#2563eb; font-size:13px;">Persentase Kehadiran: ${attStats.percentage}%</span>
+                    </div>
+                `;
+            }
+
+            if (gShowAttHistory) {
+                let rowsHistoryHtml = '';
+                if (attStats.history && attStats.history.length > 0) {
+                    attStats.history.forEach((item, idx) => {
+                        rowsHistoryHtml += `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td><strong>${formatDateIndo(item.date)}</strong></td>
+                                <td>${getStatusBadgeHtml(item.status)}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    rowsHistoryHtml = `<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada catatan tanggal pertemuan.</td></tr>`;
+                }
+
+                attendanceHistoryTableHtml = `
+                    <div style="margin-top: 15px; margin-bottom: 20px;">
+                        <h4 style="font-size: 13px; color: #475569; margin-bottom: 8px;">🗓️ Riwayat Tanggal Pertemuan & Status Kehadiran Anda:</h4>
+                        <div class="table-scroll-container" style="max-height: 200px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%;">Pertemuan</th>
+                                        <th style="width: 45%;">Tanggal Masuk</th>
+                                        <th style="width: 40%;">Status Kehadiran</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHistoryHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let tableHtml = `
+                <div style="margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; background: #ffffff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <h3 style="color: #1e293b; margin-bottom: 2px;">📘 ${g.subject}</h3>
+                            <p style="font-size: 13px; color: #64748b; margin-bottom: 10px;">Guru Pengajar: ${g.name}</p>
+                        </div>
+                    </div>
+
+                    <div class="attendance-summary-box">
+                        <div>
+                            <strong>📊 Kehadiran Siswa:</strong>
+                            <div class="progress-bar-container" style="width:200px;">
+                                <div class="progress-bar-fill" style="width: ${attStats.percentage}%;"></div>
+                            </div>
+                        </div>
+                        ${attendancePillsHtml}
+                    </div>
+
+                    ${attendanceHistoryTableHtml}
+                    
+                    <div class="table-scroll-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kategori / Penilaian</th>
+                                    ${gShowWeight ? '<th>Bobot</th>' : ''}
+                                    <th>Nilai Anda</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background:#fffbeb; font-weight:bold;">
+                                    <td>Persentase Kehadiran (Presensi)</td>
+                                    ${gShowWeight ? `<td>${gAttWgt}%</td>` : ''}
+                                    <td style="color:#b45309;">${attStats.percentage}%</td>
+                                </tr>
+            `;
+
+            gCats.forEach(cat => {
+                if (cat.visible) {
+                    if (cat.subItems && cat.subItems.length > 0) {
+                        const visibleSubItems = cat.subItems.filter(s => s.visible);
+                        if (visibleSubItems.length > 0) {
+                            const avgCat = getCategoryScore(currentLoggedInStudent.id, cat, true, sData.scores);
+
+                            tableHtml += `<tr style="background:#f1f5f9; font-weight:bold;">
+                                <td>${cat.name} (Rata-Rata)</td>
+                                ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
+                                <td>${avgCat !== null ? avgCat.toFixed(1) : '-'}</td></tr>`;
+
+                            visibleSubItems.forEach(s => {
+                                const scoreKey = `sub_${s.id}`;
+                                const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
+                                tableHtml += `<tr>
+                                    <td style="padding-left: 25px; color:#475569;">↳ ${s.name}</td>
+                                    ${gShowWeight ? `<td style="color:#aaa;">-</td>` : ''}
+                                    <td>${val}</td></tr>`;
+                            });
+                        }
+                    } else {
+                        const scoreKey = `cat_${cat.id}`;
+                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
+                        tableHtml += `<tr><td><strong>${cat.name}</strong></td>
+                            ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
+                            <td><strong>${val}</strong></td></tr>`;
+                    }
+                }
+            });
+
+            const finalScore = calculateFinalScore(currentLoggedInStudent.id, currentLoggedInStudent.className, true, gCats, sData.scores, gAttWgt, gAttData);
+
+            tableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 12px; font-weight: bold; font-size: 15px;">
+                        Nilai Akhir Pelajaran: <span style="color: #2563eb;">${finalScore}</span>
+                    </div>
+            `;
+
+            if (sData.note && sData.note.trim() !== '') {
+                tableHtml += `
+                    <div class="teacher-note-box">
+                        <strong>📌 Catatan Guru:</strong>
+                        <p style="margin-top: 4px;">${sData.note}</p>
+                    </div>
+                `;
+            }
+
+            tableHtml += `</div>`;
+            container.innerHTML += tableHtml;
+        });
+    }
+
+    applyAppProfile();
+
+    if (currentRole === 'admin') {
+        openAdminView();
+    } else if (currentRole === 'guru') {
+        const currentGuru = gurus.find(g => g.id === currentGuruId);
+        if (currentGuru) openGuruView(currentGuru);
+        else logout();
+    } else if (currentRole === 'siswa' && currentLoggedInStudent) {
+        openSiswaView();
+    } else {
+        saveData();
+    }
+</script>
+
+</body>
+</html>
