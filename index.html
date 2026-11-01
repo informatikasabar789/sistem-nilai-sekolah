@@ -61,11 +61,12 @@
         .user-session-bar {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: #f1f5f9;
             padding: 6px 14px;
             border-radius: 20px;
             font-size: 14px;
+            flex-wrap: wrap;
         }
 
         .role-badge {
@@ -601,6 +602,7 @@
         <div id="user-session-container" class="user-session-bar hidden">
             <span id="user-display-info"><strong>Admin</strong></span>
             <span id="user-role-badge" class="role-badge">ADMIN</span>
+            <button id="btn-self-change-pass" class="btn-warning btn-sm hidden" onclick="openSelfChangePassModal()">🔒 Ganti Password Saya</button>
             <button class="btn-danger btn-sm" onclick="logout()">Logout</button>
         </div>
     </header>
@@ -1238,7 +1240,30 @@
     </div>
 </div>
 
-<!-- MODALS -->
+<!-- MODAL GANTI PASSWORD MANDIRI (GURU / SISWA) -->
+<div id="self-change-pass-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>🔒 Ganti Password Saya</h3>
+        <div class="form-group">
+            <label>Password Lama Anda:</label>
+            <input type="password" id="self-old-pass" placeholder="Masukkan Password Saat Ini">
+        </div>
+        <div class="form-group">
+            <label>Password Baru:</label>
+            <input type="password" id="self-new-pass" placeholder="Masukkan Password Baru">
+        </div>
+        <div class="form-group">
+            <label>Konfirmasi Password Baru:</label>
+            <input type="password" id="self-confirm-pass" placeholder="Ulangi Password Baru" onkeydown="checkEnter(event, processSelfPasswordChange)">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeSelfChangePassModal()">Batal</button>
+            <button class="btn-success" onclick="processSelfPasswordChange()">Simpan Password Baru</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS LAINNYA -->
 <div id="forgot-admin-modal" class="modal hidden">
     <div class="modal-content">
         <h3>Reset Password Admin</h3>
@@ -1437,7 +1462,6 @@
         { id: 1002, nisn: '0087654321', name: 'Siti Rahma', className: '10 IPA 2', password: '123' }
     ];
 
-    // Migrasi data siswa agar memiliki password jika belum ada
     let masterStudents = rawMasterStudents.map(s => {
         if (!s.password) s.password = '123';
         return s;
@@ -1552,6 +1576,58 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+    }
+
+    // MANDIRI GANTI PASSWORD FOR GURU & SISWA
+    function openSelfChangePassModal() {
+        document.getElementById('self-old-pass').value = '';
+        document.getElementById('self-new-pass').value = '';
+        document.getElementById('self-confirm-pass').value = '';
+        document.getElementById('self-change-pass-modal').classList.remove('hidden');
+    }
+
+    function closeSelfChangePassModal() {
+        document.getElementById('self-change-pass-modal').classList.add('hidden');
+    }
+
+    function processSelfPasswordChange() {
+        const oldPass = document.getElementById('self-old-pass').value.trim();
+        const newPass = document.getElementById('self-new-pass').value.trim();
+        const confirmPass = document.getElementById('self-confirm-pass').value.trim();
+
+        if (!oldPass || !newPass || !confirmPass) {
+            return alert('Harap isi semua bidang password!');
+        }
+        if (newPass !== confirmPass) {
+            return alert('Password baru dan konfirmasi password tidak cocok!');
+        }
+
+        if (currentRole === 'guru') {
+            const guru = gurus.find(g => g.id === currentGuruId);
+            if (!guru) return alert('Data guru tidak ditemukan!');
+            if (guru.password !== oldPass) {
+                return alert('Password lama Anda salah!');
+            }
+            guru.password = newPass;
+            saveData();
+            closeSelfChangePassModal();
+            alert('Password akun Guru Anda berhasil diperbarui!');
+        } else if (currentRole === 'siswa') {
+            if (!currentLoggedInStudent) return alert('Data siswa tidak ditemukan!');
+            const student = masterStudents.find(s => s.id === currentLoggedInStudent.id);
+            if (!student) return alert('Data siswa tidak ditemukan di master data!');
+            
+            const curPass = student.password || '123';
+            if (curPass !== oldPass) {
+                return alert('Password lama Anda salah!');
+            }
+            student.password = newPass;
+            currentLoggedInStudent.password = newPass;
+            localStorage.setItem('portal_logged_student_v23', JSON.stringify(currentLoggedInStudent));
+            saveData();
+            closeSelfChangePassModal();
+            alert('Password akun Siswa Anda berhasil diperbarui!');
         }
     }
 
@@ -1740,7 +1816,7 @@
 
     function exportAdminBackupJSON() {
         const backupData = {
-            version: '2.4',
+            version: '2.5',
             timestamp: new Date().toISOString(),
             appProfile: appProfile,
             masterClasses: masterClasses,
@@ -2263,6 +2339,7 @@
         document.getElementById('view-guru').classList.add('hidden');
         document.getElementById('view-siswa').classList.add('hidden');
         document.getElementById('user-session-container').classList.add('hidden');
+        document.getElementById('btn-self-change-pass').classList.add('hidden');
         document.getElementById('login-username').value = '';
         document.getElementById('login-password').value = '';
     }
@@ -2274,6 +2351,7 @@
         document.getElementById('view-siswa').classList.add('hidden');
         
         document.getElementById('user-session-container').classList.remove('hidden');
+        document.getElementById('btn-self-change-pass').classList.add('hidden');
         document.getElementById('user-display-info').innerText = `Admin Sistem`;
         document.getElementById('user-role-badge').innerText = `ADMIN`;
 
@@ -2287,6 +2365,7 @@
         document.getElementById('view-siswa').classList.add('hidden');
         
         document.getElementById('user-session-container').classList.remove('hidden');
+        document.getElementById('btn-self-change-pass').classList.remove('hidden');
         document.getElementById('user-display-info').innerText = `${guru.name} (${guru.subject})`;
         document.getElementById('user-role-badge').innerText = `GURU`;
 
@@ -2300,6 +2379,7 @@
         document.getElementById('view-siswa').classList.remove('hidden');
 
         document.getElementById('user-session-container').classList.remove('hidden');
+        document.getElementById('btn-self-change-pass').classList.remove('hidden');
         document.getElementById('user-display-info').innerText = `${currentLoggedInStudent.name} (${currentLoggedInStudent.className})`;
         document.getElementById('user-role-badge').innerText = `SISWA`;
 
