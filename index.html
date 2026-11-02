@@ -559,6 +559,35 @@
         .modal-content input, .modal-content select { width: 100%; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; }
 
+        /* Loading Indicator */
+        #firebase-loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media print {
             body { background: white; padding: 0; color: black; }
             .container { max-width: 100%; box-shadow: none; padding: 0; }
@@ -588,6 +617,12 @@
     </style>
 </head>
 <body>
+
+<!-- Overlay Indikator Memuat Data Realtime Firebase -->
+<div id="firebase-loading-overlay">
+    <div class="spinner"></div>
+    <div>Menghubungkan ke Realtime Database Firebase...</div>
+</div>
 
 <div class="container">
     <header>
@@ -1443,8 +1478,29 @@
     </div>
 </div>
 
-<script>
-    let appProfile = JSON.parse(localStorage.getItem('portal_app_profile_v23')) || {
+<!-- SCRIPT FIREBASE SDK v9+ MODULE -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+    // GANTI DENGAN KUNCI KONFIGURASI FIREBASE ANDA
+	const firebaseConfig = {
+	  apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
+	  authDomain: "sns-smpn1batujajar.firebaseapp.com",
+	  databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
+	  projectId: "sns-smpn1batujajar",
+	  storageBucket: "sns-smpn1batujajar.firebasestorage.app",
+	  messagingSenderId: "1013385508921",
+	  appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
+	  measurementId: "G-L53H0NH1TE"
+	};
+
+    // Inisialisasi Firebase & Database
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // State Aplikasi
+    let appProfile = {
         appName: 'Portal Nilai & Kehadiran Sekolah',
         schoolName: 'SMA Negeri 1 Indonesia',
         logoUrl: 'https://via.placeholder.com/100x50?text=LOGO',
@@ -1453,75 +1509,137 @@
         secAnswer: 'kucing'
     };
 
-    let masterClasses = JSON.parse(localStorage.getItem('portal_master_classes_v23')) || [
-        '10 IPA 1', '10 IPA 2', '10 IPA 3', '10 IPS 1', '10 IPS 2'
-    ];
-
-    let rawMasterStudents = JSON.parse(localStorage.getItem('portal_master_students_v23')) || [
+    let masterClasses = ['10 IPA 1', '10 IPA 2', '10 IPA 3', '10 IPS 1', '10 IPS 2'];
+    let masterStudents = [
         { id: 1001, nisn: '0012345678', name: 'Budi Santoso', className: '10 IPA 1', password: '123' },
         { id: 1002, nisn: '0087654321', name: 'Siti Rahma', className: '10 IPA 2', password: '123' }
     ];
-
-    let masterStudents = rawMasterStudents.map(s => {
-        if (!s.password) s.password = '123';
-        return s;
-    });
-
-    let gurus = JSON.parse(localStorage.getItem('portal_gurus_v23')) || [
+    let gurus = [
         { id: 'g1', name: 'Budi Hartono, S.Pd', subject: 'Matematika', username: 'guru1', password: '123', assignedClasses: ['10 IPA 1', '10 IPA 2'] },
         { id: 'g2', name: 'Siti Aminah, M.Pd', subject: 'Bahasa Indonesia', username: 'guru2', password: '123', assignedClasses: ['10 IPA 2', '10 IPA 3'] }
     ];
 
-    let currentGuruId = localStorage.getItem('portal_active_guru_v23') || 'g1';
-    let currentRole = localStorage.getItem('portal_active_role_v23') || 'none';
-    let currentLoggedInStudent = JSON.parse(localStorage.getItem('portal_logged_student_v23')) || null;
+    let guruDataStore = {};
+    let currentGuruId = 'g1';
+    let currentRole = 'none';
+    let currentLoggedInStudent = null;
     let activeSiswaSubjectTab = 'ALL';
     let tempLogoDataUrl = null;
-
     let adminRekapSortKey = 'className';
     let adminRekapSortAsc = true;
 
-    let categories = JSON.parse(localStorage.getItem(`portal_cat_${currentGuruId}`)) || [
+    let categories = [
         { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
         { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
         { id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
     ];
-
-    let attendanceWeight = localStorage.getItem(`portal_att_wgt_${currentGuruId}`) !== null 
-        ? parseFloat(localStorage.getItem(`portal_att_wgt_${currentGuruId}`)) 
-        : 10;
-
-    let teacherScoresData = JSON.parse(localStorage.getItem(`portal_scores_${currentGuruId}`)) || {
+    let attendanceWeight = 10;
+    let teacherScoresData = {
         1001: { note: 'Belum Ulangan 1', scores: { "sub_101": 85 } },
         1002: { note: '', scores: { "sub_101": 90 } }
     };
+    let teacherAttendanceData = [];
+    let showWeightToStudent = true;
+    let showAttDetailToStudent = true;
+    let showAttHistoryToStudent = true;
 
-    let teacherAttendanceData = JSON.parse(localStorage.getItem(`portal_att_${currentGuruId}`)) || [];
+    // Mendengarkan Sinkronisasi Realtime Firebase
+    const dbRef = ref(db, 'portal_database');
+    onValue(dbRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            if (data.appProfile) appProfile = data.appProfile;
+            if (data.masterClasses) masterClasses = data.masterClasses;
+            if (data.masterStudents) {
+                masterStudents = data.masterStudents.map(s => {
+                    if (!s.password) s.password = '123';
+                    return s;
+                });
+            }
+            if (data.gurus) gurus = data.gurus;
+            if (data.guruDataStore) {
+                guruDataStore = data.guruDataStore;
+                if (currentGuruId && guruDataStore[currentGuruId]) {
+                    loadGuruDataFromStore(currentGuruId);
+                }
+            }
+        } else {
+            // Jika database firebase masih kosong, inisialisasi awal
+            saveData();
+        }
 
-    let showWeightToStudent = localStorage.getItem(`portal_wgt_${currentGuruId}`) !== null 
-        ? JSON.parse(localStorage.getItem(`portal_wgt_${currentGuruId}`)) 
-        : true;
+        // Sembunyikan indikator muat data
+        const overlay = document.getElementById('firebase-loading-overlay');
+        if (overlay) overlay.style.display = 'none';
 
-    let showAttDetailToStudent = localStorage.getItem(`portal_att_dtl_${currentGuruId}`) !== null 
-        ? JSON.parse(localStorage.getItem(`portal_att_dtl_${currentGuruId}`)) 
-        : true;
+        // Refresh Tampilan Sesuai Role Aktif
+        if (currentRole === 'admin') {
+            renderAdminView();
+        } else if (currentRole === 'guru') {
+            renderTeacherView();
+        } else if (currentRole === 'siswa' && currentLoggedInStudent) {
+            renderSiswaSubjectTabs();
+            renderStudentView();
+        } else {
+            applyAppProfile();
+        }
+    });
 
-    let showAttHistoryToStudent = localStorage.getItem(`portal_att_hst_${currentGuruId}`) !== null 
-        ? JSON.parse(localStorage.getItem(`portal_att_hst_${currentGuruId}`)) 
-        : true;
+    function loadGuruDataFromStore(guruId) {
+        currentGuruId = guruId;
+        const gStore = guruDataStore[guruId] || {};
+        categories = gStore.categories || [
+            { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
+            { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
+            { id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
+        ];
+        attendanceWeight = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
+        teacherScoresData = gStore.scoresData || {};
+        teacherAttendanceData = gStore.attendanceData || [];
+        showWeightToStudent = gStore.showWeight !== undefined ? gStore.showWeight : true;
+        showAttDetailToStudent = gStore.showAttDetail !== undefined ? gStore.showAttDetail : true;
+        showAttHistoryToStudent = gStore.showAttHistory !== undefined ? gStore.showAttHistory : true;
+    }
 
-    function renderDashboards() {
+    function saveData() {
+        sortMasterStudents();
+
+        if (currentGuruId) {
+            guruDataStore[currentGuruId] = {
+                categories: categories,
+                attendanceWeight: attendanceWeight,
+                scoresData: teacherScoresData,
+                attendanceData: teacherAttendanceData,
+                showWeight: showWeightToStudent,
+                showAttDetail: showAttDetailToStudent,
+                showAttHistory: showAttHistoryToStudent
+            };
+        }
+
+        const payload = {
+            appProfile: appProfile,
+            masterClasses: masterClasses,
+            masterStudents: masterStudents,
+            gurus: gurus,
+            guruDataStore: guruDataStore
+        };
+
+        // Simpan Data Ke Firebase Realtime Database
+        set(ref(db, 'portal_database'), payload);
+        renderDashboards();
+    }
+
+    // FUNGSI UTAMA & AKSI USER
+    window.renderDashboards = function() {
         const adminStudentCount = masterStudents.length;
         const adminGuruCount = gurus.length;
         const adminClassCount = masterClasses.length;
         
         let totalAdminScoresCount = 0;
         gurus.forEach(g => {
-            const scoresData = JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {};
+            const scoresData = (guruDataStore[g.id] && guruDataStore[g.id].scoresData) ? guruDataStore[g.id].scoresData : {};
             Object.values(scoresData).forEach(st => {
-                if (st.scores) {
-                    totalAdminScoresCount += Object.keys(st.scores).length;
-                }
+                if (st.scores) totalAdminScoresCount += Object.keys(st.scores).length;
             });
         });
 
@@ -1537,15 +1655,12 @@
 
         const assignedClasses = getActiveGuruAssignedClasses();
         const guruClassCount = assignedClasses.length > 0 ? assignedClasses.length : masterClasses.length;
-        
         const guruStudentsCount = masterStudents.filter(s => isStudentInAssignedClasses(s.className, assignedClasses)).length;
         const guruAttSessionCount = teacherAttendanceData.length;
 
         let totalGuruScoresCount = 0;
         Object.values(teacherScoresData).forEach(st => {
-            if (st.scores) {
-                totalGuruScoresCount += Object.keys(st.scores).length;
-            }
+            if (st.scores) totalGuruScoresCount += Object.keys(st.scores).length;
         });
 
         const elGuruCls = document.getElementById('dash-guru-classes');
@@ -1559,11 +1674,9 @@
         if (elGuruScr) elGuruScr.innerText = totalGuruScoresCount;
     }
 
-    function printCurrentView() {
-        window.print();
-    }
+    window.printCurrentView = function() { window.print(); }
 
-    function downloadCSV(csvContent, fileName) {
+    window.downloadCSV = function(csvContent, fileName) {
         const BOM = "\uFEFF";
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
@@ -1579,36 +1692,29 @@
         }
     }
 
-    // MANDIRI GANTI PASSWORD FOR GURU & SISWA
-    function openSelfChangePassModal() {
+    window.openSelfChangePassModal = function() {
         document.getElementById('self-old-pass').value = '';
         document.getElementById('self-new-pass').value = '';
         document.getElementById('self-confirm-pass').value = '';
         document.getElementById('self-change-pass-modal').classList.remove('hidden');
     }
 
-    function closeSelfChangePassModal() {
+    window.closeSelfChangePassModal = function() {
         document.getElementById('self-change-pass-modal').classList.add('hidden');
     }
 
-    function processSelfPasswordChange() {
+    window.processSelfPasswordChange = function() {
         const oldPass = document.getElementById('self-old-pass').value.trim();
         const newPass = document.getElementById('self-new-pass').value.trim();
         const confirmPass = document.getElementById('self-confirm-pass').value.trim();
 
-        if (!oldPass || !newPass || !confirmPass) {
-            return alert('Harap isi semua bidang password!');
-        }
-        if (newPass !== confirmPass) {
-            return alert('Password baru dan konfirmasi password tidak cocok!');
-        }
+        if (!oldPass || !newPass || !confirmPass) return alert('Harap isi semua bidang password!');
+        if (newPass !== confirmPass) return alert('Password baru dan konfirmasi password tidak cocok!');
 
         if (currentRole === 'guru') {
             const guru = gurus.find(g => g.id === currentGuruId);
             if (!guru) return alert('Data guru tidak ditemukan!');
-            if (guru.password !== oldPass) {
-                return alert('Password lama Anda salah!');
-            }
+            if (guru.password !== oldPass) return alert('Password lama Anda salah!');
             guru.password = newPass;
             saveData();
             closeSelfChangePassModal();
@@ -1619,12 +1725,9 @@
             if (!student) return alert('Data siswa tidak ditemukan di master data!');
             
             const curPass = student.password || '123';
-            if (curPass !== oldPass) {
-                return alert('Password lama Anda salah!');
-            }
+            if (curPass !== oldPass) return alert('Password lama Anda salah!');
             student.password = newPass;
             currentLoggedInStudent.password = newPass;
-            localStorage.setItem('portal_logged_student_v23', JSON.stringify(currentLoggedInStudent));
             saveData();
             closeSelfChangePassModal();
             alert('Password akun Siswa Anda berhasil diperbarui!');
@@ -1636,12 +1739,11 @@
         let rekapList = [];
 
         gurus.forEach(g => {
-            const cats = JSON.parse(localStorage.getItem(`portal_cat_${g.id}`)) || [];
-            const attWgt = localStorage.getItem(`portal_att_wgt_${g.id}`) !== null 
-                ? parseFloat(localStorage.getItem(`portal_att_wgt_${g.id}`)) 
-                : 10;
-            const scoresData = JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {};
-            const attData = JSON.parse(localStorage.getItem(`portal_att_${g.id}`)) || [];
+            const gStore = guruDataStore[g.id] || {};
+            const cats = gStore.categories || [];
+            const attWgt = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
+            const scoresData = gStore.scoresData || {};
+            const attData = gStore.attendanceData || [];
 
             const assignedClasses = g.assignedClasses || [];
             const filteredStus = masterStudents.filter(s => {
@@ -1691,7 +1793,7 @@
         return rekapList;
     }
 
-    function exportAdminRekapCSV() {
+    window.exportAdminRekapCSV = function() {
         const dataList = getAdminRekapData();
         const filterClass = document.getElementById('admin-rekap-filter-class').value;
 
@@ -1704,7 +1806,7 @@
         downloadCSV(csv, `rekap_monitoring_siswa_kelas_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
-    function sortAdminRekapBy(columnKey) {
+    window.sortAdminRekapBy = function(columnKey) {
         if (adminRekapSortKey === columnKey) {
             adminRekapSortAsc = !adminRekapSortAsc;
         } else {
@@ -1736,7 +1838,7 @@
         });
     }
 
-    function exportGuruScoresCSV() {
+    window.exportGuruScoresCSV = function() {
         const filterClass = document.getElementById('filter-class-score').value;
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const subjectName = currentGuru ? currentGuru.subject : 'Nilai';
@@ -1792,7 +1894,7 @@
         downloadCSV(csv, `rekap_nilai_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
-    function exportGuruAttendanceCSV() {
+    window.exportGuruAttendanceCSV = function() {
         const filterClass = document.getElementById('filter-class-att-rekap').value;
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const subjectName = currentGuru ? currentGuru.subject : 'Presensi';
@@ -1814,28 +1916,16 @@
         downloadCSV(csv, `rekap_presensi_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
-    function exportAdminBackupJSON() {
+    window.exportAdminBackupJSON = function() {
         const backupData = {
-            version: '2.5',
+            version: '3.0',
             timestamp: new Date().toISOString(),
             appProfile: appProfile,
             masterClasses: masterClasses,
             masterStudents: masterStudents,
             gurus: gurus,
-            guruDataStore: {}
+            guruDataStore: guruDataStore
         };
-
-        gurus.forEach(g => {
-            backupData.guruDataStore[g.id] = {
-                categories: JSON.parse(localStorage.getItem(`portal_cat_${g.id}`)) || [],
-                attendanceWeight: localStorage.getItem(`portal_att_wgt_${g.id}`) || '10',
-                scoresData: JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {},
-                attendanceData: JSON.parse(localStorage.getItem(`portal_att_${g.id}`)) || [],
-                showWeight: localStorage.getItem(`portal_wgt_${g.id}`) !== null ? JSON.parse(localStorage.getItem(`portal_wgt_${g.id}`)) : true,
-                showAttDetail: localStorage.getItem(`portal_att_dtl_${g.id}`) !== null ? JSON.parse(localStorage.getItem(`portal_att_dtl_${g.id}`)) : true,
-                showAttHistory: localStorage.getItem(`portal_att_hst_${g.id}`) !== null ? JSON.parse(localStorage.getItem(`portal_att_hst_${g.id}`)) : true
-            };
-        });
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
         const downloadAnchor = document.createElement('a');
@@ -1847,7 +1937,7 @@
         downloadAnchor.remove();
     }
 
-    function importAdminRestoreJSON() {
+    window.importAdminRestoreJSON = function() {
         const fileInput = document.getElementById('admin-restore-json-file');
         const file = fileInput.files[0];
         if (!file) return alert('Pilih file backup JSON terlebih dahulu!');
@@ -1871,24 +1961,12 @@
                         });
                     }
                     if (data.gurus) gurus = data.gurus;
-
-                    if (data.guruDataStore) {
-                        Object.keys(data.guruDataStore).forEach(gId => {
-                            const store = data.guruDataStore[gId];
-                            localStorage.setItem(`portal_cat_${gId}`, JSON.stringify(store.categories || []));
-                            localStorage.setItem(`portal_att_wgt_${gId}`, (store.attendanceWeight || 10).toString());
-                            localStorage.setItem(`portal_scores_${gId}`, JSON.stringify(store.scoresData || {}));
-                            localStorage.setItem(`portal_att_${gId}`, JSON.stringify(store.attendanceData || []));
-                            localStorage.setItem(`portal_wgt_${gId}`, JSON.stringify(store.showWeight ?? true));
-                            localStorage.setItem(`portal_att_dtl_${gId}`, JSON.stringify(store.showAttDetail ?? true));
-                            localStorage.setItem(`portal_att_hst_${gId}`, JSON.stringify(store.showAttHistory ?? true));
-                        });
-                    }
+                    if (data.guruDataStore) guruDataStore = data.guruDataStore;
 
                     saveData();
                     fileInput.value = '';
                     renderAdminView();
-                    alert('Restore Database System Berhasil! Data portal telah diperbarui sepenuhnya.');
+                    alert('Restore Database System Berhasil!');
                 }
             } catch (err) {
                 alert('Gagal membaca file JSON! Pastikan format file sesuai.');
@@ -1897,7 +1975,7 @@
         reader.readAsText(file);
     }
 
-    function exportGuruBackupJSON() {
+    window.exportGuruBackupJSON = function() {
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const guruName = currentGuru ? currentGuru.name.replace(/\s+/g, '_') : 'guru';
 
@@ -1924,7 +2002,7 @@
         downloadAnchor.remove();
     }
 
-    function importGuruRestoreJSON() {
+    window.importGuruRestoreJSON = function() {
         const fileInput = document.getElementById('guru-restore-json-file');
         const file = fileInput.files[0];
         if (!file) return alert('Pilih file backup JSON guru terlebih dahulu!');
@@ -1978,7 +2056,7 @@
         if (secAnswerInput && appProfile.secAnswer) secAnswerInput.value = appProfile.secAnswer;
     }
 
-    function previewSelectedLogo(event) {
+    window.previewSelectedLogo = function(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
@@ -1990,13 +2068,11 @@
         }
     }
 
-    function saveAppIdentitySettings() {
+    window.saveAppIdentitySettings = function() {
         const appName = document.getElementById('setting-app-name').value.trim();
         const schoolName = document.getElementById('setting-school-name').value.trim();
 
-        if (!appName || !schoolName) {
-            return alert('Nama aplikasi dan nama sekolah tidak boleh kosong!');
-        }
+        if (!appName || !schoolName) return alert('Nama aplikasi dan nama sekolah tidak boleh kosong!');
 
         appProfile.appName = appName;
         appProfile.schoolName = schoolName;
@@ -2011,22 +2087,18 @@
         alert('Profil aplikasi dan sekolah berhasil disimpan!');
     }
 
-    function saveAdminPasswordSettings() {
+    window.saveAdminPasswordSettings = function() {
         const newPass = document.getElementById('setting-admin-new-pass').value.trim();
         const confirmPass = document.getElementById('setting-admin-confirm-pass').value.trim();
         const secQuestion = document.getElementById('setting-sec-question').value;
         const secAnswer = document.getElementById('setting-sec-answer').value.trim();
 
         if (newPass) {
-            if (newPass !== confirmPass) {
-                return alert('Password baru dan Konfirmasi Password tidak cocok!');
-            }
+            if (newPass !== confirmPass) return alert('Password baru dan Konfirmasi Password tidak cocok!');
             appProfile.adminPassword = newPass;
         }
 
-        if (!secAnswer) {
-            return alert('Jawaban Rahasia tidak boleh kosong untuk fitur Lupa Password!');
-        }
+        if (!secAnswer) return alert('Jawaban Rahasia tidak boleh kosong!');
 
         appProfile.secQuestion = secQuestion;
         appProfile.secAnswer = secAnswer.toLowerCase();
@@ -2039,18 +2111,18 @@
         alert('Pengaturan Keamanan & Password Admin berhasil diperbarui!');
     }
 
-    function openForgotAdminModal() {
+    window.openForgotAdminModal = function() {
         document.getElementById('forgot-question-display').value = appProfile.secQuestion || 'Pertanyaan belum diset oleh Admin';
         document.getElementById('forgot-answer-input').value = '';
         document.getElementById('forgot-new-pass').value = '';
         document.getElementById('forgot-admin-modal').classList.remove('hidden');
     }
 
-    function closeForgotAdminModal() {
+    window.closeForgotAdminModal = function() {
         document.getElementById('forgot-admin-modal').classList.add('hidden');
     }
 
-    function processAdminPasswordReset() {
+    window.processAdminPasswordReset = function() {
         const answerInput = document.getElementById('forgot-answer-input').value.trim().toLowerCase();
         const newPass = document.getElementById('forgot-new-pass').value.trim();
 
@@ -2063,13 +2135,13 @@
             appProfile.adminPassword = newPass;
             saveData();
             closeForgotAdminModal();
-            alert('Password Admin berhasil direset! Silakan login dengan password baru Anda.');
+            alert('Password Admin berhasil direset!');
         } else {
             alert('Jawaban Rahasia Salah! Silakan coba lagi.');
         }
     }
 
-    function addMasterClass() {
+    window.addMasterClass = function() {
         const input = document.getElementById('add-class-input');
         const className = input.value.trim();
 
@@ -2086,7 +2158,7 @@
         alert(`Kelas "${className}" berhasil ditambahkan!`);
     }
 
-    function editMasterClass(oldClassName) {
+    window.editMasterClass = function(oldClassName) {
         const newClassName = prompt(`Ubah nama kelas "${oldClassName}" menjadi:`, oldClassName);
         if (newClassName && newClassName.trim() !== '' && newClassName.trim() !== oldClassName) {
             const trimmed = newClassName.trim();
@@ -2114,7 +2186,7 @@
         }
     }
 
-    function deleteMasterClass(className) {
+    window.deleteMasterClass = function(className) {
         if (confirm(`Hapus kelas "${className}" dari master pilihan?`)) {
             masterClasses = masterClasses.filter(c => c !== className);
             gurus.forEach(g => {
@@ -2158,7 +2230,7 @@
         container.innerHTML = '';
 
         if (masterClasses.length === 0) {
-            container.innerHTML = '<span style="color:#aaa; font-size:12px;">Belum ada master kelas. Tambahkan pada tabel CRUD di atas.</span>';
+            container.innerHTML = '<span style="color:#aaa; font-size:12px;">Belum ada master kelas.</span>';
             return;
         }
 
@@ -2199,50 +2271,7 @@
         });
     }
 
-    function loadGuruData(guruId) {
-        currentGuruId = guruId;
-        localStorage.setItem('portal_active_guru_v23', guruId);
-        categories = JSON.parse(localStorage.getItem(`portal_cat_${guruId}`)) || [
-            { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
-            { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
-            { id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
-        ];
-        attendanceWeight = localStorage.getItem(`portal_att_wgt_${guruId}`) !== null 
-            ? parseFloat(localStorage.getItem(`portal_att_wgt_${guruId}`)) 
-            : 10;
-        teacherScoresData = JSON.parse(localStorage.getItem(`portal_scores_${guruId}`)) || {};
-        teacherAttendanceData = JSON.parse(localStorage.getItem(`portal_att_${guruId}`)) || [];
-        showWeightToStudent = localStorage.getItem(`portal_wgt_${guruId}`) !== null 
-            ? JSON.parse(localStorage.getItem(`portal_wgt_${guruId}`)) 
-            : true;
-        showAttDetailToStudent = localStorage.getItem(`portal_att_dtl_${guruId}`) !== null 
-            ? JSON.parse(localStorage.getItem(`portal_att_dtl_${guruId}`)) 
-            : true;
-        showAttHistoryToStudent = localStorage.getItem(`portal_att_hst_${guruId}`) !== null 
-            ? JSON.parse(localStorage.getItem(`portal_att_hst_${guruId}`)) 
-            : true;
-    }
-
-    function saveData() {
-        sortMasterStudents();
-        localStorage.setItem('portal_app_profile_v23', JSON.stringify(appProfile));
-        localStorage.setItem('portal_master_classes_v23', JSON.stringify(masterClasses));
-        localStorage.setItem('portal_master_students_v23', JSON.stringify(masterStudents));
-        localStorage.setItem('portal_gurus_v23', JSON.stringify(gurus));
-        localStorage.setItem('portal_active_role_v23', currentRole);
-        if (currentGuruId) {
-            localStorage.setItem(`portal_cat_${currentGuruId}`, JSON.stringify(categories));
-            localStorage.setItem(`portal_att_wgt_${currentGuruId}`, attendanceWeight.toString());
-            localStorage.setItem(`portal_scores_${currentGuruId}`, JSON.stringify(teacherScoresData));
-            localStorage.setItem(`portal_att_${currentGuruId}`, JSON.stringify(teacherAttendanceData));
-            localStorage.setItem(`portal_wgt_${currentGuruId}`, JSON.stringify(showWeightToStudent));
-            localStorage.setItem(`portal_att_dtl_${currentGuruId}`, JSON.stringify(showAttDetailToStudent));
-            localStorage.setItem(`portal_att_hst_${currentGuruId}`, JSON.stringify(showAttHistoryToStudent));
-        }
-        renderDashboards();
-    }
-
-    function toggleLoginInputs() {
+    window.toggleLoginInputs = function() {
         const role = document.getElementById('login-role').value;
         const passGroup = document.getElementById('login-password-group');
         const userLabel = document.getElementById('login-username-label');
@@ -2281,7 +2310,7 @@
         }
     }
 
-    function processLogin() {
+    window.processLogin = function() {
         const role = document.getElementById('login-role').value;
         const u = document.getElementById('login-username').value.trim();
         const p = document.getElementById('login-password').value.trim();
@@ -2289,7 +2318,6 @@
         if (role === 'admin') {
             if (u === 'admin' && p === appProfile.adminPassword) {
                 currentRole = 'admin';
-                saveData();
                 openAdminView();
             } else {
                 alert('Login Admin gagal! Username atau Password salah.');
@@ -2298,42 +2326,33 @@
             const foundGuru = gurus.find(g => g.username === u && g.password === p);
             if (foundGuru) {
                 currentRole = 'guru';
-                loadGuruData(foundGuru.id);
-                saveData();
+                loadGuruDataFromStore(foundGuru.id);
                 openGuruView(foundGuru);
             } else {
                 alert('Login Guru gagal! Username atau Password tidak ditemukan.');
             }
         } else {
-            if (!validateNISN(u)) {
-                return alert('Harap masukkan 10 digit NISN yang valid!');
-            }
-            if (!p) {
-                return alert('Harap masukkan Password Siswa!');
-            }
+            if (!validateNISN(u)) return alert('Harap masukkan 10 digit NISN yang valid!');
+            if (!p) return alert('Harap masukkan Password Siswa!');
             const foundStudent = masterStudents.find(s => s.nisn === u);
             if (foundStudent) {
                 const studentPass = foundStudent.password || '123';
                 if (p === studentPass) {
                     currentRole = 'siswa';
                     currentLoggedInStudent = foundStudent;
-                    localStorage.setItem('portal_logged_student_v23', JSON.stringify(foundStudent));
-                    saveData();
                     openSiswaView();
                 } else {
                     alert('Login Siswa gagal! Password Anda salah.');
                 }
             } else {
-                alert(`Siswa dengan NISN "${u}" tidak ditemukan di sistem!`);
+                alert(`Siswa dengan NISN "${u}" tidak ditemukan!`);
             }
         }
     }
 
-    function logout() {
+    window.logout = function() {
         currentRole = 'none';
         currentLoggedInStudent = null;
-        localStorage.removeItem('portal_active_role_v23');
-        localStorage.removeItem('portal_logged_student_v23');
         document.getElementById('view-login').classList.remove('hidden');
         document.getElementById('view-admin').classList.add('hidden');
         document.getElementById('view-guru').classList.add('hidden');
@@ -2388,7 +2407,7 @@
         renderStudentView();
     }
 
-    function switchAdminTab(tabId, btnElement) {
+    window.switchAdminTab = function(tabId, btnElement) {
         const tabContents = document.querySelectorAll('#view-admin .tab-content');
         tabContents.forEach(content => content.classList.add('hidden'));
 
@@ -2436,7 +2455,7 @@
         return masterStudents.some(s => s.nisn === nisn && s.id !== excludeStudentId);
     }
 
-    function addStudentByAdmin() {
+    window.addStudentByAdmin = function() {
         const nisnInput = document.getElementById('admin-student-nisn');
         const nisn = nisnInput.value.trim();
         const name = document.getElementById('admin-student-name').value.trim();
@@ -2471,7 +2490,7 @@
         alert('Murid berhasil ditambahkan!');
     }
 
-    function importStudentsFromCSVByAdmin() {
+    window.importStudentsFromCSVByAdmin = function() {
         const fileInput = document.getElementById('admin-csv-file-input');
         const file = fileInput.files[0];
         if (!file) return alert('Silakan pilih file CSV!');
@@ -2494,9 +2513,7 @@
                         if (isGlobalNISNExists(nisn) || masterStudents.some(s => s.name.toLowerCase() === name.toLowerCase())) {
                             duplicateCount++;
                         } else {
-                            if (!masterClasses.includes(className)) {
-                                masterClasses.push(className);
-                            }
+                            if (!masterClasses.includes(className)) masterClasses.push(className);
                             masterStudents.push({
                                 id: Date.now() + Math.floor(Math.random() * 1000),
                                 nisn, name, className, password
@@ -2511,17 +2528,17 @@
             fileInput.value = '';
             saveData();
             renderAdminView();
-            alert(`Import selesai!\n- Berhasil: ${count}\n- Duplikat dilewati: ${duplicateCount}\n- Format salah dilewati: ${invalidCount}`);
+            alert(`Import selesai!\n- Berhasil: ${count}\n- Duplikat dilewati: ${duplicateCount}\n- Format salah: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
 
-    function downloadGuruTemplate() {
+    window.downloadGuruTemplate = function() {
         const csvContent = "Nama Guru,Mata Pelajaran,Username,Password,Kelas Diampu\nBudi Hartono S.Pd,Matematika,guru1,123,\"10 IPA 1, 10 IPA 2\"\nSiti Aminah M.Pd,Bahasa Indonesia,guru2,123,\"10 IPA 2, 10 IPA 3\"\n";
         downloadCSV(csvContent, "template_data_guru.csv");
     }
 
-    function importGurusFromCSV() {
+    window.importGurusFromCSV = function() {
         const fileInput = document.getElementById('admin-guru-csv-file-input');
         const file = fileInput.files[0];
         if (!file) return alert('Silakan pilih file CSV guru!');
@@ -2548,11 +2565,8 @@
                             duplicateCount++;
                         } else {
                             const assignedClasses = rawClasses ? rawClasses.split(/[,|]/).map(c => c.trim()).filter(c => c !== '') : [];
-
                             assignedClasses.forEach(cls => {
-                                if (!masterClasses.includes(cls)) {
-                                    masterClasses.push(cls);
-                                }
+                                if (!masterClasses.includes(cls)) masterClasses.push(cls);
                             });
 
                             gurus.push({
@@ -2569,12 +2583,12 @@
             fileInput.value = '';
             saveData();
             renderAdminView();
-            alert(`Import Data Guru selesai!\n- Berhasil: ${count}\n- Username Duplikat: ${duplicateCount}\n- Tidak Lengkap: ${invalidCount}`);
+            alert(`Import Data Guru selesai!\n- Berhasil: ${count}\n- Duplikat: ${duplicateCount}\n- Tidak Lengkap: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
 
-    function renderAdminStudentCrudTable() {
+    window.renderAdminStudentCrudTable = function() {
         const tbody = document.getElementById('admin-student-crud-table-body');
         tbody.innerHTML = '';
         const filterClass = document.getElementById('admin-filter-class').value;
@@ -2605,7 +2619,7 @@
         });
     }
 
-    function openResetStudentModal(studentId) {
+    window.openResetStudentModal = function(studentId) {
         const student = masterStudents.find(s => s.id === studentId);
         if (!student) return;
         document.getElementById('reset-student-id').value = student.id;
@@ -2614,11 +2628,11 @@
         document.getElementById('reset-student-modal').classList.remove('hidden');
     }
 
-    function closeResetStudentModal() {
+    window.closeResetStudentModal = function() {
         document.getElementById('reset-student-modal').classList.add('hidden');
     }
 
-    function saveStudentPasswordReset() {
+    window.saveStudentPasswordReset = function() {
         const studentId = parseInt(document.getElementById('reset-student-id').value);
         const newPass = document.getElementById('reset-student-new-pass').value.trim();
         if (!newPass) return alert('Password baru tidak boleh kosong!');
@@ -2633,7 +2647,7 @@
         }
     }
 
-    function openAdminEditStudentModal(studentId) {
+    window.openAdminEditStudentModal = function(studentId) {
         const student = masterStudents.find(s => s.id === studentId);
         if (!student) return;
         document.getElementById('admin-edit-student-id').value = student.id;
@@ -2644,11 +2658,11 @@
         document.getElementById('admin-edit-student-modal').classList.remove('hidden');
     }
 
-    function closeAdminEditStudentModal() {
+    window.closeAdminEditStudentModal = function() {
         document.getElementById('admin-edit-student-modal').classList.add('hidden');
     }
 
-    function saveAdminStudentEdit() {
+    window.saveAdminStudentEdit = function() {
         const studentId = parseInt(document.getElementById('admin-edit-student-id').value);
         const nisn = document.getElementById('admin-edit-student-nisn').value.trim();
         const name = document.getElementById('admin-edit-student-name').value.trim();
@@ -2677,7 +2691,7 @@
         }
     }
 
-    function deleteStudentByAdmin(studentId) {
+    window.deleteStudentByAdmin = function(studentId) {
         if (confirm('Hapus data murid ini dari sistem?')) {
             masterStudents = masterStudents.filter(s => s.id !== studentId);
             saveData();
@@ -2685,7 +2699,7 @@
         }
     }
 
-    function addGuruAccount() {
+    window.addGuruAccount = function() {
         const name = document.getElementById('add-guru-name').value.trim();
         const subject = document.getElementById('add-guru-subject').value.trim();
         const user = document.getElementById('add-guru-user').value.trim();
@@ -2738,7 +2752,7 @@
         });
     }
 
-    function openClassesGuruModal(guruId) {
+    window.openClassesGuruModal = function(guruId) {
         const g = gurus.find(x => x.id === guruId);
         if (!g) return;
         document.getElementById('classes-guru-id').value = g.id;
@@ -2747,11 +2761,11 @@
         document.getElementById('classes-guru-modal').classList.remove('hidden');
     }
 
-    function closeClassesGuruModal() {
+    window.closeClassesGuruModal = function() {
         document.getElementById('classes-guru-modal').classList.add('hidden');
     }
 
-    function saveGuruClassesAllocation() {
+    window.saveGuruClassesAllocation = function() {
         const guruId = document.getElementById('classes-guru-id').value;
         const selectedClasses = getSelectedClassesFromContainer('modal-guru-classes-checkboxes');
         const g = gurus.find(x => x.id === guruId);
@@ -2764,7 +2778,7 @@
         }
     }
 
-    function openResetGuruModal(guruId) {
+    window.openResetGuruModal = function(guruId) {
         const g = gurus.find(x => x.id === guruId);
         if (!g) return;
         document.getElementById('reset-guru-id').value = g.id;
@@ -2773,11 +2787,11 @@
         document.getElementById('reset-guru-modal').classList.remove('hidden');
     }
 
-    function closeResetGuruModal() {
+    window.closeResetGuruModal = function() {
         document.getElementById('reset-guru-modal').classList.add('hidden');
     }
 
-    function saveGuruPasswordReset() {
+    window.saveGuruPasswordReset = function() {
         const guruId = document.getElementById('reset-guru-id').value;
         const newPass = document.getElementById('reset-guru-new-pass').value.trim();
         if (!newPass) return alert('Password baru tidak boleh kosong!');
@@ -2791,7 +2805,7 @@
         }
     }
 
-    function openEditGuruModal(guruId) {
+    window.openEditGuruModal = function(guruId) {
         const g = gurus.find(x => x.id === guruId);
         if (!g) return;
         document.getElementById('edit-guru-id').value = g.id;
@@ -2803,11 +2817,11 @@
         document.getElementById('edit-guru-modal').classList.remove('hidden');
     }
 
-    function closeEditGuruModal() {
+    window.closeEditGuruModal = function() {
         document.getElementById('edit-guru-modal').classList.add('hidden');
     }
 
-    function saveGuruEdit() {
+    window.saveGuruEdit = function() {
         const id = document.getElementById('edit-guru-id').value;
         const name = document.getElementById('edit-guru-name').value.trim();
         const subject = document.getElementById('edit-guru-subject').value.trim();
@@ -2828,27 +2842,19 @@
         }
     }
 
-    function deleteGuru(guruId) {
+    window.deleteGuru = function(guruId) {
         if (confirm('Hapus akun guru ini? Semua data nilai dan absensi guru ini akan terhapus.')) {
             gurus = gurus.filter(g => g.id !== guruId);
-            localStorage.removeItem(`portal_cat_${guruId}`);
-            localStorage.removeItem(`portal_att_wgt_${guruId}`);
-            localStorage.removeItem(`portal_scores_${guruId}`);
-            localStorage.removeItem(`portal_att_${guruId}`);
-            localStorage.removeItem(`portal_wgt_${guruId}`);
-            localStorage.removeItem(`portal_att_dtl_${guruId}`);
-            localStorage.removeItem(`portal_att_hst_${guruId}`);
+            delete guruDataStore[guruId];
             saveData();
             renderAdminView();
         }
     }
 
-    function renderAdminRekapTable() {
+    window.renderAdminRekapTable = function() {
         const tbody = document.getElementById('admin-rekap-body');
         const selectSort = document.getElementById('admin-rekap-sort-by');
-        if (selectSort) {
-            adminRekapSortKey = selectSort.value;
-        }
+        if (selectSort) adminRekapSortKey = selectSort.value;
 
         tbody.innerHTML = '';
         const rekapDataList = getAdminRekapData();
@@ -2875,8 +2881,7 @@
     }
 
     function calculateFinalScoreAdmin(studentId, studentClass, scores, catList, attWgt, attDataList) {
-        let totalWeightedScore = 0;
-        let totalActiveWeight = 0;
+        let totalWeightedScore = 0, totalActiveWeight = 0;
 
         catList.forEach(cat => {
             let score = null;
@@ -2884,9 +2889,7 @@
                 let total = 0, count = 0;
                 cat.subItems.forEach(sub => {
                     const val = scores ? scores[`sub_${sub.id}`] : undefined;
-                    if (val !== undefined && !isNaN(val)) {
-                        total += val; count++;
-                    }
+                    if (val !== undefined && !isNaN(val)) { total += val; count++; }
                 });
                 score = count > 0 ? total / count : null;
             } else {
@@ -2910,7 +2913,7 @@
         return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
     }
 
-    function switchTab(tabId, btnElement) {
+    window.switchTab = function(tabId, btnElement) {
         const tabContents = document.querySelectorAll('#view-guru .tab-content');
         tabContents.forEach(content => content.classList.add('hidden'));
 
@@ -2921,11 +2924,9 @@
         btnElement.classList.add('active');
     }
 
-    function validateNISN(nisn) {
-        return /^\d{10}$/.test(nisn);
-    }
+    function validateNISN(nisn) { return /^\d{10}$/.test(nisn); }
 
-    function handleNISNInput(inputElement, errorSpanId) {
+    window.handleNISNInput = function(inputElement, errorSpanId) {
         const val = inputElement.value.trim();
         const errSpan = document.getElementById(errorSpanId);
 
@@ -2943,20 +2944,18 @@
         }
     }
 
-    function checkEnter(event, callbackFunction) {
+    window.checkEnter = function(event, callbackFunction) {
         if (event.key === "Enter" || event.keyCode === 13) {
             event.preventDefault();
             callbackFunction();
         }
     }
 
-    function saveAttendanceWeight() {
+    window.saveAttendanceWeight = function() {
         const input = document.getElementById('att-weight-input');
         const val = parseFloat(input.value);
 
-        if (isNaN(val) || val < 0 || val > 100) {
-            return alert('Harap masukkan persentase bobot kehadiran yang valid (0 - 100)%!');
-        }
+        if (isNaN(val) || val < 0 || val > 100) return alert('Harap masukkan persentase bobot kehadiran yang valid (0 - 100)%!');
 
         attendanceWeight = val;
         saveData();
@@ -2964,20 +2963,9 @@
         alert(`Bobot Kehadiran berhasil disimpan sebesar ${attendanceWeight}%!`);
     }
 
-    function toggleShowWeight(isChecked) {
-        showWeightToStudent = isChecked;
-        saveData();
-    }
-
-    function toggleShowAttDetail(isChecked) {
-        showAttDetailToStudent = isChecked;
-        saveData();
-    }
-
-    function toggleShowAttHistory(isChecked) {
-        showAttHistoryToStudent = isChecked;
-        saveData();
-    }
+    window.toggleShowWeight = function(isChecked) { showWeightToStudent = isChecked; saveData(); }
+    window.toggleShowAttDetail = function(isChecked) { showAttDetailToStudent = isChecked; saveData(); }
+    window.toggleShowAttHistory = function(isChecked) { showAttHistoryToStudent = isChecked; saveData(); }
 
     function getActiveGuruAssignedClasses() {
         const currentGuru = gurus.find(g => g.id === currentGuruId);
@@ -3018,7 +3006,7 @@
         }
     }
 
-    function addCategory() {
+    window.addCategory = function() {
         const nameInput = document.getElementById('cat-name');
         const weightInput = document.getElementById('cat-weight');
         const name = nameInput.value.trim();
@@ -3032,12 +3020,12 @@
         renderTeacherView();
     }
 
-    function toggleCategoryVisibility(catId) {
+    window.toggleCategoryVisibility = function(catId) {
         const cat = categories.find(c => c.id === catId);
         if (cat) { cat.visible = !cat.visible; saveData(); renderTeacherView(); }
     }
 
-    function toggleSubItemVisibility(catId, subId) {
+    window.toggleSubItemVisibility = function(catId, subId) {
         const cat = categories.find(c => c.id === catId);
         if (cat) {
             const sub = cat.subItems.find(s => s.id === subId);
@@ -3104,7 +3092,7 @@
         });
     }
 
-    function openEditSubItemModal(catId, subId) {
+    window.openEditSubItemModal = function(catId, subId) {
         const cat = categories.find(c => c.id === catId);
         if (!cat) return;
         const sub = cat.subItems.find(s => s.id === subId);
@@ -3116,9 +3104,9 @@
         document.getElementById('edit-subitem-modal').classList.remove('hidden');
     }
 
-    function closeEditSubItemModal() { document.getElementById('edit-subitem-modal').classList.add('hidden'); }
+    window.closeEditSubItemModal = function() { document.getElementById('edit-subitem-modal').classList.add('hidden'); }
 
-    function saveSubItemEdit() {
+    window.saveSubItemEdit = function() {
         const catId = parseInt(document.getElementById('edit-subitem-cat-id').value);
         const subId = parseInt(document.getElementById('edit-subitem-id').value);
         const name = document.getElementById('edit-subitem-name').value.trim();
@@ -3132,7 +3120,7 @@
         }
     }
 
-    function openSubItemModal(catId) {
+    window.openSubItemModal = function(catId) {
         const cat = categories.find(c => c.id === catId);
         if (!cat) return;
         document.getElementById('subitem-cat-id').value = cat.id;
@@ -3144,9 +3132,9 @@
         setTimeout(() => subInput.focus(), 100);
     }
 
-    function closeSubItemModal() { document.getElementById('subitem-modal').classList.add('hidden'); }
+    window.closeSubItemModal = function() { document.getElementById('subitem-modal').classList.add('hidden'); }
 
-    function saveSubItem() {
+    window.saveSubItem = function() {
         const catId = parseInt(document.getElementById('subitem-cat-id').value);
         const name = document.getElementById('subitem-name').value.trim();
 
@@ -3159,7 +3147,7 @@
         }
     }
 
-    function deleteSubItem(catId, subId) {
+    window.deleteSubItem = function(catId, subId) {
         if (confirm('Hapus sub-item / ulangan ini? Nilai siswa pada kolom ini akan terhapus.')) {
             const cat = categories.find(c => c.id === catId);
             if (cat) {
@@ -3169,7 +3157,7 @@
         }
     }
 
-    function openEditModal(catId) {
+    window.openEditModal = function(catId) {
         const cat = categories.find(c => c.id === catId);
         if (!cat) return;
         document.getElementById('edit-cat-id').value = cat.id;
@@ -3178,9 +3166,9 @@
         document.getElementById('edit-modal').classList.remove('hidden');
     }
 
-    function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+    window.closeEditModal = function() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-    function saveCategoryEdit() {
+    window.saveCategoryEdit = function() {
         const id = parseInt(document.getElementById('edit-cat-id').value);
         const name = document.getElementById('edit-cat-name').value.trim();
         const weight = parseFloat(document.getElementById('edit-cat-weight').value);
@@ -3191,7 +3179,7 @@
         if (cat) { cat.name = name; cat.weight = weight; saveData(); closeEditModal(); renderTeacherView(); }
     }
 
-    function deleteCategory(catId) {
+    window.deleteCategory = function(catId) {
         if (confirm('Hapus kategori ini? Semua sub-item dan nilainya akan terhapus.')) {
             categories = categories.filter(c => c.id !== catId);
             saveData(); renderTeacherView();
@@ -3203,7 +3191,7 @@
         return assignedClasses.includes(studentClass);
     }
 
-    function renderStudentCrudTable() {
+    window.renderStudentCrudTable = function() {
         const tbody = document.getElementById('student-crud-table-body');
         tbody.innerHTML = '';
         const filterClass = document.getElementById('filter-class-crud') ? document.getElementById('filter-class-crud').value : 'ALL';
@@ -3239,7 +3227,7 @@
         });
     }
 
-    function downloadTemplate() {
+    window.downloadTemplate = function() {
         const csvContent = "NISN,Nama Murid,Kelas,Password\n0012345671,Ahmad Dahlan,10 IPA 1,123\n0012345672,Dewi Sartika,10 IPA 2,123\n";
         downloadCSV(csvContent, "template_data_murid.csv");
     }
@@ -3262,14 +3250,14 @@
         return teacherScoresData[studentId];
     }
 
-    function updateScore(studentId, key, value) {
+    window.updateScore = function(studentId, key, value) {
         const sData = getStudentScoreObj(studentId);
         sData.scores[key] = parseFloat(value) || 0;
         saveData();
         renderTeacherTable();
     }
 
-    function updateStudentNote(studentId, noteValue) {
+    window.updateStudentNote = function(studentId, noteValue) {
         const sData = getStudentScoreObj(studentId);
         sData.note = noteValue.trim();
         saveData();
@@ -3318,14 +3306,13 @@
         return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
     }
 
-    function renderTeacherTable() {
+    window.renderTeacherTable = function() {
         const thead = document.getElementById('teacher-table-head');
         const tbody = document.getElementById('teacher-table-body');
         const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
         const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
 
         let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
-        
         headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
 
         categories.forEach(c => {
@@ -3422,7 +3409,7 @@
         renderAttendanceSummaryTable();
     }
 
-    function renderAttendanceForm() {
+    window.renderAttendanceForm = function() {
         const selectEl = document.getElementById('attendance-class-select');
         const dateEl = document.getElementById('attendance-date-input');
         if (!selectEl || !dateEl) return;
@@ -3471,13 +3458,11 @@
         });
     }
 
-    function saveCurrentAttendanceSession() {
+    window.saveCurrentAttendanceSession = function() {
         const selectedClass = document.getElementById('attendance-class-select').value;
         const selectedDate = document.getElementById('attendance-date-input').value;
 
-        if (!selectedClass || !selectedDate) {
-            return alert('Harap pilih kelas dan tanggal pertemuan!');
-        }
+        if (!selectedClass || !selectedDate) return alert('Harap pilih kelas dan tanggal pertemuan!');
 
         const classStudents = masterStudents.filter(s => s.className === selectedClass);
         if (classStudents.length === 0) return alert('Tidak ada murid di kelas ini.');
@@ -3537,7 +3522,7 @@
         };
     }
 
-    function renderAttendanceSummaryTable() {
+    window.renderAttendanceSummaryTable = function() {
         const tbody = document.getElementById('attendance-summary-body');
         if (!tbody) return;
         tbody.innerHTML = '';
@@ -3591,9 +3576,7 @@
     function formatDateIndo(dateStr) {
         if (!dateStr) return '-';
         const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
         return dateStr;
     }
 
@@ -3618,7 +3601,7 @@
         });
     }
 
-    function switchSiswaSubjectTab(guruId) {
+    window.switchSiswaSubjectTab = function(guruId) {
         activeSiswaSubjectTab = guruId;
         renderSiswaSubjectTabs();
         renderStudentView();
@@ -3648,21 +3631,14 @@
         }
 
         targetGurus.forEach(g => {
-            const gCats = JSON.parse(localStorage.getItem(`portal_cat_${g.id}`)) || [];
-            const gAttWgt = localStorage.getItem(`portal_att_wgt_${g.id}`) !== null 
-                ? parseFloat(localStorage.getItem(`portal_att_wgt_${g.id}`)) 
-                : 10;
-            const gScoresData = JSON.parse(localStorage.getItem(`portal_scores_${g.id}`)) || {};
-            const gAttData = JSON.parse(localStorage.getItem(`portal_att_${g.id}`)) || [];
-            const gShowWeight = localStorage.getItem(`portal_wgt_${g.id}`) !== null 
-                ? JSON.parse(localStorage.getItem(`portal_wgt_${g.id}`)) 
-                : true;
-            const gShowAttDetail = localStorage.getItem(`portal_att_dtl_${g.id}`) !== null 
-                ? JSON.parse(localStorage.getItem(`portal_att_dtl_${g.id}`)) 
-                : true;
-            const gShowAttHistory = localStorage.getItem(`portal_att_hst_${g.id}`) !== null 
-                ? JSON.parse(localStorage.getItem(`portal_att_hst_${g.id}`)) 
-                : true;
+            const gStore = guruDataStore[g.id] || {};
+            const gCats = gStore.categories || [];
+            const gAttWgt = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
+            const gScoresData = gStore.scoresData || {};
+            const gAttData = gStore.attendanceData || [];
+            const gShowWeight = gStore.showWeight !== undefined ? gStore.showWeight : true;
+            const gShowAttDetail = gStore.showAttDetail !== undefined ? gStore.showAttDetail : true;
+            const gShowAttHistory = gStore.showAttHistory !== undefined ? gStore.showAttHistory : true;
 
             const sData = gScoresData[currentLoggedInStudent.id] || { note: '', scores: {} };
             const attStats = calculateStudentAttendanceStats(currentLoggedInStudent.id, currentLoggedInStudent.className, gAttData);
@@ -3820,20 +3796,6 @@
             tableHtml += `</div>`;
             container.innerHTML += tableHtml;
         });
-    }
-
-    applyAppProfile();
-
-    if (currentRole === 'admin') {
-        openAdminView();
-    } else if (currentRole === 'guru') {
-        const currentGuru = gurus.find(g => g.id === currentGuruId);
-        if (currentGuru) openGuruView(currentGuru);
-        else logout();
-    } else if (currentRole === 'siswa' && currentLoggedInStudent) {
-        openSiswaView();
-    } else {
-        saveData();
     }
 </script>
 
