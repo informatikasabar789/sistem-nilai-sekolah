@@ -1182,7 +1182,7 @@
 
         <div id="tab-absensi" class="tab-content card hidden">
             <h2>📅 4. Isi Kehadiran Murid Pertemuan Kelas</h2>
-            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Pilih kelas dan tanggal masuk untuk mengisi atau memperbarui daftar kehadiran murid di kelas Anda.</p>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Pilih kelas dan tanggal masuk untuk mengisi, memperbarui, atau menghapus daftar kehadiran murid di kelas Anda.</p>
 
             <div class="form-inline" style="background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 <div>
@@ -1193,8 +1193,9 @@
                     <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Tanggal Pertemuan:</label>
                     <input type="date" id="attendance-date-input" onchange="renderAttendanceForm()">
                 </div>
-                <div style="align-self: flex-end;">
+                <div style="align-self: flex-end; display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn-success" onclick="saveCurrentAttendanceSession()">💾 Simpan Presensi Pertemuan Ini</button>
+                    <button class="btn-danger" onclick="deleteCurrentAttendanceSession()">🗑️ Hapus Presensi Tanggal Ini</button>
                 </div>
             </div>
 
@@ -3508,6 +3509,27 @@
         renderAttendanceSummaryTable();
         renderTeacherTable();
         alert(`Kehadiran Kelas ${selectedClass} untuk tanggal ${selectedDate} berhasil disimpan!`);
+    }
+
+    window.deleteCurrentAttendanceSession = function() {
+        const selectedClass = document.getElementById('attendance-class-select').value;
+        const selectedDate = document.getElementById('attendance-date-input').value;
+
+        if (!selectedClass || !selectedDate) return alert('Harap pilih kelas dan tanggal pertemuan!');
+
+        const existingIdx = teacherAttendanceData.findIndex(a => a.className === selectedClass && a.date === selectedDate);
+        if (existingIdx === -1) {
+            return alert(`Belum ada data presensi yang tersimpan untuk Kelas ${selectedClass} pada tanggal ${selectedDate}.`);
+        }
+
+        if (confirm(`Apakah Anda yakin ingin menghapus data presensi Kelas ${selectedClass} pada tanggal ${selectedDate}?`)) {
+            teacherAttendanceData.splice(existingIdx, 1);
+            saveData();
+            renderAttendanceForm();
+            renderAttendanceSummaryTable();
+            renderTeacherTable();
+            alert(`Presensi Kelas ${selectedClass} pada tanggal ${selectedDate} telah berhasil dihapus!`);
+        }
     }
 
     function calculateStudentAttendanceStats(studentId, studentClass, attDataList = teacherAttendanceData) {
