@@ -448,6 +448,15 @@
             margin-bottom: 2px;
         }
 
+        .clickable-badge {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .clickable-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
         .sub-item-badge {
             display: inline-flex;
             align-items: center;
@@ -552,6 +561,11 @@
             border-radius: 8px;
             width: 420px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .modal-content-lg {
+            width: 600px;
+            max-width: 90vw;
         }
 
         .modal-content h3 { margin-bottom: 15px; }
@@ -1233,7 +1247,8 @@
                 </div>
             </div>
             <p style="font-size: 12px; color: #64748b; margin-top: 5px; margin-bottom: 10px;">
-                *Bobot Kehadiran: Hadir / Rapat Organisasi (100%), Terlambat (75%), Izin / Sakit (50%), Alpa (0%).
+                *Bobot Kehadiran: Hadir / Rapat Organisasi (100%), Terlambat (75%), Izin / Sakit (50%), Alpa (0%).<br>
+                💡 <strong>Petunjuk:</strong> Klik pada jumlah <strong>Total Pertemuan</strong> di bawah ini untuk melihat detail riwayat tanggal presensi siswa.
             </p>
 
             <div class="table-scroll-container">
@@ -1272,6 +1287,32 @@
 
             <div id="student-subject-content">
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL POP-UP RIWAYAT TANGGAL PRESENSI GURU -->
+<div id="att-history-modal" class="modal hidden">
+    <div class="modal-content modal-content-lg">
+        <h3 id="att-history-modal-title">🗓️ Riwayat Tanggal Pertemuan Presensi</h3>
+        <p id="att-history-modal-sub" style="font-size: 13px; color: #64748b; margin-bottom: 15px;"></p>
+
+        <div class="table-scroll-container" style="max-height: 300px; margin-bottom: 15px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">No</th>
+                        <th style="width: 45%;">Tanggal Pertemuan</th>
+                        <th style="width: 40%;">Status Kehadiran</th>
+                    </tr>
+                </thead>
+                <tbody id="att-history-modal-body">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeAttendanceHistoryModal()">Tutup</button>
         </div>
     </div>
 </div>
@@ -3587,7 +3628,13 @@
                     <td>${student.nisn}</td>
                     <td><strong>${student.name}</strong></td>
                     <td>${student.className}</td>
-                    <td>${stats.total} Pertemuan</td>
+                    <td>
+                        <span class="class-badge clickable-badge" style="background:#2563eb; color:white; font-size:12px; padding:4px 8px;" 
+                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.className}')" 
+                              title="Klik untuk melihat riwayat tanggal pertemuan">
+                            📅 ${stats.total} Pertemuan
+                        </span>
+                    </td>
                     <td><span style="color:#059669; font-weight:bold;">${stats.hadir}</span></td>
                     <td><span style="color:#d97706; font-weight:bold;">${stats.terlambat}</span></td>
                     <td><span style="color:#7c3aed; font-weight:bold;">${stats.dispen}</span></td>
@@ -3598,6 +3645,36 @@
                 </tr>
             `;
         });
+    }
+
+    window.openAttendanceHistoryModal = function(studentId, studentName, className) {
+        const stats = calculateStudentAttendanceStats(studentId, className);
+        
+        document.getElementById('att-history-modal-title').innerText = `🗓️ Riwayat Kehadiran: ${studentName}`;
+        document.getElementById('att-history-modal-sub').innerText = `Kelas: ${className} | Total Input Presensi: ${stats.total} Pertemuan`;
+
+        const tbody = document.getElementById('att-history-modal-body');
+        tbody.innerHTML = '';
+
+        if (!stats.history || stats.history.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada tanggal pertemuan yang terinput untuk kelas ini.</td></tr>`;
+        } else {
+            stats.history.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${formatDateIndo(item.date)}</strong></td>
+                        <td>${getStatusBadgeHtml(item.status)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('att-history-modal').classList.remove('hidden');
+    }
+
+    window.closeAttendanceHistoryModal = function() {
+        document.getElementById('att-history-modal').classList.add('hidden');
     }
 
     function getStatusBadgeHtml(status) {
