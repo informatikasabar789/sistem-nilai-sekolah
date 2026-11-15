@@ -4046,16 +4046,57 @@
         renderTeacherTable();
     }
 
-    // 2. Fungsi Tombol Reset ke Tampilan Semula
+    /*// 2. Fungsi Tombol Reset ke Tampilan Semula
     window.resetGuruScoreSort = function() {
         guruScoreSortKey = 'default';
         guruScoreSortAsc = true;
         renderTeacherTable();
+    }*/
+	
+	window.resetGuruScoreSort = function() {
+        guruScoreSortKey = 'default';
+        guruScoreSortAsc = true;
+        const filterScore = document.getElementById('filter-class-score');
+        if (filterScore) filterScore.value = 'ALL';
+        renderQuickClassPills();
+        renderTeacherTable();
     }
 
     // 2. Pilih urutan dari dropdown
+    /*window.selectGuruScoreSortFromDropdown = function(val) {
+        const [key, dir] = val.split('|');
+        guruScoreSortKey = key;
+        guruScoreSortAsc = (dir === 'asc');
+        renderTeacherTable();
+    }*/
+	
+	// 1. Tangani pilihan dari dropdown Urutkan (baik sortir kolom maupun filter kelas)
     window.selectGuruScoreSortFromDropdown = function(val) {
         const [key, dir] = val.split('|');
+
+        // Jika yang dipilih adalah nama kelas tertentu (contoh: "onlyClass|9A")
+        if (key === 'onlyClass') {
+            const filterScore = document.getElementById('filter-class-score');
+            if (filterScore) filterScore.value = dir; // Set filter kelas ke nama kelas tersebut
+            guruScoreSortKey = 'default';
+            guruScoreSortAsc = true;
+            renderQuickClassPills();
+            renderTeacherTable();
+            return;
+        }
+
+        // Jika yang dipilih adalah "Default (Semua Kelas & Nama A-Z)"
+        if (key === 'default') {
+            const filterScore = document.getElementById('filter-class-score');
+            if (filterScore) filterScore.value = 'ALL'; // Kembalikan filter ke semua kelas
+            guruScoreSortKey = 'default';
+            guruScoreSortAsc = true;
+            renderQuickClassPills();
+            renderTeacherTable();
+            return;
+        }
+
+        // Jika yang dipilih adalah urutan kolom nilai / kehadiran / nama
         guruScoreSortKey = key;
         guruScoreSortAsc = (dir === 'asc');
         renderTeacherTable();
@@ -4108,7 +4149,7 @@
         const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
 
         // Sinkronkan opsi dropdown sortir secara dinamis mengikuti kategori/tugas yang aktif
-        const sortDropdown = document.getElementById('guru-score-sort-by');
+        /*const sortDropdown = document.getElementById('guru-score-sort-by');
         if (sortDropdown) {
             let dropHtml = `
                 <option value="default|asc">Default (Kelas & Nama A-Z)</option>
@@ -4138,6 +4179,78 @@
             const currentVal = `${guruScoreSortKey}|${guruScoreSortAsc ? 'asc' : 'desc'}`;
             if (Array.from(sortDropdown.options).some(o => o.value === currentVal)) {
                 sortDropdown.value = currentVal;
+            }
+        }*/
+		
+		// Sinkronkan opsi dropdown Urutkan secara dinamis (termasuk daftar nama setiap kelas)
+        const sortDropdown = document.getElementById('guru-score-sort-by');
+        if (sortDropdown) {
+            const classList = getAvailableClassesForActiveGuru();
+            
+            let dropHtml = `
+                <option value="default|asc">Default (Semua Kelas & Nama A-Z)</option>
+            `;
+
+            // KELOMPOK 1: FILTER PER NAMA KELAS (Misal: Kelas 9A, Kelas 9B, dst.)
+            if (classList.length > 0) {
+                dropHtml += `<optgroup label="🏫 Tampilkan Kelas Tertentu">`;
+                classList.forEach(cls => {
+                    dropHtml += `<option value="onlyClass|${cls}">Hanya Kelas ${cls}</option>`;
+                });
+                dropHtml += `</optgroup>`;
+            }
+
+            // KELOMPOK 2: URUTKAN BERDASARKAN NAMA & KEHADIRAN
+            dropHtml += `
+                <optgroup label="📊 Urutkan Identitas & Kehadiran">
+                    <option value="name|asc">Nama Murid (A-Z 🔼)</option>
+                    <option value="name|desc">Nama Murid (Z-A 🔽)</option>
+                    <option value="attendance|desc">Kehadiran (Tertinggi 🔽)</option>
+                    <option value="attendance|asc">Kehadiran (Terendah 🔼)</option>
+                </optgroup>
+            `;
+
+            // KELOMPOK 3: URUTKAN BERDASARKAN KATEGORI / SUB-TUGAS & NILAI AKHIR
+            dropHtml += `<optgroup label="📝 Urutkan Nilai">`;
+            categories.forEach(c => {
+                if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+                    c.subItems.forEach(s => {
+                        dropHtml += `<option value="sub_${s.id}|desc">${s.name} (Tertinggi 🔽)</option>`;
+                        dropHtml += `<option value="sub_${s.id}|asc">${s.name} (Terendah 🔼)</option>`;
+                    });
+                    dropHtml += `<option value="avg_${c.id}|desc">Rata² ${c.name} (Tertinggi 🔽)</option>`;
+                    dropHtml += `<option value="avg_${c.id}|asc">Rata² ${c.name} (Terendah 🔼)</option>`;
+                } else {
+                    dropHtml += `<option value="cat_${c.id}|desc">${c.name} (Tertinggi 🔽)</option>`;
+                    dropHtml += `<option value="cat_${c.id}|asc">${c.name} (Terendah 🔼)</option>`;
+                }
+            });
+            dropHtml += `
+                    <option value="finalScore|desc">Nilai Akhir (Tertinggi 🔽)</option>
+                    <option value="finalScore|asc">Nilai Akhir (Terendah 🔼)</option>
+                </optgroup>
+            `;
+
+            sortDropdown.innerHTML = dropHtml;
+
+            // Tentukan opsi mana yang sedang aktif terpilih di dropdown
+            let activeDropdownVal = `${guruScoreSortKey}|${guruScoreSortAsc ? 'asc' : 'desc'}`;
+            if (guruScoreSortKey === 'default' && filterClass !== 'ALL') {
+                activeDropdownVal = `onlyClass|${filterClass}`;
+            }
+
+            if (Array.from(sortDropdown.options).some(o => o.value === activeDropdownVal)) {
+                sortDropdown.value = activeDropdownVal;
+            }
+        }
+
+        // Tampilkan tombol Reset jika sedang menyaring kelas tertentu atau sedang menyortir kolom
+        const btnResetSort = document.getElementById('btn-reset-guru-sort');
+        if (btnResetSort) {
+            if (guruScoreSortKey !== 'default' || filterClass !== 'ALL') {
+                btnResetSort.classList.remove('hidden');
+            } else {
+                btnResetSort.classList.add('hidden');
             }
         }
 
