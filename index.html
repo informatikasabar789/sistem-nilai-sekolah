@@ -3132,11 +3132,22 @@
         if (cat) { cat.visible = !cat.visible; saveData(); renderTeacherView(); }
     }
 
-    window.toggleSubItemVisibility = function(catId, subId) {
+    /*window.toggleSubItemVisibility = function(catId, subId) {
         const cat = categories.find(c => c.id === catId);
         if (cat) {
             const sub = cat.subItems.find(s => s.id === subId);
             if (sub) { sub.visible = !sub.visible; saveData(); renderTeacherView(); }
+        }
+    }*/
+	window.toggleSubItemVisibility = function(catId, subId) {
+        const cat = categories.find(c => c.id === catId);
+        if (cat && Array.isArray(cat.subItems)) {
+            const sub = cat.subItems.find(s => s.id === subId);
+            if (sub) { 
+                sub.visible = !sub.visible; 
+                saveData(); 
+                renderTeacherView(); 
+            }
         }
     }
 
@@ -3227,7 +3238,7 @@
         }
     }
 
-    window.openSubItemModal = function(catId) {
+    /*window.openSubItemModal = function(catId) {
         const cat = categories.find(c => c.id === catId);
         if (!cat) return;
         document.getElementById('subitem-cat-id').value = cat.id;
@@ -3237,11 +3248,31 @@
         subInput.value = `Ulangan ${cat.subItems.length + 1}`;
         document.getElementById('subitem-modal').classList.remove('hidden');
         setTimeout(() => subInput.focus(), 100);
+    }*/
+	window.openSubItemModal = function(catId) {
+        const cat = categories.find(c => c.id === catId);
+        if (!cat) return;
+
+        // Pastikan subItems selalu berbentuk array (mencegah error dari Firebase)
+        if (!Array.isArray(cat.subItems)) {
+            cat.subItems = [];
+        }
+
+        document.getElementById('subitem-cat-id').value = cat.id;
+        document.getElementById('subitem-modal-title').innerText = `Tambah Sub-Item untuk ${cat.name}`;
+        
+        const subInput = document.getElementById('subitem-name');
+        subInput.value = `${cat.name} ${cat.subItems.length + 1}`;
+        document.getElementById('subitem-modal').classList.remove('hidden');
+        setTimeout(() => {
+            subInput.focus();
+            subInput.select(); // Otomatis blok teks agar mudah diganti
+        }, 100);
     }
 
     window.closeSubItemModal = function() { document.getElementById('subitem-modal').classList.add('hidden'); }
 
-    window.saveSubItem = function() {
+    /*window.saveSubItem = function() {
         const catId = parseInt(document.getElementById('subitem-cat-id').value);
         const name = document.getElementById('subitem-name').value.trim();
 
@@ -3252,14 +3283,42 @@
             cat.subItems.push({ id: Date.now(), name: name, visible: true });
             saveData(); closeSubItemModal(); renderTeacherView();
         }
+    }*/
+	
+	window.saveSubItem = function() {
+        const catId = parseInt(document.getElementById('subitem-cat-id').value);
+        const name = document.getElementById('subitem-name').value.trim();
+
+        if (!name) return alert('Nama sub-item tidak boleh kosong!');
+
+        const cat = categories.find(c => c.id === catId);
+        if (cat) {
+            if (!Array.isArray(cat.subItems)) {
+                cat.subItems = [];
+            }
+            cat.subItems.push({ id: Date.now(), name: name, visible: true });
+            saveData(); 
+            closeSubItemModal(); 
+            renderTeacherView();
+        }
     }
 
-    window.deleteSubItem = function(catId, subId) {
+    /*window.deleteSubItem = function(catId, subId) {
         if (confirm('Hapus sub-item / ulangan ini? Nilai siswa pada kolom ini akan terhapus.')) {
             const cat = categories.find(c => c.id === catId);
             if (cat) {
                 cat.subItems = cat.subItems.filter(s => s.id !== subId);
                 saveData(); renderTeacherView();
+            }
+        }
+    }*/
+	window.deleteSubItem = function(catId, subId) {
+        if (confirm('Hapus sub-item / ulangan ini? Nilai siswa pada kolom ini akan terhapus.')) {
+            const cat = categories.find(c => c.id === catId);
+            if (cat && Array.isArray(cat.subItems)) {
+                cat.subItems = cat.subItems.filter(s => s.id !== subId);
+                saveData(); 
+                renderTeacherView();
             }
         }
     }
