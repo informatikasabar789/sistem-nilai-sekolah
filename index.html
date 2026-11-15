@@ -1167,6 +1167,32 @@
                             <option value="ALL">-- Semua Kelas Diampu --</option>
                         </select>
                     </div>
+					
+					<div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="guru-search-score-student" placeholder="Cari Nama / NISN..." onkeyup="renderTeacherTable()" style="width: 180px;">
+                    
+                    <div class="filter-container" style="margin-bottom: 0;">
+                        <label for="filter-class-score"><strong>Kelas:</strong></label>
+                        <select id="filter-class-score" onchange="renderTeacherTable()">
+                            <option value="ALL">-- Semua Kelas Diampu --</option>
+                        </select>
+                    </div>
+
+                    <!-- TAMBAHKAN DROPDOWN SORTIR INI -->
+                    <div class="filter-container" style="margin-bottom: 0;">
+                        <label for="guru-score-sort-by"><strong>Urutkan:</strong></label>
+                        <select id="guru-score-sort-by" onchange="changeGuruScoreSort(this.value)">
+                            <option value="default">Kelas & Nama (A-Z)</option>
+                            <option value="final_desc">Nilai Akhir (Tertinggi 🔽)</option>
+                            <option value="final_asc">Nilai Akhir (Terendah 🔼)</option>
+                        </select>
+                    </div>
+
+                    <div class="action-btns no-print">
+                        <button class="btn-success btn-sm" onclick="exportGuruScoresCSV()">📊 Export Excel/CSV</button>
+                        <button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak / PDF</button>
+                    </div>
+                </div>
 
                     <div class="action-btns no-print">
                         <button class="btn-success btn-sm" onclick="exportGuruScoresCSV()">📊 Export Excel/CSV</button>
@@ -1600,6 +1626,7 @@
     let tempLogoDataUrl = null;
     let adminRekapSortKey = 'className';
     let adminRekapSortAsc = true;
+	let guruScoreSortMode = 'default'; // Pilihan: 'default', 'final_desc', 'final_asc'
 	let isLocalInputActive = false; // Mencegah tabel ter-reset saat guru sedang mengetik
 
     let categories = [
@@ -1746,6 +1773,24 @@
         // Simpan Data Ke Firebase Realtime Database
         set(ref(db, 'portal_database'), payload);
         renderDashboards();
+    }
+
+	// Fungsi saat dropdown sortir diubah
+    window.changeGuruScoreSort = function(mode) {
+        guruScoreSortMode = mode;
+        renderTeacherTable();
+    }
+
+    // Fungsi saat header kolom "Nilai Akhir" diklik langsung
+    window.toggleGuruFinalScoreSort = function() {
+        if (guruScoreSortMode === 'final_desc') {
+            guruScoreSortMode = 'final_asc';
+        } else {
+            guruScoreSortMode = 'final_desc';
+        }
+        const selectEl = document.getElementById('guru-score-sort-by');
+        if (selectEl) selectEl.value = guruScoreSortMode;
+        renderTeacherTable();
     }
 
     // FUNGSI UTAMA & AKSI USER
@@ -3804,7 +3849,7 @@
 */
 
 // RENDER TABEL GURU DENGAN ID KHUSUS PER BARIS MURID
-    window.renderTeacherTable = function() {
+    /*window.renderTeacherTable = function() {
         const thead = document.getElementById('teacher-table-head');
         const tbody = document.getElementById('teacher-table-body');
         const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
@@ -3898,7 +3943,125 @@
         });
 
         tbody.innerHTML = rowsHtml.join('');
+    }*/
+	
+	window.renderTeacherTable = function() {
+        const thead = document.getElementById('teacher-table-head');
+        const tbody = document.getElementById('teacher-table-body');
+        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
+        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
+
+        let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
+        headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
+
+        categories.forEach(c => {
+            if (c.subItems && c.subItems.length > 0) {
+                c.subItems.forEach(s => {
+                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                    headerHtml += `<th style="background:#e0f2fe">${s.name}${statusText}</th>`;
+                });
+                headerHtml += `<th style="background:#bae6fd">Rata² ${c.name}</th>`;
+            } else {
+                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                headerHtml += `<th>${c.name} (${c.weight}%)${statusText}</th>`;
+            }
+        });
+
+        // Ikon indikator sortir pada header Nilai Akhir
+        let sortIcon = '↕️';
+        if (guruScoreSortMode === 'final_desc') sortIcon = '🔽';
+        else if (guruScoreSortMode === 'final_asc') sortIcon = '🔼';
+
+        // Header Nilai Akhir bisa diklik langsung untuk bolak-balik urutan
+        headerHtml += `<th class="sortable-header" onclick="toggleGuruFinalScoreSort()" title="Klik untuk mengurutkan Nilai Akhir">Nilai Akhir ${sortIcon}</th>`;
+        headerHtml += `<th>Catatan Khusus / Keterangan Guru</th>`;
+        if (thead) thead.innerHTML = headerHtml;
+
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        let filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            const matchSearch = !searchQuery || 
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.nisn || '').toLowerCase().includes(searchQuery);
+
+            return matchAssignedClass && matchFilterDropdown && matchSearch;
+        });
+
+        // TERAPKAN LOGIKA SORTIR NILAI AKHIR
+        if (guruScoreSortMode === 'final_desc' || guruScoreSortMode === 'final_asc') {
+            filteredStudents.sort((a, b) => {
+                const scoreA = parseFloat(calculateFinalScore(a.id, a.className, false)) || 0;
+                const scoreB = parseFloat(calculateFinalScore(b.id, b.className, false)) || 0;
+                
+                if (scoreA !== scoreB) {
+                    return guruScoreSortMode === 'final_desc' ? (scoreB - scoreA) : (scoreA - scoreB);
+                }
+                // Jika nilai akhir sama, urutkan berdasarkan nama A-Z
+                return (a.name || '').localeCompare(b.name || '');
+            });
+        }
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
+            return;
+        }
+
+        const rowsHtml = filteredStudents.map(student => {
+            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+
+            let row = `<tr>
+                <td>${student.nisn}</td>
+                <td><strong>${student.name}</strong></td>
+                <td>${student.className}</td>
+                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
+            `;
+
+            categories.forEach(cat => {
+                if (cat.subItems && cat.subItems.length > 0) {
+                    cat.subItems.forEach(s => {
+                        const scoreKey = `sub_${s.id}`;
+                        const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                        row += `<td>
+                            <input type="number" class="input-score" value="${val}" 
+                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                        </td>`;
+                    });
+                    const avgCat = getCategoryScore(student.id, cat, false);
+                    row += `<td id="avg_${student.id}_${cat.id}" style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
+                } else {
+                    const scoreKey = `cat_${cat.id}`;
+                    const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                    row += `<td>
+                        <input type="number" class="input-score" value="${val}" 
+                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                    </td>`;
+                }
+            });
+
+            const currentNote = sData.note || '';
+
+            row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
+            row += `<td>
+                <input type="text" class="input-note" value="${currentNote}" 
+                placeholder="misal: Belum Tugas 1" 
+                onchange="updateStudentNote(${student.id}, this.value)" 
+                onkeydown="checkEnter(event, () => this.blur())">
+            </td></tr>`;
+
+            return row;
+        });
+
+        tbody.innerHTML = rowsHtml.join('');
     }
+	
     function initAttendanceTab() {
         const dateInput = document.getElementById('attendance-date-input');
         if (dateInput && !dateInput.value) {
