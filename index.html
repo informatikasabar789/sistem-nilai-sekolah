@@ -1522,7 +1522,7 @@
 
 <!-- SCRIPT FIREBASE SDK v9+ MODULE -->
 <script type="module">
-    // Mematikan menu Klik Kanan
+	// Mematikan menu Klik Kanan
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     });
@@ -1538,21 +1538,23 @@
             return false;
         }
     });
-    
+	
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    //import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+	// GANTI BARIS IMPORT DATABASE LAMA DENGAN INI:
+	import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     // GANTI DENGAN KUNCI KONFIGURASI FIREBASE ANDA
-    const firebaseConfig = {
-      apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
-      authDomain: "sns-smpn1batujajar.firebaseapp.com",
-      databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
-      projectId: "sns-smpn1batujajar",
-      storageBucket: "sns-smpn1batujajar.firebasestorage.app",
-      messagingSenderId: "1013385508921",
-      appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
-      measurementId: "G-L53H0NH1TE"
-    };
+	const firebaseConfig = {
+	  apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
+	  authDomain: "sns-smpn1batujajar.firebaseapp.com",
+	  databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
+	  projectId: "sns-smpn1batujajar",
+	  storageBucket: "sns-smpn1batujajar.firebasestorage.app",
+	  messagingSenderId: "1013385508921",
+	  appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
+	  measurementId: "G-L53H0NH1TE"
+	};
 
     // Inisialisasi Firebase & Database
     const app = initializeApp(firebaseConfig);
@@ -1586,7 +1588,7 @@
     let tempLogoDataUrl = null;
     let adminRekapSortKey = 'className';
     let adminRekapSortAsc = true;
-    let isLocalInputActive = false; // Mencegah tabel ter-reset saat guru sedang mengetik nilai/catatan
+	let isLocalInputActive = false; // Mencegah tabel ter-reset saat guru sedang mengetik
 
     let categories = [
         { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
@@ -1605,7 +1607,7 @@
 
     // Mendengarkan Sinkronisasi Realtime Firebase
     const dbRef = ref(db, 'portal_database');
-    onValue(dbRef, (snapshot) => {
+    /*onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             if (data.appProfile) appProfile = data.appProfile;
@@ -1632,14 +1634,52 @@
         const overlay = document.getElementById('firebase-loading-overlay');
         if (overlay) overlay.style.display = 'none';
 
-        // JANGAN render ulang seluruh halaman guru jika guru baru saja menginput nilai/catatan secara lokal
+        // Refresh Tampilan Sesuai Role Aktif
+        if (currentRole === 'admin') {
+            renderAdminView();
+        } else if (currentRole === 'guru') {
+            renderTeacherView();
+        } else if (currentRole === 'siswa' && currentLoggedInStudent) {
+            renderSiswaSubjectTabs();
+            renderStudentView();
+        } else {
+            applyAppProfile();
+        }
+    });*/
+	
+	// GANTI BLOK onValue LAMA DENGAN INI:
+    onValue(dbRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            if (data.appProfile) appProfile = data.appProfile;
+            if (data.masterClasses) masterClasses = data.masterClasses;
+            if (data.masterStudents) {
+                masterStudents = data.masterStudents.map(s => {
+                    if (!s.password) s.password = '123';
+                    return s;
+                });
+            }
+            if (data.gurus) gurus = data.gurus;
+            if (data.guruDataStore) {
+                guruDataStore = data.guruDataStore;
+                if (currentGuruId && guruDataStore[currentGuruId]) {
+                    loadGuruDataFromStore(currentGuruId);
+                }
+            }
+        } else {
+            saveData();
+        }
+
+        const overlay = document.getElementById('firebase-loading-overlay');
+        if (overlay) overlay.style.display = 'none';
+
+        // JANGAN render ulang seluruh halaman guru jika guru baru saja menginput nilai/catatan
         if (isLocalInputActive && currentRole === 'guru') {
             isLocalInputActive = false;
             renderDashboards();
-            return;
+            return; 
         }
 
-        // Refresh Tampilan Sesuai Role Aktif
         if (currentRole === 'admin') {
             renderAdminView();
         } else if (currentRole === 'guru') {
@@ -1744,7 +1784,7 @@
     window.printCurrentView = function() { window.print(); }
 
     window.downloadCSV = function(csvContent, fileName) {
-        const BOM = "﻿";
+        const BOM = "\uFEFF";
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         if (navigator.msSaveBlob) {
@@ -1864,12 +1904,10 @@
         const dataList = getAdminRekapData();
         const filterClass = document.getElementById('admin-rekap-filter-class').value;
 
-        let csv = "Guru Pengajar,Mata Pelajaran,NISN,Nama Siswa,Kelas,Persentase Kehadiran (%),Hadir/Total Pertemuan,Nilai Akhir
-";
+        let csv = "Guru Pengajar,Mata Pelajaran,NISN,Nama Siswa,Kelas,Persentase Kehadiran (%),Hadir/Total Pertemuan,Nilai Akhir\n";
 
         dataList.forEach(item => {
-            csv += `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"
-`;
+            csv += `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"\n`;
         });
 
         downloadCSV(csv, `rekap_monitoring_siswa_kelas_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1925,8 +1963,7 @@
         headers.push("Nilai Akhir");
         headers.push("Catatan Guru");
 
-        let csv = headers.map(h => `"${h}"`).join(",") + "
-";
+        let csv = headers.map(h => `"${h}"`).join(",") + "\n";
 
         const assignedClasses = getActiveGuruAssignedClasses();
         const filteredStudents = masterStudents.filter(s => {
@@ -1944,13 +1981,13 @@
             categories.forEach(cat => {
                 if (cat.subItems && cat.subItems.length > 0) {
                     cat.subItems.forEach(s => {
-                        const val = (sData.scores && sData.scores[`sub_${s.id}`] !== undefined) ? sData.scores[`sub_${s.id}`] : '';
+                        const val = sData.scores[`sub_${s.id}`] !== undefined ? sData.scores[`sub_${s.id}`] : '';
                         row.push(`"${val}"`);
                     });
                     const avgCat = getCategoryScore(student.id, cat, false);
                     row.push(`"${avgCat !== null ? avgCat.toFixed(1) : '-'}"`);
                 } else {
-                    const val = (sData.scores && sData.scores[`cat_${cat.id}`] !== undefined) ? sData.scores[`cat_${cat.id}`] : '';
+                    const val = sData.scores[`cat_${cat.id}`] !== undefined ? sData.scores[`cat_${cat.id}`] : '';
                     row.push(`"${val}"`);
                 }
             });
@@ -1958,8 +1995,7 @@
             row.push(`"${calculateFinalScore(student.id, student.className, false)}"`);
             row.push(`"${sData.note || ''}"`);
 
-            csv += row.join(",") + "
-";
+            csv += row.join(",") + "\n";
         });
 
         downloadCSV(csv, `rekap_nilai_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1970,8 +2006,7 @@
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const subjectName = currentGuru ? currentGuru.subject : 'Presensi';
 
-        let csv = "No,NISN,Nama Murid,Kelas,Total Pertemuan,Hadir (H),Terlambat (T),Rapat/Dispen (D),Izin (I),Sakit (S),Alpa (A),Persentase (%)
-";
+        let csv = "No,NISN,Nama Murid,Kelas,Total Pertemuan,Hadir (H),Terlambat (T),Rapat/Dispen (D),Izin (I),Sakit (S),Alpa (A),Persentase (%)\n";
 
         const assignedClasses = getActiveGuruAssignedClasses();
         const filteredStudents = masterStudents.filter(s => {
@@ -1982,8 +2017,7 @@
 
         filteredStudents.forEach((student, index) => {
             const stats = calculateStudentAttendanceStats(student.id, student.className);
-            csv += `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"
-`;
+            csv += `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"\n`;
         });
 
         downloadCSV(csv, `rekap_presensi_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -2570,9 +2604,7 @@
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            const lines = e.target.result.split(/
-|
-/);
+            const lines = e.target.result.split(/\r\n|\n/);
             let count = 0, invalidCount = 0, duplicateCount = 0;
 
             for (let i = 1; i < lines.length; i++) {
@@ -2603,19 +2635,13 @@
             fileInput.value = '';
             saveData();
             renderAdminView();
-            alert(`Import selesai!
-- Berhasil: ${count}
-- Duplikat dilewati: ${duplicateCount}
-- Format salah: ${invalidCount}`);
+            alert(`Import selesai!\n- Berhasil: ${count}\n- Duplikat dilewati: ${duplicateCount}\n- Format salah: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
 
     window.downloadGuruTemplate = function() {
-        const csvContent = "Nama Guru,Mata Pelajaran,Username,Password,Kelas Diampu
-Budi Hartono S.Pd,Matematika,guru1,123,"10 IPA 1, 10 IPA 2"
-Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
-";
+        const csvContent = "Nama Guru,Mata Pelajaran,Username,Password,Kelas Diampu\nBudi Hartono S.Pd,Matematika,guru1,123,\"10 IPA 1, 10 IPA 2\"\nSiti Aminah M.Pd,Bahasa Indonesia,guru2,123,\"10 IPA 2, 10 IPA 3\"\n";
         downloadCSV(csvContent, "template_data_guru.csv");
     }
 
@@ -2626,9 +2652,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            const lines = e.target.result.split(/
-|
-/);
+            const lines = e.target.result.split(/\r\n|\n/);
             let count = 0, invalidCount = 0, duplicateCount = 0;
 
             for (let i = 1; i < lines.length; i++) {
@@ -2666,10 +2690,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
             fileInput.value = '';
             saveData();
             renderAdminView();
-            alert(`Import Data Guru selesai!
-- Berhasil: ${count}
-- Duplikat: ${duplicateCount}
-- Tidak Lengkap: ${invalidCount}`);
+            alert(`Import Data Guru selesai!\n- Berhasil: ${count}\n- Duplikat: ${duplicateCount}\n- Tidak Lengkap: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
@@ -3314,10 +3335,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
     }
 
     window.downloadTemplate = function() {
-        const csvContent = "NISN,Nama Murid,Kelas,Password
-0012345671,Ahmad Dahlan,10 IPA 1,123
-0012345672,Dewi Sartika,10 IPA 2,123
-";
+        const csvContent = "NISN,Nama Murid,Kelas,Password\n0012345671,Ahmad Dahlan,10 IPA 1,123\n0012345672,Dewi Sartika,10 IPA 2,123\n";
         downloadCSV(csvContent, "template_data_murid.csv");
     }
 
@@ -3336,24 +3354,27 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
         if (!teacherScoresData[studentId]) {
             teacherScoresData[studentId] = { note: '', scores: {} };
         }
-        if (!teacherScoresData[studentId].scores) {
-            teacherScoresData[studentId].scores = {};
-        }
         return teacherScoresData[studentId];
     }
 
-    // OPTIMALISASI: Update nilai hanya untuk murid terkait tanpa merender ulang seluruh tabel & tanpa menimpa seluruh database
+    /*window.updateScore = function(studentId, key, value) {
+        const sData = getStudentScoreObj(studentId);
+        sData.scores[key] = parseFloat(value) || 0;
+        saveData();
+        renderTeacherTable();
+    }*/
+	// FUNGSI UPDATE NILAI YANG RINGAN & CEPAT
     window.updateScore = function(studentId, key, value) {
         const sData = getStudentScoreObj(studentId);
         const numericVal = value === '' ? null : (parseFloat(value) || 0);
-
+        
         if (numericVal === null) {
             delete sData.scores[key];
         } else {
             sData.scores[key] = numericVal;
         }
 
-        // 1. Update tampilan angka Rata-rata & Nilai Akhir HANYA untuk baris murid ini secara instan
+        // 1. Update tampilan angka Rata-rata & Nilai Akhir HANYA untuk baris murid ini (Instan!)
         const student = masterStudents.find(s => s.id === studentId);
         if (student) {
             categories.forEach(cat => {
@@ -3372,7 +3393,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
             }
         }
 
-        // 2. Simpan HANYA nilai spesifik murid ini ke Firebase menggunakan update()
+        // 2. Simpan HANYA nilai spesifik murid ini ke Firebase (tidak menimpa seluruh database)
         if (currentGuruId) {
             isLocalInputActive = true;
             const scoreRef = ref(db, `portal_database/guruDataStore/${currentGuruId}/scoresData/${studentId}/scores`);
@@ -3380,7 +3401,13 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
         }
     }
 
-    // OPTIMALISASI: Update catatan khusus guru secara parsial
+    /*window.updateStudentNote = function(studentId, noteValue) {
+        const sData = getStudentScoreObj(studentId);
+        sData.note = noteValue.trim();
+        saveData();
+    }
+	*/
+	// FUNGSI UPDATE CATATAN GURU YANG RINGAN
     window.updateStudentNote = function(studentId, noteValue) {
         const sData = getStudentScoreObj(studentId);
         const cleanNote = noteValue.trim();
@@ -3400,14 +3427,14 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
             let total = 0, count = 0;
             cat.subItems.forEach(sub => {
                 if (!onlyVisible || sub.visible) {
-                    const val = scores ? scores[`sub_${sub.id}`] : undefined;
+                    const val = scores[`sub_${sub.id}`];
                     if (val !== undefined && !isNaN(val)) { total += val; count++; }
                 }
             });
             return count > 0 ? total / count : null;
         } else {
             if (onlyVisible && !cat.visible) return null;
-            return (scores && scores[`cat_${cat.id}`] !== undefined) ? scores[`cat_${cat.id}`] : 0;
+            return scores[`cat_${cat.id}`] !== undefined ? scores[`cat_${cat.id}`] : 0;
         }
     }
 
@@ -3436,6 +3463,101 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
         return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
     }
 
+/*    window.renderTeacherTable = function() {
+        const thead = document.getElementById('teacher-table-head');
+        const tbody = document.getElementById('teacher-table-body');
+        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
+        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
+
+        let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
+        headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
+
+        categories.forEach(c => {
+            if (c.subItems && c.subItems.length > 0) {
+                c.subItems.forEach(s => {
+                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                    headerHtml += `<th style="background:#e0f2fe">${s.name}${statusText}</th>`;
+                });
+                headerHtml += `<th style="background:#bae6fd">Rata² ${c.name}</th>`;
+            } else {
+                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                headerHtml += `<th>${c.name} (${c.weight}%)${statusText}</th>`;
+            }
+        });
+        headerHtml += `<th>Nilai Akhir</th><th>Catatan Khusus / Keterangan Guru</th>`;
+        if (thead) thead.innerHTML = headerHtml;
+
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            const matchSearch = !searchQuery || 
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.nisn || '').toLowerCase().includes(searchQuery);
+
+            return matchAssignedClass && matchFilterDropdown && matchSearch;
+        });
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
+            return;
+        }
+
+        filteredStudents.forEach(student => {
+            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+
+            let row = `<tr>
+                <td>${student.nisn}</td>
+                <td><strong>${student.name}</strong></td>
+                <td>${student.className}</td>
+                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
+            `;
+
+            categories.forEach(cat => {
+                if (cat.subItems && cat.subItems.length > 0) {
+                    cat.subItems.forEach(s => {
+                        const scoreKey = `sub_${s.id}`;
+                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                        row += `<td>
+                            <input type="number" class="input-score" value="${val}" 
+                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                        </td>`;
+                    });
+                    const avgCat = getCategoryScore(student.id, cat, false);
+                    row += `<td style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
+                } else {
+                    const scoreKey = `cat_${cat.id}`;
+                    const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                    row += `<td>
+                        <input type="number" class="input-score" value="${val}" 
+                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                    </td>`;
+                }
+            });
+
+            const currentNote = sData.note || '';
+
+            row += `<td><strong>${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
+            row += `<td>
+                <input type="text" class="input-note" value="${currentNote}" 
+                placeholder="misal: Belum Tugas 1" 
+                onchange="updateStudentNote(${student.id}, this.value)" 
+                onkeydown="checkEnter(event, () => this.blur())">
+            </td></tr>`;
+
+            tbody.innerHTML += row;
+        });
+    }
+*/
+
+// RENDER TABEL GURU DENGAN ID KHUSUS PER BARIS MURID
     window.renderTeacherTable = function() {
         const thead = document.getElementById('teacher-table-head');
         const tbody = document.getElementById('teacher-table-body');
@@ -3461,6 +3583,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
         if (thead) thead.innerHTML = headerHtml;
 
         if (!tbody) return;
+        tbody.innerHTML = '';
 
         const assignedClasses = getActiveGuruAssignedClasses();
 
@@ -3479,6 +3602,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
             return;
         }
 
+        // Gunakan array + join('') agar manipulasi DOM jauh lebih cepat daripada += innerHTML
         const rowsHtml = filteredStudents.map(student => {
             const sData = teacherScoresData[student.id] || { note: '', scores: {} };
             const attCalc = calculateStudentAttendanceStats(student.id, student.className);
@@ -3494,7 +3618,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
                 if (cat.subItems && cat.subItems.length > 0) {
                     cat.subItems.forEach(s => {
                         const scoreKey = `sub_${s.id}`;
-                        const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '';
+                        const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
                         row += `<td>
                             <input type="number" class="input-score" value="${val}" 
                             onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
@@ -3505,7 +3629,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
                     row += `<td id="avg_${student.id}_${cat.id}" style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
                 } else {
                     const scoreKey = `cat_${cat.id}`;
-                    const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '';
+                    const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
                     row += `<td>
                         <input type="number" class="input-score" value="${val}" 
                         onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
@@ -3529,7 +3653,6 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
 
         tbody.innerHTML = rowsHtml.join('');
     }
-
     function initAttendanceTab() {
         const dateInput = document.getElementById('attendance-date-input');
         if (dateInput && !dateInput.value) {
@@ -3702,7 +3825,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
                     <td>${student.className}</td>
                     <td>
                         <span class="class-badge clickable-badge" style="background:#2563eb; color:white; font-size:12px; padding:4px 8px;" 
-                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\'")}', '${student.className}')" 
+                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.className}')" 
                               title="Klik untuk melihat riwayat tanggal pertemuan">
                             📅 ${stats.total} Pertemuan
                         </span>
@@ -3943,7 +4066,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
 
                             visibleSubItems.forEach(s => {
                                 const scoreKey = `sub_${s.id}`;
-                                const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '-';
+                                const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
                                 tableHtml += `<tr>
                                     <td style="padding-left: 25px; color:#475569;">↳ ${s.name}</td>
                                     ${gShowWeight ? `<td style="color:#aaa;">-</td>` : ''}
@@ -3952,7 +4075,7 @@ Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
                         }
                     } else {
                         const scoreKey = `cat_${cat.id}`;
-                        const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '-';
+                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
                         tableHtml += `<tr><td><strong>${cat.name}</strong></td>
                             ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
                             <td><strong>${val}</strong></td></tr>`;
