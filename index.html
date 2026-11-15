@@ -1161,11 +1161,31 @@
                 <h2>3. Input & Rekap Nilai Murid</h2>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                     <input type="text" id="guru-search-score-student" placeholder="Cari Nama / NISN..." onkeyup="renderTeacherTable()" style="width: 200px;">
-                    <div class="filter-container" style="margin-bottom: 0;">
+                    <!--<div class="filter-container" style="margin-bottom: 0;">
                         <label for="filter-class-score"><strong>Filter Kelas:</strong></label>
                         <select id="filter-class-score" onchange="renderTeacherTable()">
                             <option value="ALL">-- Semua Kelas Diampu --</option>
                         </select>
+                    </div>--!>
+					
+					<div class="filter-container" style="margin-bottom: 0;">
+                        <label for="guru-score-sort-by"><strong>Urutkan:</strong></label>
+                        <select id="guru-score-sort-by" onchange="selectGuruScoreSortFromDropdown(this.value)">
+                            <option value="default|asc">Default (Kelas & Nama A-Z)</option>
+                            <option value="attendance|desc">Kehadiran (Tertinggi 🔽)</option>
+                            <option value="attendance|asc">Kehadiran (Terendah 🔼)</option>
+                            <option value="finalScore|desc">Nilai Akhir (Tertinggi 🔽)</option>
+                            <option value="finalScore|asc">Nilai Akhir (Terendah 🔼)</option>
+                        </select>
+                    </div>
+					
+					<div class="filter-container" style="margin-bottom: 0;">
+                        <label for="guru-score-sort-by"><strong>Urutkan:</strong></label>
+                        <select id="guru-score-sort-by" onchange="selectGuruScoreSortFromDropdown(this.value)">
+                            <option value="default|asc">Default (Kelas & Nama A-Z)</option>
+                        </select>
+                        <!-- TOMBOL RESET OTOMATIS MUNCUL SAAT SEDANG DISORTIR -->
+                        <button type="button" id="btn-reset-guru-sort" class="btn-secondary btn-sm hidden" onclick="resetGuruScoreSort()" title="Kembalikan ke urutan semula">↺ Reset</button>
                     </div>
 
                     <div class="action-btns no-print">
@@ -1600,6 +1620,8 @@
     let tempLogoDataUrl = null;
     let adminRekapSortKey = 'className';
     let adminRekapSortAsc = true;
+	let guruScoreSortKey = 'default'; // Bisa: 'default', 'nisn', 'name', 'className', 'attendance', 'sub_101', 'cat_2', 'avg_1', 'finalScore'
+    let guruScoreSortAsc = true;      // true = Terkecil ke Terbesar / A-Z, false = Terbesar ke Terkecil / Z-A
 	let isLocalInputActive = false; // Mencegah tabel ter-reset saat guru sedang mengetik
 
     let categories = [
@@ -3804,7 +3826,7 @@
 */
 
 // RENDER TABEL GURU DENGAN ID KHUSUS PER BARIS MURID
-    window.renderTeacherTable = function() {
+    /*window.renderTeacherTable = function() {
         const thead = document.getElementById('teacher-table-head');
         const tbody = document.getElementById('teacher-table-body');
         const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
@@ -3898,7 +3920,258 @@
         });
 
         tbody.innerHTML = rowsHtml.join('');
+    }*/
+	
+	// 1. Klik langsung pada judul kolom mana saja di Tabel Nilai Guru
+    /*window.sortGuruTableBy = function(columnKey) {
+        if (guruScoreSortKey === columnKey) {
+            guruScoreSortAsc = !guruScoreSortAsc; // Balik arah urutan jika kolom yang sama diklik lagi
+        } else {
+            guruScoreSortKey = columnKey;
+            // Untuk kolom angka (nilai & kehadiran), klik pertama otomatis urut dari Tertinggi ke Terendah
+            const isTextCol = (columnKey === 'nisn' || columnKey === 'name' || columnKey === 'className' || columnKey === 'default');
+            guruScoreSortAsc = isTextCol ? true : false;
+        }
+        renderTeacherTable();
+    }*/
+	// 1. Siklus Klik 3x pada Header: Tertinggi -> Terendah -> Kembali Semula (Default)
+    window.sortGuruTableBy = function(columnKey) {
+        const isTextCol = (columnKey === 'nisn' || columnKey === 'name' || columnKey === 'className');
+
+        if (guruScoreSortKey !== columnKey) {
+            // Klik ke-1 pada kolom baru
+            guruScoreSortKey = columnKey;
+            guruScoreSortAsc = isTextCol ? true : false; // Teks mulai A-Z, Angka mulai Tertinggi
+        } else {
+            // Kolom yang sama diklik lagi
+            if (isTextCol) {
+                if (guruScoreSortAsc === true) {
+                    guruScoreSortAsc = false; // Klik ke-2: ubah ke Z-A
+                } else {
+                    guruScoreSortKey = 'default'; // Klik ke-3: kembali ke tampilan semula
+                    guruScoreSortAsc = true;
+                }
+            } else {
+                if (guruScoreSortAsc === false) {
+                    guruScoreSortAsc = true; // Klik ke-2: ubah ke Terendah
+                } else {
+                    guruScoreSortKey = 'default'; // Klik ke-3: kembali ke tampilan semula
+                    guruScoreSortAsc = true;
+                }
+            }
+        }
+        renderTeacherTable();
     }
+
+    // 2. Fungsi Tombol Reset ke Tampilan Semula
+    window.resetGuruScoreSort = function() {
+        guruScoreSortKey = 'default';
+        guruScoreSortAsc = true;
+        renderTeacherTable();
+    }
+
+    // 2. Pilih urutan dari dropdown
+    window.selectGuruScoreSortFromDropdown = function(val) {
+        const [key, dir] = val.split('|');
+        guruScoreSortKey = key;
+        guruScoreSortAsc = (dir === 'asc');
+        renderTeacherTable();
+    }
+
+    // 3. Helper untuk menampilkan ikon arah sortir pada header kolom
+    function getGuruSortIcon(columnKey) {
+        if (guruScoreSortKey !== columnKey) return '↕️';
+        return guruScoreSortAsc ? '🔼' : '🔽';
+    }
+
+    // 4. Helper untuk mengambil nilai dari kolom apa pun milik seorang siswa
+    function getStudentSortValue(student, columnKey) {
+        const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+
+        if (columnKey === 'nisn') return student.nisn || '';
+        if (columnKey === 'name') return (student.name || '').toLowerCase();
+        if (columnKey === 'className') return (student.className || '').toLowerCase();
+        
+        if (columnKey === 'attendance') {
+            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+            return parseFloat(attCalc.percentage) || 0;
+        }
+        
+        if (columnKey === 'finalScore') {
+            return parseFloat(calculateFinalScore(student.id, student.className, false)) || 0;
+        }
+
+        // Jika kolom rata-rata kategori (format: avg_catId)
+        if (columnKey.startsWith('avg_')) {
+            const catId = parseInt(columnKey.replace('avg_', ''));
+            const cat = categories.find(c => c.id === catId);
+            if (!cat) return -1;
+            const avg = getCategoryScore(student.id, cat, false);
+            return avg !== null ? avg : -1; // Nilai kosong ditaruh di bawah
+        }
+
+        // Jika kolom input nilai langsung (format: sub_id atau cat_id)
+        if (sData.scores && sData.scores[columnKey] !== undefined && sData.scores[columnKey] !== '') {
+            return parseFloat(sData.scores[columnKey]);
+        }
+        return -1; // Siswa yang nilainya masih kosong dianggap -1 agar rapi saat disortir
+    }
+
+    // 5. Render Tabel Guru dengan Header Sortir di Semua Kolom
+    window.renderTeacherTable = function() {
+        const thead = document.getElementById('teacher-table-head');
+        const tbody = document.getElementById('teacher-table-body');
+        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
+        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
+
+        // Sinkronkan opsi dropdown sortir secara dinamis mengikuti kategori/tugas yang aktif
+        const sortDropdown = document.getElementById('guru-score-sort-by');
+        if (sortDropdown) {
+            let dropHtml = `
+                <option value="default|asc">Default (Kelas & Nama A-Z)</option>
+                <option value="name|asc">Nama Murid (A-Z 🔼)</option>
+                <option value="name|desc">Nama Murid (Z-A 🔽)</option>
+                <option value="attendance|desc">Kehadiran (Tertinggi 🔽)</option>
+                <option value="attendance|asc">Kehadiran (Terendah 🔼)</option>
+            `;
+            categories.forEach(c => {
+                if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+                    c.subItems.forEach(s => {
+                        dropHtml += `<option value="sub_${s.id}|desc">${s.name} (Tertinggi 🔽)</option>`;
+                        dropHtml += `<option value="sub_${s.id}|asc">${s.name} (Terendah 🔼)</option>`;
+                    });
+                    dropHtml += `<option value="avg_${c.id}|desc">Rata² ${c.name} (Tertinggi 🔽)</option>`;
+                    dropHtml += `<option value="avg_${c.id}|asc">Rata² ${c.name} (Terendah 🔼)</option>`;
+                } else {
+                    dropHtml += `<option value="cat_${c.id}|desc">${c.name} (Tertinggi 🔽)</option>`;
+                    dropHtml += `<option value="cat_${c.id}|asc">${c.name} (Terendah 🔼)</option>`;
+                }
+            });
+            dropHtml += `
+                <option value="finalScore|desc">Nilai Akhir (Tertinggi 🔽)</option>
+                <option value="finalScore|asc">Nilai Akhir (Terendah 🔼)</option>
+            `;
+            sortDropdown.innerHTML = dropHtml;
+            const currentVal = `${guruScoreSortKey}|${guruScoreSortAsc ? 'asc' : 'desc'}`;
+            if (Array.from(sortDropdown.options).some(o => o.value === currentVal)) {
+                sortDropdown.value = currentVal;
+            }
+        }
+
+        // Bangun Header Tabel (Semua kolom bisa diklik untuk sortir)
+        let headerHtml = `
+            <th class="sortable-header" onclick="sortGuruTableBy('nisn')" title="Urutkan NISN">NISN ${getGuruSortIcon('nisn')}</th>
+            <th class="sortable-header" onclick="sortGuruTableBy('name')" title="Urutkan Nama">Nama Murid ${getGuruSortIcon('name')}</th>
+            <th class="sortable-header" onclick="sortGuruTableBy('className')" title="Urutkan Kelas">Kelas ${getGuruSortIcon('className')}</th>
+            <th class="sortable-header" style="background:#fef3c7;" onclick="sortGuruTableBy('attendance')" title="Urutkan Kehadiran">Persentase Kehadiran (${attendanceWeight}%) ${getGuruSortIcon('attendance')}</th>
+        `;
+
+        categories.forEach(c => {
+            if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+                c.subItems.forEach(s => {
+                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                    const key = `sub_${s.id}`;
+                    headerHtml += `<th class="sortable-header" style="background:#e0f2fe" onclick="sortGuruTableBy('${key}')" title="Urutkan ${s.name}">${s.name}${statusText} ${getGuruSortIcon(key)}</th>`;
+                });
+                const avgKey = `avg_${c.id}`;
+                headerHtml += `<th class="sortable-header" style="background:#bae6fd" onclick="sortGuruTableBy('${avgKey}')" title="Urutkan Rata-rata ${c.name}">Rata² ${c.name} ${getGuruSortIcon(avgKey)}</th>`;
+            } else {
+                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
+                const key = `cat_${c.id}`;
+                headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('${key}')" title="Urutkan ${c.name}">${c.name} (${c.weight}%)${statusText} ${getGuruSortIcon(key)}</th>`;
+            }
+        });
+
+        headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('finalScore')" title="Urutkan Nilai Akhir">Nilai Akhir ${getGuruSortIcon('finalScore')}</th>`;
+        headerHtml += `<th>Catatan Khusus / Keterangan Guru</th>`;
+        if (thead) thead.innerHTML = headerHtml;
+
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        let filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            const matchSearch = !searchQuery || 
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.nisn || '').toLowerCase().includes(searchQuery);
+
+            return matchAssignedClass && matchFilterDropdown && matchSearch;
+        });
+
+        // Terapkan Pengurutan pada Daftar Siswa
+        if (guruScoreSortKey !== 'default') {
+            filteredStudents.sort((a, b) => {
+                const valA = getStudentSortValue(a, guruScoreSortKey);
+                const valB = getStudentSortValue(b, guruScoreSortKey);
+
+                if (valA < valB) return guruScoreSortAsc ? -1 : 1;
+                if (valA > valB) return guruScoreSortAsc ? 1 : -1;
+
+                // Jika nilainya seri/sama, urutkan nama siswa dari A-Z
+                return (a.name || '').localeCompare(b.name || '');
+            });
+        }
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
+            return;
+        }
+
+        const rowsHtml = filteredStudents.map(student => {
+            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+
+            let row = `<tr>
+                <td>${student.nisn}</td>
+                <td><strong>${student.name}</strong></td>
+                <td>${student.className}</td>
+                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
+            `;
+
+            categories.forEach(cat => {
+                if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
+                    cat.subItems.forEach(s => {
+                        const scoreKey = `sub_${s.id}`;
+                        const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                        row += `<td>
+                            <input type="number" class="input-score" value="${val}" 
+                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                        </td>`;
+                    });
+                    const avgCat = getCategoryScore(student.id, cat, false);
+                    row += `<td id="avg_${student.id}_${cat.id}" style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
+                } else {
+                    const scoreKey = `cat_${cat.id}`;
+                    const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                    row += `<td>
+                        <input type="number" class="input-score" value="${val}" 
+                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
+                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
+                    </td>`;
+                }
+            });
+
+            const currentNote = sData.note || '';
+
+            row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
+            row += `<td>
+                <input type="text" class="input-note" value="${currentNote}" 
+                placeholder="misal: Belum Tugas 1" 
+                onchange="updateStudentNote(${student.id}, this.value)" 
+                onkeydown="checkEnter(event, () => this.blur())">
+            </td></tr>`;
+
+            return row;
+        });
+
+        tbody.innerHTML = rowsHtml.join('');
+    }
+	
+	
     function initAttendanceTab() {
         const dateInput = document.getElementById('attendance-date-input');
         if (dateInput && !dateInput.value) {
