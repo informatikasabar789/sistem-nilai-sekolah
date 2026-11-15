@@ -1175,6 +1175,18 @@
                 </div>
             </div>
 
+            <div class="import-box" style="margin-bottom: 15px; background: #f8fafc;">
+                <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 6px;">⚡ Input Nilai Massal via Excel / CSV</h4>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+                    Unduh template sesuai filter kelas saat ini, isi nilai di Excel, lalu unggah kembali ke sini.
+                </p>
+                <div class="form-inline" style="margin-bottom: 0;">
+                    <button class="btn-success btn-sm" onclick="downloadGuruScoreTemplate()">📥 Unduh Template Nilai (CSV)</button>
+                    <input type="file" id="guru-score-csv-input" accept=".csv, .txt" style="padding: 4px 8px; font-size: 13px;">
+                    <button class="btn-purple btn-sm" onclick="importGuruScoresFromCSV()">📤 Upload & Import Nilai</button>
+                </div>
+            </div>
+
             <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">*Kolom <strong>Persentase Kehadiran (%)</strong> terhitung otomatis dari pengisian presensi di Tab 4 dan ikut dihitung dalam Nilai Akhir berdasarkan bobot kehadiran.</p>
             
             <div class="table-scroll-container-lg">
@@ -1999,6 +2011,181 @@
         });
 
         downloadCSV(csv, `rekap_nilai_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+	
+	// 1. FUNGSI UNDUH TEMPLATE NILAI DINAMIS (SESUAI KELAS & KATEGORI)
+    window.downloadGuruScoreTemplate = function() {
+        const filterClass = document.getElementById('filter-class-score').value;
+        const currentGuru = gurus.find(g => g.id === currentGuruId);
+        const subjectName = currentGuru ? currentGuru.subject.replace(/\s+/g, '_') : 'Nilai';
+
+        // Susun Header Kolom Berdasarkan Kategori & Sub-Item yang Aktif
+        let headers = ["NISN", "Nama Murid", "Kelas"];
+        categories.forEach(c => {
+            if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+                c.subItems.forEach(s => headers.push(s.name));
+            } else {
+                headers.push(c.name);
+            }
+        });
+        headers.push("Catatan Guru");
+
+        let csv = headers.map(h => `"${h}"`).join(",") + "\n";
+
+        // Masukkan Daftar Siswa Sesuai Filter Kelas
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            return matchAssignedClass && matchFilterDropdown;
+        });
+
+        if (filteredStudents.length === 0) {
+            return alert('Tidak ada data murid pada filter kelas yang dipilih!');
+        }
+
+        filteredStudents.forEach(student => {
+            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
+            // Gunakan tanda kutip tunggal di depan NISN agar angka 0 di depan tidak hilang di Excel
+            let row = [`"'${student.nisn}"`, `"${student.name}"`, `"${student.className}"`];
+
+            categories.forEach(cat => {
+                if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
+                    cat.subItems.forEach(s => {
+                        const val = (sData.scores && sData.scores[`sub_${s.id}`] !== undefined) ? sData.scores[`sub_${s.id}`] : '';
+                        row.push(`"${val}"`);
+                    });
+                } else {
+                    const val = (sData.scores && sData.scores[`cat_${cat.id}`] !== undefined) ? sData.scores[`cat_${cat.id}`] : '';
+                    row.push(`"${val}"`);
+                }
+            });
+
+            row.push(`"${sData.note || ''}"`);
+            csv += row.join(",") + "\n";
+        });
+
+        downloadCSV(csv, `template_input_nilai_${subjectName}_${filterClass}.csv`);
+    }
+
+    // 2. FUNGSI UPLOAD & IMPORT NILAI DARI CSV EXCEL
+    window.importGuruScoresFromCSV = function() {
+        const fileInput = document.getElementById('guru-score-csv-input');
+        const file = fileInput.files[0];
+        if (!file) return alert('Silakan pilih file CSV template nilai terlebih dahulu!');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+            
+            if (lines.length < 2) {
+                return alert('File CSV kosong atau tidak memiliki baris data!');
+            }
+
+            // Deteksi pemisah otomatis (Excel Indonesia sering memakai titik koma ';', standar memakai ',')
+            const delimiter = lines[0].includes(';') ? ';' : ',';
+
+            // Fungsi helper untuk memecah baris CSV dengan aman
+            const parseCSVLine = (str) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str[i];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === delimiter && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                result.push(current.trim());
+                return result.map(col => col.replace(/^"|"$/g, '').replace(/^'/, '').trim());
+            };
+
+            const headerCols = parseCSVLine(lines[0]);
+            const nisnColIndex = headerCols.findIndex(h => h.toLowerCase() === 'nisn');
+            if (nisnColIndex === -1) {
+                return alert('Kolom "NISN" tidak ditemukan pada baris pertama file CSV!');
+            }
+
+            // Petakan urutan kolom kategori/sub-item saat ini
+            let expectedScoreFields = [];
+            categories.forEach(c => {
+                if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+                    c.subItems.forEach(s => {
+                        expectedScoreFields.push({ key: `sub_${s.id}`, label: s.name });
+                    });
+                } else {
+                    expectedScoreFields.push({ key: `cat_${c.id}`, label: c.name });
+                }
+            });
+
+            // Cocokkan kolom CSV berdasarkan nama header (atau urutan default kolom ke-3 dst)
+            const columnMappings = expectedScoreFields.map((field, idx) => {
+                const matchIdx = headerCols.findIndex(h => h.toLowerCase() === field.label.toLowerCase());
+                return {
+                    key: field.key,
+                    colIndex: matchIdx !== -1 ? matchIdx : (3 + idx)
+                };
+            });
+
+            const noteColIndex = headerCols.findIndex(h => h.toLowerCase().includes('catatan'));
+
+            let updatedCount = 0;
+            let notFoundCount = 0;
+
+            for (let i = 1; i < lines.length; i++) {
+                const cols = parseCSVLine(lines[i]);
+                let rawNisn = cols[nisnColIndex] || '';
+                // Pastikan format NISN 10 digit jika angka 0 di depan sempat terpotong Excel
+                if (/^\d{8,9}$/.test(rawNisn)) {
+                    rawNisn = rawNisn.padStart(10, '0');
+                }
+
+                if (!rawNisn) continue;
+
+                const student = masterStudents.find(s => s.nisn === rawNisn);
+                if (!student) {
+                    notFoundCount++;
+                    continue;
+                }
+
+                const sData = getStudentScoreObj(student.id);
+                if (!sData.scores) sData.scores = {};
+
+                // Ambil setiap nilai dari kolom yang cocok
+                columnMappings.forEach(map => {
+                    if (cols[map.colIndex] !== undefined) {
+                        const rawVal = cols[map.colIndex].replace(',', '.'); // Antisipasi koma desimal Excel
+                        if (rawVal === '' || rawVal === '-') {
+                            delete sData.scores[map.key];
+                        } else if (!isNaN(parseFloat(rawVal))) {
+                            sData.scores[map.key] = parseFloat(rawVal);
+                        }
+                    }
+                });
+
+                // Ambil catatan guru jika kolom catatan ada
+                if (noteColIndex !== -1 && cols[noteColIndex] !== undefined) {
+                    sData.note = cols[noteColIndex];
+                }
+
+                updatedCount++;
+            }
+
+            // Simpan seluruh perubahan ke Firebase dan perbarui tabel
+            saveData();
+            renderTeacherTable();
+            fileInput.value = '';
+
+            alert(`Import Nilai Selesai!\n✅ Berhasil diperbarui: ${updatedCount} siswa` + 
+                  (notFoundCount > 0 ? `\n⚠️ NISN tidak ditemukan: ${notFoundCount} baris` : ''));
+        };
+        reader.readAsText(file);
     }
 
     window.exportGuruAttendanceCSV = function() {
