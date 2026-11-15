@@ -1209,6 +1209,9 @@
 
             <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">*Kolom <strong>Persentase Kehadiran (%)</strong> terhitung otomatis dari pengisian presensi di Tab 4 dan ikut dihitung dalam Nilai Akhir berdasarkan bobot kehadiran.</p>
             
+			<!-- TOMBOL FILTER CEPAT PER KELAS (MISAL: Semua | 9A | 9B) -->
+            <div id="guru-quick-class-pills" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;"></div>
+			
             <div class="table-scroll-container-lg">
                 <table id="teacher-table">
                     <thead>
@@ -3288,7 +3291,7 @@
         return (currentGuru && currentGuru.assignedClasses) ? currentGuru.assignedClasses : [];
     }
 
-    function updateClassFilterDropdowns() {
+    /*function updateClassFilterDropdowns() {
         const assignedClasses = getActiveGuruAssignedClasses();
         const filterCrud = document.getElementById('filter-class-crud');
         const filterScore = document.getElementById('filter-class-score');
@@ -3320,6 +3323,85 @@
         if (classesDisplay) {
             classesDisplay.innerText = assignedClasses.length > 0 ? assignedClasses.join(', ') : 'Semua Kelas (Belum Di-Set Khusus)';
         }
+    }*/
+	
+	// Helper untuk mendapatkan daftar kelas valid milik guru aktif (gabungan alokasi & data murid)
+    function getAvailableClassesForActiveGuru() {
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const studentClasses = [...new Set(masterStudents.map(s => s.className).filter(Boolean))];
+        
+        if (assignedClasses.length > 0) {
+            return [...assignedClasses].sort();
+        }
+        // Jika guru belum di-set alokasi khusus, gabungkan masterClasses & kelas dari data murid
+        return [...new Set([...masterClasses, ...studentClasses])].sort();
+    }
+
+    function updateClassFilterDropdowns() {
+        const assignedClasses = getActiveGuruAssignedClasses();
+        const classList = getAvailableClassesForActiveGuru();
+
+        const filterCrud = document.getElementById('filter-class-crud');
+        const filterScore = document.getElementById('filter-class-score');
+        const selectAtt = document.getElementById('attendance-class-select');
+        const filterAttRekap = document.getElementById('filter-class-att-rekap');
+
+        const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
+        const currentScoreVal = filterScore ? filterScore.value : 'ALL';
+
+        let optionsHtml = `<option value="ALL">-- Semua Kelas Diampu --</option>`;
+        let selectOptionsHtml = ``;
+
+        classList.forEach(cls => {
+            optionsHtml += `<option value="${cls}">Kelas ${cls}</option>`;
+            selectOptionsHtml += `<option value="${cls}">${cls}</option>`;
+        });
+
+        if (filterCrud) {
+            filterCrud.innerHTML = optionsHtml;
+            filterCrud.value = Array.from(filterCrud.options).some(o => o.value === currentCrudVal) ? currentCrudVal : "ALL";
+        }
+        if (filterScore) {
+            filterScore.innerHTML = optionsHtml;
+            filterScore.value = Array.from(filterScore.options).some(o => o.value === currentScoreVal) ? currentScoreVal : "ALL";
+        }
+        if (filterAttRekap) filterAttRekap.innerHTML = optionsHtml;
+        if (selectAtt) selectAtt.innerHTML = selectOptionsHtml;
+
+        const classesDisplay = document.getElementById('guru-allocated-classes-display');
+        if (classesDisplay) {
+            classesDisplay.innerText = assignedClasses.length > 0 ? assignedClasses.join(', ') : 'Semua Kelas (Belum Di-Set Khusus)';
+        }
+
+        renderQuickClassPills();
+    }
+
+    // Render tombol cepat per kelas di atas tabel nilai (misal: [Semua] [9A] [9B])
+    window.renderQuickClassPills = function() {
+        const container = document.getElementById('guru-quick-class-pills');
+        const filterScore = document.getElementById('filter-class-score');
+        if (!container || !filterScore) return;
+
+        const classList = getAvailableClassesForActiveGuru();
+        const activeClass = filterScore.value || 'ALL';
+
+        let html = `<button type="button" class="btn-sm ${activeClass === 'ALL' ? '' : 'btn-secondary'}" onclick="selectQuickClassFilter('ALL')">📋 Semua Kelas</button>`;
+        
+        classList.forEach(cls => {
+            const isActive = (activeClass === cls);
+            html += `<button type="button" class="btn-sm ${isActive ? '' : 'btn-secondary'}" onclick="selectQuickClassFilter('${cls}')">🏫 ${cls}</button>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    window.selectQuickClassFilter = function(className) {
+        const filterScore = document.getElementById('filter-class-score');
+        if (filterScore) {
+            filterScore.value = className;
+        }
+        renderQuickClassPills();
+        renderTeacherTable();
     }
 
     window.addCategory = function() {
@@ -3613,6 +3695,7 @@
         updateClassFilterDropdowns();
         renderCategoryTable();
         renderStudentCrudTable();
+		renderQuickClassPills();
         renderTeacherTable();
         initAttendanceTab();
         applyAppProfile();
