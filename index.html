@@ -1522,7 +1522,7 @@
 
 <!-- SCRIPT FIREBASE SDK v9+ MODULE -->
 <script type="module">
-	// Mematikan menu Klik Kanan
+    // Mematikan menu Klik Kanan
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     });
@@ -1538,21 +1538,21 @@
             return false;
         }
     });
-	
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     // GANTI DENGAN KUNCI KONFIGURASI FIREBASE ANDA
-	const firebaseConfig = {
-	  apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
-	  authDomain: "sns-smpn1batujajar.firebaseapp.com",
-	  databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
-	  projectId: "sns-smpn1batujajar",
-	  storageBucket: "sns-smpn1batujajar.firebasestorage.app",
-	  messagingSenderId: "1013385508921",
-	  appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
-	  measurementId: "G-L53H0NH1TE"
-	};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
+      authDomain: "sns-smpn1batujajar.firebaseapp.com",
+      databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
+      projectId: "sns-smpn1batujajar",
+      storageBucket: "sns-smpn1batujajar.firebasestorage.app",
+      messagingSenderId: "1013385508921",
+      appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
+      measurementId: "G-L53H0NH1TE"
+    };
 
     // Inisialisasi Firebase & Database
     const app = initializeApp(firebaseConfig);
@@ -1586,6 +1586,7 @@
     let tempLogoDataUrl = null;
     let adminRekapSortKey = 'className';
     let adminRekapSortAsc = true;
+    let isLocalInputActive = false; // Mencegah tabel ter-reset saat guru sedang mengetik nilai/catatan
 
     let categories = [
         { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
@@ -1630,6 +1631,13 @@
         // Sembunyikan indikator muat data
         const overlay = document.getElementById('firebase-loading-overlay');
         if (overlay) overlay.style.display = 'none';
+
+        // JANGAN render ulang seluruh halaman guru jika guru baru saja menginput nilai/catatan secara lokal
+        if (isLocalInputActive && currentRole === 'guru') {
+            isLocalInputActive = false;
+            renderDashboards();
+            return;
+        }
 
         // Refresh Tampilan Sesuai Role Aktif
         if (currentRole === 'admin') {
@@ -1736,7 +1744,7 @@
     window.printCurrentView = function() { window.print(); }
 
     window.downloadCSV = function(csvContent, fileName) {
-        const BOM = "\uFEFF";
+        const BOM = "﻿";
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         if (navigator.msSaveBlob) {
@@ -1856,10 +1864,12 @@
         const dataList = getAdminRekapData();
         const filterClass = document.getElementById('admin-rekap-filter-class').value;
 
-        let csv = "Guru Pengajar,Mata Pelajaran,NISN,Nama Siswa,Kelas,Persentase Kehadiran (%),Hadir/Total Pertemuan,Nilai Akhir\n";
+        let csv = "Guru Pengajar,Mata Pelajaran,NISN,Nama Siswa,Kelas,Persentase Kehadiran (%),Hadir/Total Pertemuan,Nilai Akhir
+";
 
         dataList.forEach(item => {
-            csv += `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"\n`;
+            csv += `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"
+`;
         });
 
         downloadCSV(csv, `rekap_monitoring_siswa_kelas_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1915,7 +1925,8 @@
         headers.push("Nilai Akhir");
         headers.push("Catatan Guru");
 
-        let csv = headers.map(h => `"${h}"`).join(",") + "\n";
+        let csv = headers.map(h => `"${h}"`).join(",") + "
+";
 
         const assignedClasses = getActiveGuruAssignedClasses();
         const filteredStudents = masterStudents.filter(s => {
@@ -1933,13 +1944,13 @@
             categories.forEach(cat => {
                 if (cat.subItems && cat.subItems.length > 0) {
                     cat.subItems.forEach(s => {
-                        const val = sData.scores[`sub_${s.id}`] !== undefined ? sData.scores[`sub_${s.id}`] : '';
+                        const val = (sData.scores && sData.scores[`sub_${s.id}`] !== undefined) ? sData.scores[`sub_${s.id}`] : '';
                         row.push(`"${val}"`);
                     });
                     const avgCat = getCategoryScore(student.id, cat, false);
                     row.push(`"${avgCat !== null ? avgCat.toFixed(1) : '-'}"`);
                 } else {
-                    const val = sData.scores[`cat_${cat.id}`] !== undefined ? sData.scores[`cat_${cat.id}`] : '';
+                    const val = (sData.scores && sData.scores[`cat_${cat.id}`] !== undefined) ? sData.scores[`cat_${cat.id}`] : '';
                     row.push(`"${val}"`);
                 }
             });
@@ -1947,7 +1958,8 @@
             row.push(`"${calculateFinalScore(student.id, student.className, false)}"`);
             row.push(`"${sData.note || ''}"`);
 
-            csv += row.join(",") + "\n";
+            csv += row.join(",") + "
+";
         });
 
         downloadCSV(csv, `rekap_nilai_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1958,7 +1970,8 @@
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const subjectName = currentGuru ? currentGuru.subject : 'Presensi';
 
-        let csv = "No,NISN,Nama Murid,Kelas,Total Pertemuan,Hadir (H),Terlambat (T),Rapat/Dispen (D),Izin (I),Sakit (S),Alpa (A),Persentase (%)\n";
+        let csv = "No,NISN,Nama Murid,Kelas,Total Pertemuan,Hadir (H),Terlambat (T),Rapat/Dispen (D),Izin (I),Sakit (S),Alpa (A),Persentase (%)
+";
 
         const assignedClasses = getActiveGuruAssignedClasses();
         const filteredStudents = masterStudents.filter(s => {
@@ -1969,7 +1982,8 @@
 
         filteredStudents.forEach((student, index) => {
             const stats = calculateStudentAttendanceStats(student.id, student.className);
-            csv += `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"\n`;
+            csv += `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"
+`;
         });
 
         downloadCSV(csv, `rekap_presensi_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -2556,7 +2570,9 @@
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            const lines = e.target.result.split(/\r\n|\n/);
+            const lines = e.target.result.split(/
+|
+/);
             let count = 0, invalidCount = 0, duplicateCount = 0;
 
             for (let i = 1; i < lines.length; i++) {
@@ -2587,13 +2603,19 @@
             fileInput.value = '';
             saveData();
             renderAdminView();
-            alert(`Import selesai!\n- Berhasil: ${count}\n- Duplikat dilewati: ${duplicateCount}\n- Format salah: ${invalidCount}`);
+            alert(`Import selesai!
+- Berhasil: ${count}
+- Duplikat dilewati: ${duplicateCount}
+- Format salah: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
 
     window.downloadGuruTemplate = function() {
-        const csvContent = "Nama Guru,Mata Pelajaran,Username,Password,Kelas Diampu\nBudi Hartono S.Pd,Matematika,guru1,123,\"10 IPA 1, 10 IPA 2\"\nSiti Aminah M.Pd,Bahasa Indonesia,guru2,123,\"10 IPA 2, 10 IPA 3\"\n";
+        const csvContent = "Nama Guru,Mata Pelajaran,Username,Password,Kelas Diampu
+Budi Hartono S.Pd,Matematika,guru1,123,"10 IPA 1, 10 IPA 2"
+Siti Aminah M.Pd,Bahasa Indonesia,guru2,123,"10 IPA 2, 10 IPA 3"
+";
         downloadCSV(csvContent, "template_data_guru.csv");
     }
 
@@ -2604,7 +2626,9 @@
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            const lines = e.target.result.split(/\r\n|\n/);
+            const lines = e.target.result.split(/
+|
+/);
             let count = 0, invalidCount = 0, duplicateCount = 0;
 
             for (let i = 1; i < lines.length; i++) {
@@ -2642,7 +2666,10 @@
             fileInput.value = '';
             saveData();
             renderAdminView();
-            alert(`Import Data Guru selesai!\n- Berhasil: ${count}\n- Duplikat: ${duplicateCount}\n- Tidak Lengkap: ${invalidCount}`);
+            alert(`Import Data Guru selesai!
+- Berhasil: ${count}
+- Duplikat: ${duplicateCount}
+- Tidak Lengkap: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
@@ -3287,7 +3314,10 @@
     }
 
     window.downloadTemplate = function() {
-        const csvContent = "NISN,Nama Murid,Kelas,Password\n0012345671,Ahmad Dahlan,10 IPA 1,123\n0012345672,Dewi Sartika,10 IPA 2,123\n";
+        const csvContent = "NISN,Nama Murid,Kelas,Password
+0012345671,Ahmad Dahlan,10 IPA 1,123
+0012345672,Dewi Sartika,10 IPA 2,123
+";
         downloadCSV(csvContent, "template_data_murid.csv");
     }
 
@@ -3306,20 +3336,61 @@
         if (!teacherScoresData[studentId]) {
             teacherScoresData[studentId] = { note: '', scores: {} };
         }
+        if (!teacherScoresData[studentId].scores) {
+            teacherScoresData[studentId].scores = {};
+        }
         return teacherScoresData[studentId];
     }
 
+    // OPTIMALISASI: Update nilai hanya untuk murid terkait tanpa merender ulang seluruh tabel & tanpa menimpa seluruh database
     window.updateScore = function(studentId, key, value) {
         const sData = getStudentScoreObj(studentId);
-        sData.scores[key] = parseFloat(value) || 0;
-        saveData();
-        renderTeacherTable();
+        const numericVal = value === '' ? null : (parseFloat(value) || 0);
+
+        if (numericVal === null) {
+            delete sData.scores[key];
+        } else {
+            sData.scores[key] = numericVal;
+        }
+
+        // 1. Update tampilan angka Rata-rata & Nilai Akhir HANYA untuk baris murid ini secara instan
+        const student = masterStudents.find(s => s.id === studentId);
+        if (student) {
+            categories.forEach(cat => {
+                if (cat.subItems && cat.subItems.length > 0) {
+                    const avgEl = document.getElementById(`avg_${studentId}_${cat.id}`);
+                    if (avgEl) {
+                        const avgCat = getCategoryScore(studentId, cat, false);
+                        avgEl.innerText = avgCat !== null ? avgCat.toFixed(1) : '-';
+                    }
+                }
+            });
+
+            const finalEl = document.getElementById(`final_${studentId}`);
+            if (finalEl) {
+                finalEl.innerText = calculateFinalScore(studentId, student.className, false);
+            }
+        }
+
+        // 2. Simpan HANYA nilai spesifik murid ini ke Firebase menggunakan update()
+        if (currentGuruId) {
+            isLocalInputActive = true;
+            const scoreRef = ref(db, `portal_database/guruDataStore/${currentGuruId}/scoresData/${studentId}/scores`);
+            update(scoreRef, { [key]: numericVal });
+        }
     }
 
+    // OPTIMALISASI: Update catatan khusus guru secara parsial
     window.updateStudentNote = function(studentId, noteValue) {
         const sData = getStudentScoreObj(studentId);
-        sData.note = noteValue.trim();
-        saveData();
+        const cleanNote = noteValue.trim();
+        sData.note = cleanNote;
+
+        if (currentGuruId) {
+            isLocalInputActive = true;
+            const noteRef = ref(db, `portal_database/guruDataStore/${currentGuruId}/scoresData/${studentId}`);
+            update(noteRef, { note: cleanNote });
+        }
     }
 
     function getCategoryScore(studentId, cat, onlyVisible = false, scoresOverride = null) {
@@ -3329,14 +3400,14 @@
             let total = 0, count = 0;
             cat.subItems.forEach(sub => {
                 if (!onlyVisible || sub.visible) {
-                    const val = scores[`sub_${sub.id}`];
+                    const val = scores ? scores[`sub_${sub.id}`] : undefined;
                     if (val !== undefined && !isNaN(val)) { total += val; count++; }
                 }
             });
             return count > 0 ? total / count : null;
         } else {
             if (onlyVisible && !cat.visible) return null;
-            return scores[`cat_${cat.id}`] !== undefined ? scores[`cat_${cat.id}`] : 0;
+            return (scores && scores[`cat_${cat.id}`] !== undefined) ? scores[`cat_${cat.id}`] : 0;
         }
     }
 
@@ -3390,7 +3461,6 @@
         if (thead) thead.innerHTML = headerHtml;
 
         if (!tbody) return;
-        tbody.innerHTML = '';
 
         const assignedClasses = getActiveGuruAssignedClasses();
 
@@ -3409,7 +3479,7 @@
             return;
         }
 
-        filteredStudents.forEach(student => {
+        const rowsHtml = filteredStudents.map(student => {
             const sData = teacherScoresData[student.id] || { note: '', scores: {} };
             const attCalc = calculateStudentAttendanceStats(student.id, student.className);
 
@@ -3424,7 +3494,7 @@
                 if (cat.subItems && cat.subItems.length > 0) {
                     cat.subItems.forEach(s => {
                         const scoreKey = `sub_${s.id}`;
-                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                        const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '';
                         row += `<td>
                             <input type="number" class="input-score" value="${val}" 
                             onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
@@ -3432,10 +3502,10 @@
                         </td>`;
                     });
                     const avgCat = getCategoryScore(student.id, cat, false);
-                    row += `<td style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
+                    row += `<td id="avg_${student.id}_${cat.id}" style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
                 } else {
                     const scoreKey = `cat_${cat.id}`;
-                    const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
+                    const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '';
                     row += `<td>
                         <input type="number" class="input-score" value="${val}" 
                         onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
@@ -3446,7 +3516,7 @@
 
             const currentNote = sData.note || '';
 
-            row += `<td><strong>${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
+            row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
             row += `<td>
                 <input type="text" class="input-note" value="${currentNote}" 
                 placeholder="misal: Belum Tugas 1" 
@@ -3454,8 +3524,10 @@
                 onkeydown="checkEnter(event, () => this.blur())">
             </td></tr>`;
 
-            tbody.innerHTML += row;
+            return row;
         });
+
+        tbody.innerHTML = rowsHtml.join('');
     }
 
     function initAttendanceTab() {
@@ -3630,7 +3702,7 @@
                     <td>${student.className}</td>
                     <td>
                         <span class="class-badge clickable-badge" style="background:#2563eb; color:white; font-size:12px; padding:4px 8px;" 
-                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.className}')" 
+                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\'")}', '${student.className}')" 
                               title="Klik untuk melihat riwayat tanggal pertemuan">
                             📅 ${stats.total} Pertemuan
                         </span>
@@ -3871,7 +3943,7 @@
 
                             visibleSubItems.forEach(s => {
                                 const scoreKey = `sub_${s.id}`;
-                                const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
+                                const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '-';
                                 tableHtml += `<tr>
                                     <td style="padding-left: 25px; color:#475569;">↳ ${s.name}</td>
                                     ${gShowWeight ? `<td style="color:#aaa;">-</td>` : ''}
@@ -3880,7 +3952,7 @@
                         }
                     } else {
                         const scoreKey = `cat_${cat.id}`;
-                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
+                        const val = (sData.scores && sData.scores[scoreKey] !== undefined) ? sData.scores[scoreKey] : '-';
                         tableHtml += `<tr><td><strong>${cat.name}</strong></td>
                             ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
                             <td><strong>${val}</strong></td></tr>`;
