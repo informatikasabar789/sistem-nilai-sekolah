@@ -1169,37 +1169,26 @@
                     </div>
 					
 					<div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <input type="text" id="guru-search-score-student" placeholder="Cari Nama / NISN..." onkeyup="renderTeacherTable()" style="width: 180px;">
                     
-                    <div class="filter-container" style="margin-bottom: 0;">
-                        <label for="filter-class-score"><strong>Kelas:</strong></label>
-                        <select id="filter-class-score" onchange="renderTeacherTable()">
-                            <option value="ALL">-- Semua Kelas Diampu --</option>
-                        </select>
-                    </div>
 
                     <!-- TAMBAHKAN DROPDOWN SORTIR INI -->
-                    <div class="filter-container" style="margin-bottom: 0;">
-                        <label for="guru-score-sort-by"><strong>Urutkan:</strong></label>
-                        <select id="guru-score-sort-by" onchange="selectGuruScoreSortFromDropdown(this.value)">
-                            <option value="default|asc">Default (Kelas & Nama A-Z)</option>
-                            <option value="attendance|desc">Kehadiran (Tertinggi 🔽)</option>
-                            <option value="attendance|asc">Kehadiran (Terendah 🔼)</option>
-                            <option value="finalScore|desc">Nilai Akhir (Tertinggi 🔽)</option>
-                            <option value="finalScore|asc">Nilai Akhir (Terendah 🔼)</option>
-                        </select>
-                    </div>
+						<div class="filter-container" style="margin-bottom: 0;">
+							<label for="guru-score-sort-by"><strong>Urutkan:</strong></label>
+							<select id="guru-score-sort-by" onchange="selectGuruScoreSortFromDropdown(this.value)">
+								<option value="default|asc">Default (Kelas & Nama A-Z)</option>
+								<option value="attendance|desc">Kehadiran (Tertinggi 🔽)</option>
+								<option value="attendance|asc">Kehadiran (Terendah 🔼)</option>
+								<option value="finalScore|desc">Nilai Akhir (Tertinggi 🔽)</option>
+								<option value="finalScore|asc">Nilai Akhir (Terendah 🔼)</option>
+							</select>
+						</div>
 
-                    <div class="action-btns no-print">
-                        <button class="btn-success btn-sm" onclick="exportGuruScoresCSV()">📊 Export Excel/CSV</button>
-                        <button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak / PDF</button>
-                    </div>
-                </div>
+						<div class="action-btns no-print">
+							<button class="btn-success btn-sm" onclick="exportGuruScoresCSV()">📊 Export Excel/CSV</button>
+							<button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak / PDF</button>
+						</div>
+					</div>
 
-                    <div class="action-btns no-print">
-                        <button class="btn-success btn-sm" onclick="exportGuruScoresCSV()">📊 Export Excel/CSV</button>
-                        <button class="btn-info btn-sm" onclick="printCurrentView()">🖨️ Cetak / PDF</button>
-                    </div>
                 </div>
             </div>
 
@@ -1560,9 +1549,8 @@
     </div>
 </div>
 
-<!-- SCRIPT FIREBASE SDK v9+ MODULE -->
-<script type="module">
-	// Mematikan menu Klik Kanan
+
+// Mematikan menu Klik Kanan
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     });
@@ -1580,23 +1568,19 @@
     });
 	
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    //import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-	// GANTI BARIS IMPORT DATABASE LAMA DENGAN INI:
-	import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    // GANTI DENGAN KUNCI KONFIGURASI FIREBASE ANDA
-	const firebaseConfig = {
-	  apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
-	  authDomain: "sns-smpn1batujajar.firebaseapp.com",
-	  databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
-	  projectId: "sns-smpn1batujajar",
-	  storageBucket: "sns-smpn1batujajar.firebasestorage.app",
-	  messagingSenderId: "1013385508921",
-	  appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
-	  measurementId: "G-L53H0NH1TE"
-	};
+    const firebaseConfig = {
+        apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
+        authDomain: "sns-smpn1batujajar.firebaseapp.com",
+        databaseURL: "https://sns-smpn1batujajar-default-rtdb.firebaseio.com",
+        projectId: "sns-smpn1batujajar",
+        storageBucket: "sns-smpn1batujajar.firebasestorage.app",
+        messagingSenderId: "1013385508921",
+        appId: "1:1013385508921:web:5ef8d74d4a45334d58f5e8",
+        measurementId: "G-L53H0NH1TE"
+    };
 
-    // Inisialisasi Firebase & Database
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
@@ -1625,13 +1609,14 @@
     let currentRole = 'none';
     let currentLoggedInStudent = null;
     let activeSiswaSubjectTab = 'ALL';
+    let activeAdminTab = 'tab-admin-guru';
+    let activeGuruTab = 'tab-kategori';
     let tempLogoDataUrl = null;
     let adminRekapSortKey = 'className';
     let adminRekapSortAsc = true;
-	let guruScoreSortMode = 'default'; // Pilihan: 'default', 'final_desc', 'final_asc'
-	let isLocalInputActive = false; // Mencegah tabel ter-reset saat guru sedang mengetik
-	let guruScoreSortKey = 'default'; // Bisa: 'default', 'nisn', 'name', 'className', 'attendance', 'sub_101', 'cat_2', 'avg_1', 'finalScore'
-    let guruScoreSortAsc = true;      // true = Terkecil ke Terbesar / A-Z, false = Terbesar ke Terkecil / Z-A
+    let isLocalInputActive = false;
+    let guruScoreSortKey = 'default';
+    let guruScoreSortAsc = true;
 
     let categories = [
         { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
@@ -1648,49 +1633,57 @@
     let showAttDetailToStudent = true;
     let showAttHistoryToStudent = true;
 
+    // Cache Perhitungan Presensi agar tidak dihitung berulang kali
+    let attendanceStatsCache = {};
+
+    function buildAttendanceCache(attDataList = teacherAttendanceData) {
+        const cache = {};
+        const sessionsByClass = {};
+
+        // Kelompokkan & urutkan sesi presensi per kelas SEKALI SAJA
+        (attDataList || []).forEach(session => {
+            if (!sessionsByClass[session.className]) {
+                sessionsByClass[session.className] = [];
+            }
+            sessionsByClass[session.className].push(session);
+        });
+
+        Object.keys(sessionsByClass).forEach(cls => {
+            sessionsByClass[cls].sort((a, b) => new Date(a.date) - new Date(b.date));
+        });
+
+        masterStudents.forEach(s => {
+            const classSessions = sessionsByClass[s.className] || [];
+            const totalSessions = classSessions.length;
+            let hadir = 0, terlambat = 0, dispen = 0, izin = 0, sakit = 0, alpa = 0;
+            const history = [];
+
+            classSessions.forEach(session => {
+                const status = session.records ? session.records[s.id] : 'H';
+                if (status === 'H') hadir++;
+                else if (status === 'T') terlambat++;
+                else if (status === 'D') dispen++;
+                else if (status === 'I') izin++;
+                else if (status === 'S') sakit++;
+                else if (status === 'A') alpa++;
+
+                history.push({ date: session.date, status: status });
+            });
+
+            const earnedPoints = (hadir * 1.0) + (dispen * 1.0) + (terlambat * 0.75) + (izin * 0.50) + (sakit * 0.50);
+            const percentage = totalSessions > 0 ? ((earnedPoints / totalSessions) * 100).toFixed(1) : "100.0";
+
+            cache[s.id] = {
+                total: totalSessions,
+                hadir, terlambat, dispen, izin, sakit, alpa, percentage, history
+            };
+        });
+
+        return cache;
+    }
+
     // Mendengarkan Sinkronisasi Realtime Firebase
     const dbRef = ref(db, 'portal_database');
-    /*onValue(dbRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            if (data.appProfile) appProfile = data.appProfile;
-            if (data.masterClasses) masterClasses = data.masterClasses;
-            if (data.masterStudents) {
-                masterStudents = data.masterStudents.map(s => {
-                    if (!s.password) s.password = '123';
-                    return s;
-                });
-            }
-            if (data.gurus) gurus = data.gurus;
-            if (data.guruDataStore) {
-                guruDataStore = data.guruDataStore;
-                if (currentGuruId && guruDataStore[currentGuruId]) {
-                    loadGuruDataFromStore(currentGuruId);
-                }
-            }
-        } else {
-            // Jika database firebase masih kosong, inisialisasi awal
-            saveData();
-        }
-
-        // Sembunyikan indikator muat data
-        const overlay = document.getElementById('firebase-loading-overlay');
-        if (overlay) overlay.style.display = 'none';
-
-        // Refresh Tampilan Sesuai Role Aktif
-        if (currentRole === 'admin') {
-            renderAdminView();
-        } else if (currentRole === 'guru') {
-            renderTeacherView();
-        } else if (currentRole === 'siswa' && currentLoggedInStudent) {
-            renderSiswaSubjectTabs();
-            renderStudentView();
-        } else {
-            applyAppProfile();
-        }
-    });*/
-	
-	// GANTI BLOK onValue LAMA DENGAN INI:
     onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -1705,7 +1698,7 @@
             if (data.gurus) gurus = data.gurus;
             if (data.guruDataStore) {
                 guruDataStore = data.guruDataStore;
-                if (currentGuruId && guruDataStore[currentGuruId]) {
+                if (currentRole === 'guru' && currentGuruId && guruDataStore[currentGuruId]) {
                     loadGuruDataFromStore(currentGuruId);
                 }
             }
@@ -1716,7 +1709,6 @@
         const overlay = document.getElementById('firebase-loading-overlay');
         if (overlay) overlay.style.display = 'none';
 
-        // JANGAN render ulang seluruh halaman guru jika guru baru saja menginput nilai/catatan
         if (isLocalInputActive && currentRole === 'guru') {
             isLocalInputActive = false;
             renderDashboards();
@@ -1749,12 +1741,13 @@
         showWeightToStudent = gStore.showWeight !== undefined ? gStore.showWeight : true;
         showAttDetailToStudent = gStore.showAttDetail !== undefined ? gStore.showAttDetail : true;
         showAttHistoryToStudent = gStore.showAttHistory !== undefined ? gStore.showAttHistory : true;
+        attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
     }
 
     function saveData() {
         sortMasterStudents();
 
-        if (currentGuruId) {
+        if (currentRole === 'guru' && currentGuruId) {
             guruDataStore[currentGuruId] = {
                 categories: categories,
                 attendanceWeight: attendanceWeight,
@@ -1774,72 +1767,51 @@
             guruDataStore: guruDataStore
         };
 
-        // Simpan Data Ke Firebase Realtime Database
         set(ref(db, 'portal_database'), payload);
         renderDashboards();
     }
 
-	// Fungsi saat dropdown sortir diubah
-    window.changeGuruScoreSort = function(mode) {
-        guruScoreSortMode = mode;
-        renderTeacherTable();
-    }
-
-    // Fungsi saat header kolom "Nilai Akhir" diklik langsung
-    window.toggleGuruFinalScoreSort = function() {
-        if (guruScoreSortMode === 'final_desc') {
-            guruScoreSortMode = 'final_asc';
-        } else {
-            guruScoreSortMode = 'final_desc';
-        }
-        const selectEl = document.getElementById('guru-score-sort-by');
-        if (selectEl) selectEl.value = guruScoreSortMode;
-        renderTeacherTable();
-    }
-
-    // FUNGSI UTAMA & AKSI USER
+    // DASHBOARD SUMMARY
     window.renderDashboards = function() {
-        const adminStudentCount = masterStudents.length;
-        const adminGuruCount = gurus.length;
-        const adminClassCount = masterClasses.length;
-        
-        let totalAdminScoresCount = 0;
-        gurus.forEach(g => {
-            const scoresData = (guruDataStore[g.id] && guruDataStore[g.id].scoresData) ? guruDataStore[g.id].scoresData : {};
-            Object.values(scoresData).forEach(st => {
-                if (st.scores) totalAdminScoresCount += Object.keys(st.scores).length;
+        if (currentRole === 'admin') {
+            let totalAdminScoresCount = 0;
+            gurus.forEach(g => {
+                const scoresData = (guruDataStore[g.id] && guruDataStore[g.id].scoresData) ? guruDataStore[g.id].scoresData : {};
+                Object.values(scoresData).forEach(st => {
+                    if (st.scores) totalAdminScoresCount += Object.keys(st.scores).length;
+                });
             });
-        });
 
-        const elAdminStu = document.getElementById('dash-admin-students');
-        const elAdminGuru = document.getElementById('dash-admin-gurus');
-        const elAdminCls = document.getElementById('dash-admin-classes');
-        const elAdminScr = document.getElementById('dash-admin-scores');
+            const elAdminStu = document.getElementById('dash-admin-students');
+            const elAdminGuru = document.getElementById('dash-admin-gurus');
+            const elAdminCls = document.getElementById('dash-admin-classes');
+            const elAdminScr = document.getElementById('dash-admin-scores');
 
-        if (elAdminStu) elAdminStu.innerText = adminStudentCount;
-        if (elAdminGuru) elAdminGuru.innerText = adminGuruCount;
-        if (elAdminCls) elAdminCls.innerText = adminClassCount;
-        if (elAdminScr) elAdminScr.innerText = totalAdminScoresCount;
+            if (elAdminStu) elAdminStu.innerText = masterStudents.length;
+            if (elAdminGuru) elAdminGuru.innerText = gurus.length;
+            if (elAdminCls) elAdminCls.innerText = masterClasses.length;
+            if (elAdminScr) elAdminScr.innerText = totalAdminScoresCount;
+        } else if (currentRole === 'guru') {
+            const assignedClasses = getActiveGuruAssignedClasses();
+            const guruClassCount = assignedClasses.length > 0 ? assignedClasses.length : masterClasses.length;
+            const guruStudentsCount = masterStudents.filter(s => isStudentInAssignedClasses(s.className, assignedClasses)).length;
+            const guruAttSessionCount = teacherAttendanceData.length;
 
-        const assignedClasses = getActiveGuruAssignedClasses();
-        const guruClassCount = assignedClasses.length > 0 ? assignedClasses.length : masterClasses.length;
-        const guruStudentsCount = masterStudents.filter(s => isStudentInAssignedClasses(s.className, assignedClasses)).length;
-        const guruAttSessionCount = teacherAttendanceData.length;
+            let totalGuruScoresCount = 0;
+            Object.values(teacherScoresData).forEach(st => {
+                if (st.scores) totalGuruScoresCount += Object.keys(st.scores).length;
+            });
 
-        let totalGuruScoresCount = 0;
-        Object.values(teacherScoresData).forEach(st => {
-            if (st.scores) totalGuruScoresCount += Object.keys(st.scores).length;
-        });
+            const elGuruCls = document.getElementById('dash-guru-classes');
+            const elGuruStu = document.getElementById('dash-guru-students');
+            const elGuruAtt = document.getElementById('dash-guru-att-sessions');
+            const elGuruScr = document.getElementById('dash-guru-scores');
 
-        const elGuruCls = document.getElementById('dash-guru-classes');
-        const elGuruStu = document.getElementById('dash-guru-students');
-        const elGuruAtt = document.getElementById('dash-guru-att-sessions');
-        const elGuruScr = document.getElementById('dash-guru-scores');
-
-        if (elGuruCls) elGuruCls.innerText = guruClassCount;
-        if (elGuruStu) elGuruStu.innerText = guruStudentsCount;
-        if (elGuruAtt) elGuruAtt.innerText = guruAttSessionCount;
-        if (elGuruScr) elGuruScr.innerText = totalGuruScoresCount;
+            if (elGuruCls) elGuruCls.innerText = guruClassCount;
+            if (elGuruStu) elGuruStu.innerText = guruStudentsCount;
+            if (elGuruAtt) elGuruAtt.innerText = guruAttSessionCount;
+            if (elGuruScr) elGuruScr.innerText = totalGuruScoresCount;
+        }
     }
 
     window.printCurrentView = function() { window.print(); }
@@ -1860,6 +1832,7 @@
         }
     }
 
+    // PASSWORD MANDIRI
     window.openSelfChangePassModal = function() {
         document.getElementById('self-old-pass').value = '';
         document.getElementById('self-new-pass').value = '';
@@ -1902,6 +1875,7 @@
         }
     }
 
+    // ADMIN REKAP MONITORING
     function getAdminRekapData() {
         const filterClass = document.getElementById('admin-rekap-filter-class') ? document.getElementById('admin-rekap-filter-class').value : 'ALL';
         let rekapList = [];
@@ -1912,6 +1886,7 @@
             const attWgt = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
             const scoresData = gStore.scoresData || {};
             const attData = gStore.attendanceData || [];
+            const guruAttCache = buildAttendanceCache(attData);
 
             const assignedClasses = g.assignedClasses || [];
             const filteredStus = masterStudents.filter(s => {
@@ -1922,8 +1897,8 @@
 
             filteredStus.forEach(s => {
                 const studentScores = scoresData[s.id] ? scoresData[s.id].scores : {};
-                let attCalc = calculateStudentAttendanceStats(s.id, s.className, attData);
-                let finalScore = calculateFinalScoreAdmin(s.id, s.className, studentScores, cats, attWgt, attData);
+                const attCalc = guruAttCache[s.id] || { percentage: "100.0", hadir: 0, total: 0 };
+                const finalScore = calculateFinalScoreAdmin(s.id, s.className, studentScores, cats, attWgt, guruAttCache);
 
                 rekapList.push({
                     guruId: g.id,
@@ -1966,10 +1941,9 @@
         const filterClass = document.getElementById('admin-rekap-filter-class').value;
 
         let csv = "Guru Pengajar,Mata Pelajaran,NISN,Nama Siswa,Kelas,Persentase Kehadiran (%),Hadir/Total Pertemuan,Nilai Akhir\n";
-
-        dataList.forEach(item => {
-            csv += `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"\n`;
-        });
+        csv += dataList.map(item => 
+            `"${item.guruName}","${item.subject}","'${item.nisn}","${item.studentName}","${item.className}","${item.attendancePercentage}%","${item.attendanceRatio}","${item.finalScore.toFixed(2)}"`
+        ).join("\n");
 
         downloadCSV(csv, `rekap_monitoring_siswa_kelas_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
     }
@@ -1983,11 +1957,7 @@
         }
 
         const selectSort = document.getElementById('admin-rekap-sort-by');
-        if (selectSort) {
-            if (columnKey === 'attendance') selectSort.value = 'attendance';
-            else if (columnKey === 'finalScore') selectSort.value = 'finalScore';
-            else selectSort.value = columnKey;
-        }
+        if (selectSort) selectSort.value = columnKey;
 
         renderAdminRekapTable();
     }
@@ -1997,32 +1967,27 @@
         keys.forEach(k => {
             const el = document.getElementById(`sort-icon-${k}`);
             if (el) {
-                if (adminRekapSortKey === k) {
-                    el.innerText = adminRekapSortAsc ? '🔼' : '🔽';
-                } else {
-                    el.innerText = '↕️';
-                }
+                el.innerText = adminRekapSortKey === k ? (adminRekapSortAsc ? '🔼' : '🔽') : '↕️';
             }
         });
     }
 
+    // EXPORT & IMPORT CSV GURU
     window.exportGuruScoresCSV = function() {
         const filterClass = document.getElementById('filter-class-score').value;
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const subjectName = currentGuru ? currentGuru.subject : 'Nilai';
 
         let headers = ["NISN", "Nama Murid", "Kelas", `Kehadiran (${attendanceWeight}%)`];
-        
         categories.forEach(c => {
-            if (c.subItems && c.subItems.length > 0) {
+            if (Array.isArray(c.subItems) && c.subItems.length > 0) {
                 c.subItems.forEach(s => headers.push(s.name));
                 headers.push(`Rata-rata ${c.name}`);
             } else {
                 headers.push(`${c.name} (${c.weight}%)`);
             }
         });
-        headers.push("Nilai Akhir");
-        headers.push("Catatan Guru");
+        headers.push("Nilai Akhir", "Catatan Guru");
 
         let csv = headers.map(h => `"${h}"`).join(",") + "\n";
 
@@ -2033,14 +1998,13 @@
             return matchAssignedClass && matchFilterDropdown;
         });
 
-        filteredStudents.forEach(student => {
+        const rows = filteredStudents.map(student => {
             const sData = teacherScoresData[student.id] || { note: '', scores: {} };
             const attCalc = calculateStudentAttendanceStats(student.id, student.className);
-
             let row = [`"'${student.nisn}"`, `"${student.name}"`, `"${student.className}"`, `"${attCalc.percentage}%"`];
 
             categories.forEach(cat => {
-                if (cat.subItems && cat.subItems.length > 0) {
+                if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
                     cat.subItems.forEach(s => {
                         const val = sData.scores[`sub_${s.id}`] !== undefined ? sData.scores[`sub_${s.id}`] : '';
                         row.push(`"${val}"`);
@@ -2055,20 +2019,18 @@
 
             row.push(`"${calculateFinalScore(student.id, student.className, false)}"`);
             row.push(`"${sData.note || ''}"`);
-
-            csv += row.join(",") + "\n";
+            return row.join(",");
         });
 
+        csv += rows.join("\n");
         downloadCSV(csv, `rekap_nilai_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
     }
 	
-	// 1. FUNGSI UNDUH TEMPLATE NILAI DINAMIS (SESUAI KELAS & KATEGORI)
     window.downloadGuruScoreTemplate = function() {
         const filterClass = document.getElementById('filter-class-score').value;
         const currentGuru = gurus.find(g => g.id === currentGuruId);
         const subjectName = currentGuru ? currentGuru.subject.replace(/\s+/g, '_') : 'Nilai';
 
-        // Susun Header Kolom Berdasarkan Kategori & Sub-Item yang Aktif
         let headers = ["NISN", "Nama Murid", "Kelas"];
         categories.forEach(c => {
             if (Array.isArray(c.subItems) && c.subItems.length > 0) {
@@ -2081,7 +2043,6 @@
 
         let csv = headers.map(h => `"${h}"`).join(",") + "\n";
 
-        // Masukkan Daftar Siswa Sesuai Filter Kelas
         const assignedClasses = getActiveGuruAssignedClasses();
         const filteredStudents = masterStudents.filter(s => {
             const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
@@ -2093,9 +2054,8 @@
             return alert('Tidak ada data murid pada filter kelas yang dipilih!');
         }
 
-        filteredStudents.forEach(student => {
+        const rows = filteredStudents.map(student => {
             const sData = teacherScoresData[student.id] || { note: '', scores: {} };
-            // Gunakan tanda kutip tunggal di depan NISN agar angka 0 di depan tidak hilang di Excel
             let row = [`"'${student.nisn}"`, `"${student.name}"`, `"${student.className}"`];
 
             categories.forEach(cat => {
@@ -2111,13 +2071,13 @@
             });
 
             row.push(`"${sData.note || ''}"`);
-            csv += row.join(",") + "\n";
+            return row.join(",");
         });
 
+        csv += rows.join("\n");
         downloadCSV(csv, `template_input_nilai_${subjectName}_${filterClass}.csv`);
     }
 
-    // 2. FUNGSI UPLOAD & IMPORT NILAI DARI CSV EXCEL
     window.importGuruScoresFromCSV = function() {
         const fileInput = document.getElementById('guru-score-csv-input');
         const file = fileInput.files[0];
@@ -2127,29 +2087,20 @@
         reader.onload = function(e) {
             const text = e.target.result;
             const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
-            
-            if (lines.length < 2) {
-                return alert('File CSV kosong atau tidak memiliki baris data!');
-            }
+            if (lines.length < 2) return alert('File CSV kosong atau tidak memiliki baris data!');
 
-            // Deteksi pemisah otomatis (Excel Indonesia sering memakai titik koma ';', standar memakai ',')
             const delimiter = lines[0].includes(';') ? ';' : ',';
-
-            // Fungsi helper untuk memecah baris CSV dengan aman
             const parseCSVLine = (str) => {
                 const result = [];
                 let current = '';
                 let inQuotes = false;
                 for (let i = 0; i < str.length; i++) {
                     const char = str[i];
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === delimiter && !inQuotes) {
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === delimiter && !inQuotes) {
                         result.push(current.trim());
                         current = '';
-                    } else {
-                        current += char;
-                    }
+                    } else current += char;
                 }
                 result.push(current.trim());
                 return result.map(col => col.replace(/^"|"$/g, '').replace(/^'/, '').trim());
@@ -2157,80 +2108,54 @@
 
             const headerCols = parseCSVLine(lines[0]);
             const nisnColIndex = headerCols.findIndex(h => h.toLowerCase() === 'nisn');
-            if (nisnColIndex === -1) {
-                return alert('Kolom "NISN" tidak ditemukan pada baris pertama file CSV!');
-            }
+            if (nisnColIndex === -1) return alert('Kolom "NISN" tidak ditemukan pada baris pertama file CSV!');
 
-            // Petakan urutan kolom kategori/sub-item saat ini
             let expectedScoreFields = [];
             categories.forEach(c => {
                 if (Array.isArray(c.subItems) && c.subItems.length > 0) {
-                    c.subItems.forEach(s => {
-                        expectedScoreFields.push({ key: `sub_${s.id}`, label: s.name });
-                    });
+                    c.subItems.forEach(s => expectedScoreFields.push({ key: `sub_${s.id}`, label: s.name }));
                 } else {
                     expectedScoreFields.push({ key: `cat_${c.id}`, label: c.name });
                 }
             });
 
-            // Cocokkan kolom CSV berdasarkan nama header (atau urutan default kolom ke-3 dst)
             const columnMappings = expectedScoreFields.map((field, idx) => {
                 const matchIdx = headerCols.findIndex(h => h.toLowerCase() === field.label.toLowerCase());
-                return {
-                    key: field.key,
-                    colIndex: matchIdx !== -1 ? matchIdx : (3 + idx)
-                };
+                return { key: field.key, colIndex: matchIdx !== -1 ? matchIdx : (3 + idx) };
             });
 
             const noteColIndex = headerCols.findIndex(h => h.toLowerCase().includes('catatan'));
-
-            let updatedCount = 0;
-            let notFoundCount = 0;
+            let updatedCount = 0, notFoundCount = 0;
 
             for (let i = 1; i < lines.length; i++) {
                 const cols = parseCSVLine(lines[i]);
                 let rawNisn = cols[nisnColIndex] || '';
-                // Pastikan format NISN 10 digit jika angka 0 di depan sempat terpotong Excel
-                if (/^\d{8,9}$/.test(rawNisn)) {
-                    rawNisn = rawNisn.padStart(10, '0');
-                }
-
+                if (/^\d{8,9}$/.test(rawNisn)) rawNisn = rawNisn.padStart(10, '0');
                 if (!rawNisn) continue;
 
                 const student = masterStudents.find(s => s.nisn === rawNisn);
-                if (!student) {
-                    notFoundCount++;
-                    continue;
-                }
+                if (!student) { notFoundCount++; continue; }
 
                 const sData = getStudentScoreObj(student.id);
                 if (!sData.scores) sData.scores = {};
 
-                // Ambil setiap nilai dari kolom yang cocok
                 columnMappings.forEach(map => {
                     if (cols[map.colIndex] !== undefined) {
-                        const rawVal = cols[map.colIndex].replace(',', '.'); // Antisipasi koma desimal Excel
-                        if (rawVal === '' || rawVal === '-') {
-                            delete sData.scores[map.key];
-                        } else if (!isNaN(parseFloat(rawVal))) {
-                            sData.scores[map.key] = parseFloat(rawVal);
-                        }
+                        const rawVal = cols[map.colIndex].replace(',', '.');
+                        if (rawVal === '' || rawVal === '-') delete sData.scores[map.key];
+                        else if (!isNaN(parseFloat(rawVal))) sData.scores[map.key] = parseFloat(rawVal);
                     }
                 });
 
-                // Ambil catatan guru jika kolom catatan ada
                 if (noteColIndex !== -1 && cols[noteColIndex] !== undefined) {
                     sData.note = cols[noteColIndex];
                 }
-
                 updatedCount++;
             }
 
-            // Simpan seluruh perubahan ke Firebase dan perbarui tabel
             saveData();
             renderTeacherTable();
             fileInput.value = '';
-
             alert(`Import Nilai Selesai!\n✅ Berhasil diperbarui: ${updatedCount} siswa` + 
                   (notFoundCount > 0 ? `\n⚠️ NISN tidak ditemukan: ${notFoundCount} baris` : ''));
         };
@@ -2251,30 +2176,26 @@
             return matchAssignedClass && matchFilter;
         });
 
-        filteredStudents.forEach((student, index) => {
+        csv += filteredStudents.map((student, index) => {
             const stats = calculateStudentAttendanceStats(student.id, student.className);
-            csv += `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"\n`;
-        });
+            return `"${index + 1}","'${student.nisn}","${student.name}","${student.className}","${stats.total}","${stats.hadir}","${stats.terlambat}","${stats.dispen}","${stats.izin}","${stats.sakit}","${stats.alpa}","${stats.percentage}%"`;
+        }).join("\n");
 
         downloadCSV(csv, `rekap_presensi_${subjectName}_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
+    // BACKUP & RESTORE JSON
     window.exportAdminBackupJSON = function() {
         const backupData = {
             version: '3.0',
             timestamp: new Date().toISOString(),
-            appProfile: appProfile,
-            masterClasses: masterClasses,
-            masterStudents: masterStudents,
-            gurus: gurus,
-            guruDataStore: guruDataStore
+            appProfile, masterClasses, masterStudents, gurus, guruDataStore
         };
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
         const downloadAnchor = document.createElement('a');
-        const fileName = `backup_portal_sekolah_${new Date().toISOString().split('T')[0]}.json`;
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", fileName);
+        downloadAnchor.setAttribute("download", `backup_portal_sekolah_${new Date().toISOString().split('T')[0]}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -2289,7 +2210,6 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-
                 if (!data.masterClasses || !data.masterStudents || !data.gurus) {
                     return alert('File JSON tidak valid atau struktur tidak cocok!');
                 }
@@ -2326,8 +2246,7 @@
             guruId: currentGuruId,
             subject: currentGuru ? currentGuru.subject : '',
             timestamp: new Date().toISOString(),
-            categories: categories,
-            attendanceWeight: attendanceWeight,
+            categories, attendanceWeight,
             scoresData: teacherScoresData,
             attendanceData: teacherAttendanceData,
             showWeight: showWeightToStudent,
@@ -2337,9 +2256,8 @@
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(guruBackup, null, 2));
         const downloadAnchor = document.createElement('a');
-        const fileName = `backup_guru_${guruName}_${new Date().toISOString().split('T')[0]}.json`;
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", fileName);
+        downloadAnchor.setAttribute("download", `backup_guru_${guruName}_${new Date().toISOString().split('T')[0]}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -2354,7 +2272,6 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-
                 if (!data.categories || data.attendanceWeight === undefined || !data.scoresData) {
                     return alert('File JSON backup guru tidak valid!');
                 }
@@ -2368,6 +2285,7 @@
                     if (data.showAttDetail !== undefined) showAttDetailToStudent = data.showAttDetail;
                     if (data.showAttHistory !== undefined) showAttHistoryToStudent = data.showAttHistory;
 
+                    attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
                     saveData();
                     fileInput.value = '';
                     renderTeacherView();
@@ -2380,6 +2298,7 @@
         reader.readAsText(file);
     }
 
+    // PROFIL & IDENTITAS APLIKASI
     function applyAppProfile() {
         document.getElementById('header-app-name').innerText = appProfile.appName;
         document.getElementById('header-school-name').innerText = appProfile.schoolName;
@@ -2414,12 +2333,10 @@
     window.saveAppIdentitySettings = function() {
         const appName = document.getElementById('setting-app-name').value.trim();
         const schoolName = document.getElementById('setting-school-name').value.trim();
-
         if (!appName || !schoolName) return alert('Nama aplikasi dan nama sekolah tidak boleh kosong!');
 
         appProfile.appName = appName;
         appProfile.schoolName = schoolName;
-
         if (tempLogoDataUrl) {
             appProfile.logoUrl = tempLogoDataUrl;
             tempLogoDataUrl = null;
@@ -2440,17 +2357,14 @@
             if (newPass !== confirmPass) return alert('Password baru dan Konfirmasi Password tidak cocok!');
             appProfile.adminPassword = newPass;
         }
-
         if (!secAnswer) return alert('Jawaban Rahasia tidak boleh kosong!');
 
         appProfile.secQuestion = secQuestion;
         appProfile.secAnswer = secAnswer.toLowerCase();
 
         saveData();
-
         document.getElementById('setting-admin-new-pass').value = '';
         document.getElementById('setting-admin-confirm-pass').value = '';
-
         alert('Pengaturan Keamanan & Password Admin berhasil diperbarui!');
     }
 
@@ -2473,7 +2387,6 @@
         if (!newPass) return alert('Harap masukkan Password Admin baru!');
 
         const validAnswer = (appProfile.secAnswer || 'kucing').toLowerCase();
-
         if (answerInput === validAnswer) {
             appProfile.adminPassword = newPass;
             saveData();
@@ -2484,10 +2397,10 @@
         }
     }
 
+    // MASTER KELAS
     window.addMasterClass = function() {
         const input = document.getElementById('add-class-input');
         const className = input.value.trim();
-
         if (!className) return alert('Nama kelas tidak boleh kosong!');
         if (masterClasses.some(c => c.toLowerCase() === className.toLowerCase())) {
             return alert(`Kelas "${className}" sudah ada!`);
@@ -2512,16 +2425,10 @@
             const idx = masterClasses.indexOf(oldClassName);
             if (idx !== -1) {
                 masterClasses[idx] = trimmed;
-                
-                masterStudents.forEach(s => {
-                    if (s.className === oldClassName) s.className = trimmed;
-                });
+                masterStudents.forEach(s => { if (s.className === oldClassName) s.className = trimmed; });
                 gurus.forEach(g => {
-                    if (g.assignedClasses) {
-                        g.assignedClasses = g.assignedClasses.map(c => c === oldClassName ? trimmed : c);
-                    }
+                    if (g.assignedClasses) g.assignedClasses = g.assignedClasses.map(c => c === oldClassName ? trimmed : c);
                 });
-
                 saveData();
                 renderAdminView();
                 alert(`Nama kelas berhasil diubah!`);
@@ -2533,9 +2440,7 @@
         if (confirm(`Hapus kelas "${className}" dari master pilihan?`)) {
             masterClasses = masterClasses.filter(c => c !== className);
             gurus.forEach(g => {
-                if (g.assignedClasses) {
-                    g.assignedClasses = g.assignedClasses.filter(c => c !== className);
-                }
+                if (g.assignedClasses) g.assignedClasses = g.assignedClasses.filter(c => c !== className);
             });
             saveData();
             renderAdminView();
@@ -2544,76 +2449,58 @@
 
     function renderMasterClassTable() {
         const tbody = document.getElementById('master-class-table-body');
-        tbody.innerHTML = '';
-
+        if (!tbody) return;
         if (masterClasses.length === 0) {
             tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#888;">Belum ada master kelas.</td></tr>`;
             return;
         }
-
-        masterClasses.forEach(cls => {
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${cls}</strong></td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-warning btn-sm" onclick="editMasterClass('${cls}')">Edit</button>
-                            <button class="btn-danger btn-sm" onclick="deleteMasterClass('${cls}')">Hapus</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
+        tbody.innerHTML = masterClasses.map(cls => `
+            <tr>
+                <td><strong>${cls}</strong></td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-warning btn-sm" onclick="editMasterClass('${cls}')">Edit</button>
+                        <button class="btn-danger btn-sm" onclick="deleteMasterClass('${cls}')">Hapus</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
     }
 
     function renderClassCheckboxes(containerId, selectedClasses = [], prefix = 'chk_') {
         const container = document.getElementById(containerId);
         if (!container) return;
-
-        container.innerHTML = '';
-
         if (masterClasses.length === 0) {
             container.innerHTML = '<span style="color:#aaa; font-size:12px;">Belum ada master kelas.</span>';
             return;
         }
-
-        masterClasses.forEach((cls, idx) => {
+        container.innerHTML = masterClasses.map((cls, idx) => {
             const isChecked = selectedClasses.includes(cls) ? 'checked' : '';
             const checkId = `${prefix}_${idx}_${cls.replace(/\s+/g, '_')}`;
-            container.innerHTML += `
+            return `
                 <label class="checkbox-item" for="${checkId}">
                     <input type="checkbox" id="${checkId}" value="${cls}" ${isChecked} class="class-checkbox-input">
                     <span><strong>${cls}</strong></span>
                 </label>
             `;
-        });
+        }).join('');
     }
 
     function getSelectedClassesFromContainer(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return [];
-        const checkboxes = container.querySelectorAll('.class-checkbox-input:checked');
-        const selected = [];
-        checkboxes.forEach(cb => selected.push(cb.value));
-        return selected;
+        return Array.from(container.querySelectorAll('.class-checkbox-input:checked')).map(cb => cb.value);
     }
 
     function sortMasterStudents() {
         masterStudents.sort((a, b) => {
-            const classA = (a.className || '').toLowerCase();
-            const classB = (b.className || '').toLowerCase();
-            if (classA < classB) return -1;
-            if (classA > classB) return 1;
-
-            const nameA = (a.name || '').toLowerCase();
-            const nameB = (b.name || '').toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-
-            return 0;
+            const classCompare = (a.className || '').localeCompare(b.className || '');
+            if (classCompare !== 0) return classCompare;
+            return (a.name || '').localeCompare(b.name || '');
         });
     }
 
+    // AUTH & LOGIN
     window.toggleLoginInputs = function() {
         const role = document.getElementById('login-role').value;
         const passGroup = document.getElementById('login-password-group');
@@ -2717,6 +2604,14 @@
         document.getElementById('user-display-info').innerText = `Admin Sistem`;
         document.getElementById('user-role-badge').innerText = `ADMIN`;
 
+        // Reset ke Tab 1 agar instan saat login
+        activeAdminTab = 'tab-admin-guru';
+        document.querySelectorAll('#view-admin .tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-admin-guru').classList.remove('hidden');
+        const btns = document.querySelectorAll('#view-admin .tab-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        if (btns[0]) btns[0].classList.add('active');
+
         renderAdminView();
     }
 
@@ -2730,6 +2625,14 @@
         document.getElementById('btn-self-change-pass').classList.remove('hidden');
         document.getElementById('user-display-info').innerText = `${guru.name} (${guru.subject})`;
         document.getElementById('user-role-badge').innerText = `GURU`;
+
+        // Reset ke Tab 1 agar instan saat login
+        activeGuruTab = 'tab-kategori';
+        document.querySelectorAll('#view-guru .tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-kategori').classList.remove('hidden');
+        const btns = document.querySelectorAll('#view-guru .tab-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        if (btns[0]) btns[0].classList.add('active');
 
         renderTeacherView();
     }
@@ -2750,36 +2653,46 @@
         renderStudentView();
     }
 
+    // LAZY RENDER SAAT PINDAH TAB ADMIN
     window.switchAdminTab = function(tabId, btnElement) {
-        const tabContents = document.querySelectorAll('#view-admin .tab-content');
-        tabContents.forEach(content => content.classList.add('hidden'));
-
-        const tabBtns = document.querySelectorAll('#view-admin .tab-btn');
-        tabBtns.forEach(btn => btn.classList.remove('active'));
+        activeAdminTab = tabId;
+        document.querySelectorAll('#view-admin .tab-content').forEach(content => content.classList.add('hidden'));
+        document.querySelectorAll('#view-admin .tab-btn').forEach(btn => btn.classList.remove('active'));
 
         document.getElementById(tabId).classList.remove('hidden');
         btnElement.classList.add('active');
+
+        renderActiveAdminTabContent();
+    }
+
+    function renderActiveAdminTabContent() {
+        if (activeAdminTab === 'tab-admin-guru') {
+            renderMasterClassTable();
+            renderClassCheckboxes('add-guru-classes-checkboxes', [], 'add_guru_chk');
+            renderGuruTable();
+        } else if (activeAdminTab === 'tab-admin-murid') {
+            populateAdminClassFilterDropdown();
+            renderAdminStudentCrudTable();
+        } else if (activeAdminTab === 'tab-admin-rekap') {
+            populateAdminClassFilterDropdown();
+            renderAdminRekapTable();
+        } else if (activeAdminTab === 'tab-admin-profile') {
+            applyAppProfile();
+        }
     }
 
     function renderAdminView() {
-        renderDashboards();
-        renderMasterClassTable();
-        renderClassCheckboxes('add-guru-classes-checkboxes', [], 'add_guru_chk');
-        renderGuruTable();
-        populateAdminClassFilterDropdown();
-        renderAdminStudentCrudTable();
-        renderAdminRekapTable();
         applyAppProfile();
+        renderDashboards();
+        renderActiveAdminTabContent();
     }
 
     function populateAdminClassFilterDropdown() {
         const selectFilter = document.getElementById('admin-filter-class');
         const rekapSelectFilter = document.getElementById('admin-rekap-filter-class');
 
-        let options = '<option value="ALL">-- Semua Kelas --</option>';
-        masterClasses.forEach(c => {
-            options += `<option value="${c}">${c}</option>`;
-        });
+        const options = '<option value="ALL">-- Semua Kelas --</option>' + 
+            masterClasses.map(c => `<option value="${c}">${c}</option>`).join('');
 
         if (selectFilter) {
             const curVal = selectFilter.value;
@@ -2933,7 +2846,7 @@
 
     window.renderAdminStudentCrudTable = function() {
         const tbody = document.getElementById('admin-student-crud-table-body');
-        tbody.innerHTML = '';
+        if (!tbody) return;
         const filterClass = document.getElementById('admin-filter-class').value;
         const filtered = masterStudents.filter(s => filterClass === 'ALL' || s.className === filterClass);
 
@@ -2942,24 +2855,22 @@
             return;
         }
 
-        filtered.forEach((s, idx) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${idx + 1}</td>
-                    <td>${s.nisn}</td>
-                    <td><strong>${s.name}</strong></td>
-                    <td>${s.className}</td>
-                    <td><code>${s.password || '123'}</code></td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn-info btn-sm" onclick="openResetStudentModal(${s.id})">🔑 Reset Pass</button>
-                            <button class="btn-warning btn-sm" onclick="openAdminEditStudentModal(${s.id})">Edit</button>
-                            <button class="btn-danger btn-sm" onclick="deleteStudentByAdmin(${s.id})">Hapus</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
+        tbody.innerHTML = filtered.map((s, idx) => `
+            <tr>
+                <td>${idx + 1}</td>
+                <td>${s.nisn}</td>
+                <td><strong>${s.name}</strong></td>
+                <td>${s.className}</td>
+                <td><code>${s.password || '123'}</code></td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-info btn-sm" onclick="openResetStudentModal(${s.id})">🔑 Reset Pass</button>
+                        <button class="btn-warning btn-sm" onclick="openAdminEditStudentModal(${s.id})">Edit</button>
+                        <button class="btn-danger btn-sm" onclick="deleteStudentByAdmin(${s.id})">Hapus</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
     }
 
     window.openResetStudentModal = function(studentId) {
@@ -3069,13 +2980,13 @@
 
     function renderGuruTable() {
         const tbody = document.getElementById('guru-table-body');
-        tbody.innerHTML = '';
-        gurus.forEach(g => {
+        if (!tbody) return;
+        tbody.innerHTML = gurus.map(g => {
             const classBadges = (g.assignedClasses && g.assignedClasses.length > 0)
                 ? g.assignedClasses.map(c => `<span class="class-badge">${c}</span>`).join('')
                 : `<span style="color:#aaa; font-size:12px;">Belum ada kelas</span>`;
 
-            tbody.innerHTML += `
+            return `
                 <tr>
                     <td>${g.id}</td>
                     <td><strong>${g.name}</strong></td>
@@ -3092,7 +3003,7 @@
                     </td>
                 </tr>
             `;
-        });
+        }).join('');
     }
 
     window.openClassesGuruModal = function(guruId) {
@@ -3196,10 +3107,10 @@
 
     window.renderAdminRekapTable = function() {
         const tbody = document.getElementById('admin-rekap-body');
+        if (!tbody) return;
         const selectSort = document.getElementById('admin-rekap-sort-by');
         if (selectSort) adminRekapSortKey = selectSort.value;
 
-        tbody.innerHTML = '';
         const rekapDataList = getAdminRekapData();
         updateAdminSortIcons();
 
@@ -3208,27 +3119,25 @@
             return;
         }
 
-        rekapDataList.forEach(item => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${item.guruName}</td>
-                    <td><strong>${item.subject}</strong></td>
-                    <td>${item.nisn}</td>
-                    <td>${item.studentName}</td>
-                    <td><span class="class-badge">${item.className}</span></td>
-                    <td><strong>${item.attendancePercentage.toFixed(1)}%</strong> (${item.attendanceRatio})</td>
-                    <td><strong>${item.finalScore.toFixed(2)}</strong></td>
-                </tr>
-            `;
-        });
+        tbody.innerHTML = rekapDataList.map(item => `
+            <tr>
+                <td>${item.guruName}</td>
+                <td><strong>${item.subject}</strong></td>
+                <td>${item.nisn}</td>
+                <td>${item.studentName}</td>
+                <td><span class="class-badge">${item.className}</span></td>
+                <td><strong>${item.attendancePercentage.toFixed(1)}%</strong> (${item.attendanceRatio})</td>
+                <td><strong>${item.finalScore.toFixed(2)}</strong></td>
+            </tr>
+        `).join('');
     }
 
-    function calculateFinalScoreAdmin(studentId, studentClass, scores, catList, attWgt, attDataList) {
+    function calculateFinalScoreAdmin(studentId, studentClass, scores, catList, attWgt, attCache) {
         let totalWeightedScore = 0, totalActiveWeight = 0;
 
         catList.forEach(cat => {
             let score = null;
-            if (cat.subItems && cat.subItems.length > 0) {
+            if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
                 let total = 0, count = 0;
                 cat.subItems.forEach(sub => {
                     const val = scores ? scores[`sub_${sub.id}`] : undefined;
@@ -3246,8 +3155,8 @@
         });
 
         if (attWgt > 0) {
-            let attCalc = calculateStudentAttendanceStats(studentId, studentClass, attDataList);
-            let attPercentage = parseFloat(attCalc.percentage) || 0;
+            const attCalc = attCache[studentId] || { percentage: "100.0" };
+            const attPercentage = parseFloat(attCalc.percentage) || 0;
             totalWeightedScore += attPercentage * (attWgt / 100);
             totalActiveWeight += attWgt;
         }
@@ -3256,15 +3165,29 @@
         return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
     }
 
+    // LAZY RENDER SAAT PINDAH TAB GURU
     window.switchTab = function(tabId, btnElement) {
-        const tabContents = document.querySelectorAll('#view-guru .tab-content');
-        tabContents.forEach(content => content.classList.add('hidden'));
-
-        const tabBtns = document.querySelectorAll('#view-guru .tab-btn');
-        tabBtns.forEach(btn => btn.classList.remove('active'));
+        activeGuruTab = tabId;
+        document.querySelectorAll('#view-guru .tab-content').forEach(content => content.classList.add('hidden'));
+        document.querySelectorAll('#view-guru .tab-btn').forEach(btn => btn.classList.remove('active'));
 
         document.getElementById(tabId).classList.remove('hidden');
         btnElement.classList.add('active');
+
+        renderActiveGuruTabContent();
+    }
+
+    function renderActiveGuruTabContent() {
+        updateClassFilterDropdowns();
+        if (activeGuruTab === 'tab-kategori') {
+            renderCategoryTable();
+        } else if (activeGuruTab === 'tab-murid') {
+            renderStudentCrudTable();
+        } else if (activeGuruTab === 'tab-nilai') {
+            renderTeacherTable();
+        } else if (activeGuruTab === 'tab-absensi') {
+            initAttendanceTab();
+        }
     }
 
     function validateNISN(nisn) { return /^\d{10}$/.test(nisn); }
@@ -3297,7 +3220,6 @@
     window.saveAttendanceWeight = function() {
         const input = document.getElementById('att-weight-input');
         const val = parseFloat(input.value);
-
         if (isNaN(val) || val < 0 || val > 100) return alert('Harap masukkan persentase bobot kehadiran yang valid (0 - 100)%!');
 
         attendanceWeight = val;
@@ -3324,24 +3246,21 @@
 
         const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
         const currentScoreVal = filterScore ? filterScore.value : 'ALL';
-
-        let optionsHtml = `<option value="ALL">-- Semua Kelas Diampu --</option>`;
-        let selectOptionsHtml = ``;
-
         const classList = assignedClasses.length > 0 ? assignedClasses : masterClasses;
 
-        classList.forEach(cls => {
-            optionsHtml += `<option value="${cls}">${cls}</option>`;
-            selectOptionsHtml += `<option value="${cls}">${cls}</option>`;
-        });
+        const selectOptionsHtml = classList.map(cls => `<option value="${cls}">${cls}</option>`).join('');
+        const optionsHtml = `<option value="ALL">-- Semua Kelas Diampu --</option>` + selectOptionsHtml;
 
-        if (filterCrud) filterCrud.innerHTML = optionsHtml;
-        if (filterScore) filterScore.innerHTML = optionsHtml;
+        if (filterCrud) {
+            filterCrud.innerHTML = optionsHtml;
+            filterCrud.value = currentCrudVal && Array.from(filterCrud.options).some(o => o.value === currentCrudVal) ? currentCrudVal : "ALL";
+        }
+        if (filterScore) {
+            filterScore.innerHTML = optionsHtml;
+            filterScore.value = currentScoreVal && Array.from(filterScore.options).some(o => o.value === currentScoreVal) ? currentScoreVal : "ALL";
+        }
         if (filterAttRekap) filterAttRekap.innerHTML = optionsHtml;
         if (selectAtt) selectAtt.innerHTML = selectOptionsHtml;
-
-        if (filterCrud) filterCrud.value = currentCrudVal && Array.from(filterCrud.options).some(o => o.value === currentCrudVal) ? currentCrudVal : "ALL";
-        if (filterScore) filterScore.value = currentScoreVal && Array.from(filterScore.options).some(o => o.value === currentScoreVal) ? currentScoreVal : "ALL";
 
         const classesDisplay = document.getElementById('guru-allocated-classes-display');
         if (classesDisplay) {
@@ -3368,28 +3287,17 @@
         if (cat) { cat.visible = !cat.visible; saveData(); renderTeacherView(); }
     }
 
-    /*window.toggleSubItemVisibility = function(catId, subId) {
-        const cat = categories.find(c => c.id === catId);
-        if (cat) {
-            const sub = cat.subItems.find(s => s.id === subId);
-            if (sub) { sub.visible = !sub.visible; saveData(); renderTeacherView(); }
-        }
-    }*/
-	window.toggleSubItemVisibility = function(catId, subId) {
+    window.toggleSubItemVisibility = function(catId, subId) {
         const cat = categories.find(c => c.id === catId);
         if (cat && Array.isArray(cat.subItems)) {
             const sub = cat.subItems.find(s => s.id === subId);
-            if (sub) { 
-                sub.visible = !sub.visible; 
-                saveData(); 
-                renderTeacherView(); 
-            }
+            if (sub) { sub.visible = !sub.visible; saveData(); renderTeacherView(); }
         }
     }
 
     function renderCategoryTable() {
         const tbody = document.getElementById('category-table-body');
-        tbody.innerHTML = '';
+        if (!tbody) return;
         
         const attWeightInput = document.getElementById('att-weight-input');
         if (attWeightInput) attWeightInput.value = attendanceWeight;
@@ -3403,12 +3311,12 @@
             return;
         }
 
-        categories.forEach(c => {
+        tbody.innerHTML = categories.map(c => {
             let subBadges = '';
-            if (c.subItems && c.subItems.length > 0) {
-                c.subItems.forEach(s => {
+            if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+                subBadges = c.subItems.map(s => {
                     const statusBadge = s.visible ? `<span class="badge-visible">Tampil</span>` : `<span class="badge-hidden">Sembunyi</span>`;
-                    subBadges += `
+                    return `
                         <div class="sub-item-badge">
                             <strong>${s.name}</strong> ${statusBadge}
                             <button class="btn-warning btn-sm" onclick="openEditSubItemModal(${c.id}, ${s.id})">Edit</button>
@@ -3416,12 +3324,14 @@
                             <button onclick="deleteSubItem(${c.id}, ${s.id})" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">&times;</button>
                         </div>
                     `;
-                });
-            } else subBadges = `<span style="color:#aaa; font-size:12px;">Tanpa sub-item</span>`;
+                }).join('');
+            } else {
+                subBadges = `<span style="color:#aaa; font-size:12px;">Tanpa sub-item</span>`;
+            }
 
             const catStatus = c.visible ? `<span class="badge-visible">Tampil ke Siswa</span>` : `<span class="badge-hidden">Disembunyikan</span>`;
 
-            tbody.innerHTML += `
+            return `
                 <tr>
                     <td><strong>${c.name}</strong></td>
                     <td>${c.weight}%</td>
@@ -3443,7 +3353,7 @@
                     </td>
                 </tr>
             `;
-        });
+        }).join('');
     }
 
     window.openEditSubItemModal = function(catId, subId) {
@@ -3474,25 +3384,10 @@
         }
     }
 
-    /*window.openSubItemModal = function(catId) {
+    window.openSubItemModal = function(catId) {
         const cat = categories.find(c => c.id === catId);
         if (!cat) return;
-        document.getElementById('subitem-cat-id').value = cat.id;
-        document.getElementById('subitem-modal-title').innerText = `Tambah Sub-Item untuk ${cat.name}`;
-        
-        const subInput = document.getElementById('subitem-name');
-        subInput.value = `Ulangan ${cat.subItems.length + 1}`;
-        document.getElementById('subitem-modal').classList.remove('hidden');
-        setTimeout(() => subInput.focus(), 100);
-    }*/
-	window.openSubItemModal = function(catId) {
-        const cat = categories.find(c => c.id === catId);
-        if (!cat) return;
-
-        // Pastikan subItems selalu berbentuk array (mencegah error dari Firebase)
-        if (!Array.isArray(cat.subItems)) {
-            cat.subItems = [];
-        }
+        if (!Array.isArray(cat.subItems)) cat.subItems = [];
 
         document.getElementById('subitem-cat-id').value = cat.id;
         document.getElementById('subitem-modal-title').innerText = `Tambah Sub-Item untuk ${cat.name}`;
@@ -3500,61 +3395,30 @@
         const subInput = document.getElementById('subitem-name');
         subInput.value = `${cat.name} ${cat.subItems.length + 1}`;
         document.getElementById('subitem-modal').classList.remove('hidden');
-        setTimeout(() => {
-            subInput.focus();
-            subInput.select(); // Otomatis blok teks agar mudah diganti
-        }, 100);
+        setTimeout(() => { subInput.focus(); subInput.select(); }, 100);
     }
 
     window.closeSubItemModal = function() { document.getElementById('subitem-modal').classList.add('hidden'); }
 
-    /*window.saveSubItem = function() {
+    window.saveSubItem = function() {
         const catId = parseInt(document.getElementById('subitem-cat-id').value);
         const name = document.getElementById('subitem-name').value.trim();
-
         if (!name) return alert('Nama sub-item tidak boleh kosong!');
 
         const cat = categories.find(c => c.id === catId);
         if (cat) {
+            if (!Array.isArray(cat.subItems)) cat.subItems = [];
             cat.subItems.push({ id: Date.now(), name: name, visible: true });
             saveData(); closeSubItemModal(); renderTeacherView();
         }
-    }*/
-	
-	window.saveSubItem = function() {
-        const catId = parseInt(document.getElementById('subitem-cat-id').value);
-        const name = document.getElementById('subitem-name').value.trim();
-
-        if (!name) return alert('Nama sub-item tidak boleh kosong!');
-
-        const cat = categories.find(c => c.id === catId);
-        if (cat) {
-            if (!Array.isArray(cat.subItems)) {
-                cat.subItems = [];
-            }
-            cat.subItems.push({ id: Date.now(), name: name, visible: true });
-            saveData(); 
-            closeSubItemModal(); 
-            renderTeacherView();
-        }
     }
 
-    /*window.deleteSubItem = function(catId, subId) {
-        if (confirm('Hapus sub-item / ulangan ini? Nilai siswa pada kolom ini akan terhapus.')) {
-            const cat = categories.find(c => c.id === catId);
-            if (cat) {
-                cat.subItems = cat.subItems.filter(s => s.id !== subId);
-                saveData(); renderTeacherView();
-            }
-        }
-    }*/
-	window.deleteSubItem = function(catId, subId) {
+    window.deleteSubItem = function(catId, subId) {
         if (confirm('Hapus sub-item / ulangan ini? Nilai siswa pada kolom ini akan terhapus.')) {
             const cat = categories.find(c => c.id === catId);
             if (cat && Array.isArray(cat.subItems)) {
                 cat.subItems = cat.subItems.filter(s => s.id !== subId);
-                saveData(); 
-                renderTeacherView();
+                saveData(); renderTeacherView();
             }
         }
     }
@@ -3574,7 +3438,6 @@
         const id = parseInt(document.getElementById('edit-cat-id').value);
         const name = document.getElementById('edit-cat-name').value.trim();
         const weight = parseFloat(document.getElementById('edit-cat-weight').value);
-
         if (!name || isNaN(weight)) return alert('Harap isi data dengan lengkap!');
 
         const cat = categories.find(c => c.id === id);
@@ -3583,7 +3446,7 @@
 
     window.deleteCategory = function(catId) {
         if (confirm('Hapus kategori ini? Semua sub-item dan nilainya akan terhapus.')) {
-            categories = categories.filter(c => c.id !== catId);
+            categories = categories.filter(c => c !== catId && c.id !== catId);
             saveData(); renderTeacherView();
         }
     }
@@ -3595,10 +3458,9 @@
 
     window.renderStudentCrudTable = function() {
         const tbody = document.getElementById('student-crud-table-body');
-        tbody.innerHTML = '';
+        if (!tbody) return;
         const filterClass = document.getElementById('filter-class-crud') ? document.getElementById('filter-class-crud').value : 'ALL';
         const searchQuery = (document.getElementById('guru-search-student')?.value || '').toLowerCase().trim();
-
         const assignedClasses = getActiveGuruAssignedClasses();
 
         const filteredStudents = masterStudents.filter(s => {
@@ -3607,7 +3469,6 @@
             const matchSearch = !searchQuery || 
                 (s.name || '').toLowerCase().includes(searchQuery) || 
                 (s.nisn || '').toLowerCase().includes(searchQuery);
-
             return matchAssignedClass && matchFilterDropdown && matchSearch;
         });
 
@@ -3616,17 +3477,15 @@
             return;
         }
 
-        filteredStudents.forEach((s, index) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${s.nisn || '-'}</td>
-                    <td><strong>${s.name}</strong></td>
-                    <td>${s.className || '-'}</td>
-                    <td><span class="badge-visible">Terdaftar</span></td>
-                </tr>
-            `;
-        });
+        tbody.innerHTML = filteredStudents.map((s, index) => `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${s.nisn || '-'}</td>
+                <td><strong>${s.name}</strong></td>
+                <td>${s.className || '-'}</td>
+                <td><span class="badge-visible">Terdaftar</span></td>
+            </tr>
+        `).join('');
     }
 
     window.downloadTemplate = function() {
@@ -3636,13 +3495,9 @@
 
     function renderTeacherView() {
         sortMasterStudents();
-        renderDashboards();
-        updateClassFilterDropdowns();
-        renderCategoryTable();
-        renderStudentCrudTable();
-        renderTeacherTable();
-        initAttendanceTab();
         applyAppProfile();
+        renderDashboards();
+        renderActiveGuruTabContent();
     }
 
     function getStudentScoreObj(studentId) {
@@ -3652,28 +3507,17 @@
         return teacherScoresData[studentId];
     }
 
-    /*window.updateScore = function(studentId, key, value) {
-        const sData = getStudentScoreObj(studentId);
-        sData.scores[key] = parseFloat(value) || 0;
-        saveData();
-        renderTeacherTable();
-    }*/
-	// FUNGSI UPDATE NILAI YANG RINGAN & CEPAT
     window.updateScore = function(studentId, key, value) {
         const sData = getStudentScoreObj(studentId);
         const numericVal = value === '' ? null : (parseFloat(value) || 0);
         
-        if (numericVal === null) {
-            delete sData.scores[key];
-        } else {
-            sData.scores[key] = numericVal;
-        }
+        if (numericVal === null) delete sData.scores[key];
+        else sData.scores[key] = numericVal;
 
-        // 1. Update tampilan angka Rata-rata & Nilai Akhir HANYA untuk baris murid ini (Instan!)
         const student = masterStudents.find(s => s.id === studentId);
         if (student) {
             categories.forEach(cat => {
-                if (cat.subItems && cat.subItems.length > 0) {
+                if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
                     const avgEl = document.getElementById(`avg_${studentId}_${cat.id}`);
                     if (avgEl) {
                         const avgCat = getCategoryScore(studentId, cat, false);
@@ -3688,7 +3532,6 @@
             }
         }
 
-        // 2. Simpan HANYA nilai spesifik murid ini ke Firebase (tidak menimpa seluruh database)
         if (currentGuruId) {
             isLocalInputActive = true;
             const scoreRef = ref(db, `portal_database/guruDataStore/${currentGuruId}/scoresData/${studentId}/scores`);
@@ -3696,13 +3539,6 @@
         }
     }
 
-    /*window.updateStudentNote = function(studentId, noteValue) {
-        const sData = getStudentScoreObj(studentId);
-        sData.note = noteValue.trim();
-        saveData();
-    }
-	*/
-	// FUNGSI UPDATE CATATAN GURU YANG RINGAN
     window.updateStudentNote = function(studentId, noteValue) {
         const sData = getStudentScoreObj(studentId);
         const cleanNote = noteValue.trim();
@@ -3718,7 +3554,7 @@
     function getCategoryScore(studentId, cat, onlyVisible = false, scoresOverride = null) {
         const scores = scoresOverride !== null ? scoresOverride : (teacherScoresData[studentId] ? teacherScoresData[studentId].scores : {});
 
-        if (cat.subItems && cat.subItems.length > 0) {
+        if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
             let total = 0, count = 0;
             cat.subItems.forEach(sub => {
                 if (!onlyVisible || sub.visible) {
@@ -3733,7 +3569,7 @@
         }
     }
 
-    function calculateFinalScore(studentId, studentClass, onlyVisible = false, catList = categories, scoresOverride = null, attWgtOverride = null, attDataList = teacherAttendanceData) {
+    function calculateFinalScore(studentId, studentClass, onlyVisible = false, catList = categories, scoresOverride = null, attWgtOverride = null, customCache = null) {
         let totalWeightedScore = 0, totalActiveWeight = 0;
 
         catList.forEach(cat => {
@@ -3748,8 +3584,9 @@
 
         const activeAttWeight = attWgtOverride !== null ? attWgtOverride : attendanceWeight;
         if (activeAttWeight > 0) {
-            let attCalc = calculateStudentAttendanceStats(studentId, studentClass, attDataList);
-            let attPercentage = parseFloat(attCalc.percentage) || 0;
+            const cacheSource = customCache || attendanceStatsCache;
+            const attCalc = cacheSource[studentId] || calculateStudentAttendanceStats(studentId, studentClass);
+            const attPercentage = parseFloat(attCalc.percentage) || 0;
             totalWeightedScore += attPercentage * (activeAttWeight / 100);
             totalActiveWeight += activeAttWeight;
         }
@@ -3758,328 +3595,18 @@
         return ((totalWeightedScore / totalActiveWeight) * 100).toFixed(2);
     }
 
-/*    window.renderTeacherTable = function() {
-        const thead = document.getElementById('teacher-table-head');
-        const tbody = document.getElementById('teacher-table-body');
-        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
-        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
-
-        let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
-        headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
-
-        categories.forEach(c => {
-            if (c.subItems && c.subItems.length > 0) {
-                c.subItems.forEach(s => {
-                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
-                    headerHtml += `<th style="background:#e0f2fe">${s.name}${statusText}</th>`;
-                });
-                headerHtml += `<th style="background:#bae6fd">Rata² ${c.name}</th>`;
-            } else {
-                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
-                headerHtml += `<th>${c.name} (${c.weight}%)${statusText}</th>`;
-            }
-        });
-        headerHtml += `<th>Nilai Akhir</th><th>Catatan Khusus / Keterangan Guru</th>`;
-        if (thead) thead.innerHTML = headerHtml;
-
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        const assignedClasses = getActiveGuruAssignedClasses();
-
-        const filteredStudents = masterStudents.filter(s => {
-            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
-            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
-            const matchSearch = !searchQuery || 
-                (s.name || '').toLowerCase().includes(searchQuery) || 
-                (s.nisn || '').toLowerCase().includes(searchQuery);
-
-            return matchAssignedClass && matchFilterDropdown && matchSearch;
-        });
-
-        if (filteredStudents.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
-            return;
-        }
-
-        filteredStudents.forEach(student => {
-            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
-            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
-
-            let row = `<tr>
-                <td>${student.nisn}</td>
-                <td><strong>${student.name}</strong></td>
-                <td>${student.className}</td>
-                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
-            `;
-
-            categories.forEach(cat => {
-                if (cat.subItems && cat.subItems.length > 0) {
-                    cat.subItems.forEach(s => {
-                        const scoreKey = `sub_${s.id}`;
-                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
-                        row += `<td>
-                            <input type="number" class="input-score" value="${val}" 
-                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
-                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
-                        </td>`;
-                    });
-                    const avgCat = getCategoryScore(student.id, cat, false);
-                    row += `<td style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
-                } else {
-                    const scoreKey = `cat_${cat.id}`;
-                    const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
-                    row += `<td>
-                        <input type="number" class="input-score" value="${val}" 
-                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
-                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
-                    </td>`;
-                }
-            });
-
-            const currentNote = sData.note || '';
-
-            row += `<td><strong>${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
-            row += `<td>
-                <input type="text" class="input-note" value="${currentNote}" 
-                placeholder="misal: Belum Tugas 1" 
-                onchange="updateStudentNote(${student.id}, this.value)" 
-                onkeydown="checkEnter(event, () => this.blur())">
-            </td></tr>`;
-
-            tbody.innerHTML += row;
-        });
-    }
-*/
-
-// RENDER TABEL GURU DENGAN ID KHUSUS PER BARIS MURID
-    /*window.renderTeacherTable = function() {
-        const thead = document.getElementById('teacher-table-head');
-        const tbody = document.getElementById('teacher-table-body');
-        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
-        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
-
-        let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
-        headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
-
-        categories.forEach(c => {
-            if (c.subItems && c.subItems.length > 0) {
-                c.subItems.forEach(s => {
-                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
-                    headerHtml += `<th style="background:#e0f2fe">${s.name}${statusText}</th>`;
-                });
-                headerHtml += `<th style="background:#bae6fd">Rata² ${c.name}</th>`;
-            } else {
-                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
-                headerHtml += `<th>${c.name} (${c.weight}%)${statusText}</th>`;
-            }
-        });
-        headerHtml += `<th>Nilai Akhir</th><th>Catatan Khusus / Keterangan Guru</th>`;
-        if (thead) thead.innerHTML = headerHtml;
-
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        const assignedClasses = getActiveGuruAssignedClasses();
-
-        const filteredStudents = masterStudents.filter(s => {
-            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
-            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
-            const matchSearch = !searchQuery || 
-                (s.name || '').toLowerCase().includes(searchQuery) || 
-                (s.nisn || '').toLowerCase().includes(searchQuery);
-
-            return matchAssignedClass && matchFilterDropdown && matchSearch;
-        });
-
-        if (filteredStudents.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
-            return;
-        }
-
-        // Gunakan array + join('') agar manipulasi DOM jauh lebih cepat daripada += innerHTML
-        const rowsHtml = filteredStudents.map(student => {
-            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
-            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
-
-            let row = `<tr>
-                <td>${student.nisn}</td>
-                <td><strong>${student.name}</strong></td>
-                <td>${student.className}</td>
-                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
-            `;
-
-            categories.forEach(cat => {
-                if (cat.subItems && cat.subItems.length > 0) {
-                    cat.subItems.forEach(s => {
-                        const scoreKey = `sub_${s.id}`;
-                        const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
-                        row += `<td>
-                            <input type="number" class="input-score" value="${val}" 
-                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
-                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
-                        </td>`;
-                    });
-                    const avgCat = getCategoryScore(student.id, cat, false);
-                    row += `<td id="avg_${student.id}_${cat.id}" style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
-                } else {
-                    const scoreKey = `cat_${cat.id}`;
-                    const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
-                    row += `<td>
-                        <input type="number" class="input-score" value="${val}" 
-                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
-                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
-                    </td>`;
-                }
-            });
-
-            const currentNote = sData.note || '';
-
-            row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
-            row += `<td>
-                <input type="text" class="input-note" value="${currentNote}" 
-                placeholder="misal: Belum Tugas 1" 
-                onchange="updateStudentNote(${student.id}, this.value)" 
-                onkeydown="checkEnter(event, () => this.blur())">
-            </td></tr>`;
-
-            return row;
-        });
-
-        tbody.innerHTML = rowsHtml.join('');
-    }*/
-	
-	/*window.renderTeacherTable = function() {
-        const thead = document.getElementById('teacher-table-head');
-        const tbody = document.getElementById('teacher-table-body');
-        const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
-        const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
-
-        let headerHtml = `<th>NISN</th><th>Nama Murid</th><th>Kelas</th>`;
-        headerHtml += `<th style="background:#fef3c7;">Persentase Kehadiran (${attendanceWeight}%)</th>`;
-
-        categories.forEach(c => {
-            if (c.subItems && c.subItems.length > 0) {
-                c.subItems.forEach(s => {
-                    const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
-                    headerHtml += `<th style="background:#e0f2fe">${s.name}${statusText}</th>`;
-                });
-                headerHtml += `<th style="background:#bae6fd">Rata² ${c.name}</th>`;
-            } else {
-                const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
-                headerHtml += `<th>${c.name} (${c.weight}%)${statusText}</th>`;
-            }
-        });
-
-        // Ikon indikator sortir pada header Nilai Akhir
-        let sortIcon = '↕️';
-        if (guruScoreSortMode === 'final_desc') sortIcon = '🔽';
-        else if (guruScoreSortMode === 'final_asc') sortIcon = '🔼';
-
-        // Header Nilai Akhir bisa diklik langsung untuk bolak-balik urutan
-        headerHtml += `<th class="sortable-header" onclick="toggleGuruFinalScoreSort()" title="Klik untuk mengurutkan Nilai Akhir">Nilai Akhir ${sortIcon}</th>`;
-        headerHtml += `<th>Catatan Khusus / Keterangan Guru</th>`;
-        if (thead) thead.innerHTML = headerHtml;
-
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        const assignedClasses = getActiveGuruAssignedClasses();
-
-        let filteredStudents = masterStudents.filter(s => {
-            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
-            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
-            const matchSearch = !searchQuery || 
-                (s.name || '').toLowerCase().includes(searchQuery) || 
-                (s.nisn || '').toLowerCase().includes(searchQuery);
-
-            return matchAssignedClass && matchFilterDropdown && matchSearch;
-        });
-
-        // TERAPKAN LOGIKA SORTIR NILAI AKHIR
-        if (guruScoreSortMode === 'final_desc' || guruScoreSortMode === 'final_asc') {
-            filteredStudents.sort((a, b) => {
-                const scoreA = parseFloat(calculateFinalScore(a.id, a.className, false)) || 0;
-                const scoreB = parseFloat(calculateFinalScore(b.id, b.className, false)) || 0;
-                
-                if (scoreA !== scoreB) {
-                    return guruScoreSortMode === 'final_desc' ? (scoreB - scoreA) : (scoreA - scoreB);
-                }
-                // Jika nilai akhir sama, urutkan berdasarkan nama A-Z
-                return (a.name || '').localeCompare(b.name || '');
-            });
-        }
-
-        if (filteredStudents.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:#888;">Tidak ada data murid yang cocok.</td></tr>`;
-            return;
-        }
-
-        const rowsHtml = filteredStudents.map(student => {
-            const sData = teacherScoresData[student.id] || { note: '', scores: {} };
-            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
-
-            let row = `<tr>
-                <td>${student.nisn}</td>
-                <td><strong>${student.name}</strong></td>
-                <td>${student.className}</td>
-                <td style="background:#fffbeb; text-align:center; font-weight:bold; color:#b45309;">${attCalc.percentage}%</td>
-            `;
-
-            categories.forEach(cat => {
-                if (cat.subItems && cat.subItems.length > 0) {
-                    cat.subItems.forEach(s => {
-                        const scoreKey = `sub_${s.id}`;
-                        const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
-                        row += `<td>
-                            <input type="number" class="input-score" value="${val}" 
-                            onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
-                            onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
-                        </td>`;
-                    });
-                    const avgCat = getCategoryScore(student.id, cat, false);
-                    row += `<td id="avg_${student.id}_${cat.id}" style="background:#f0f9ff; font-weight:bold;">${avgCat !== null ? avgCat.toFixed(1) : '-'}</td>`;
-                } else {
-                    const scoreKey = `cat_${cat.id}`;
-                    const val = sData.scores && sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '';
-                    row += `<td>
-                        <input type="number" class="input-score" value="${val}" 
-                        onchange="updateScore(${student.id}, '${scoreKey}', this.value)" 
-                        onkeydown="checkEnter(event, () => this.blur())" placeholder="0">
-                    </td>`;
-                }
-            });
-
-            const currentNote = sData.note || '';
-
-            row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
-            row += `<td>
-                <input type="text" class="input-note" value="${currentNote}" 
-                placeholder="misal: Belum Tugas 1" 
-                onchange="updateStudentNote(${student.id}, this.value)" 
-                onkeydown="checkEnter(event, () => this.blur())">
-            </td></tr>`;
-
-            return row;
-        });
-
-        tbody.innerHTML = rowsHtml.join('');
-    }*/
-	
-	// 1. Klik langsung pada judul kolom mana saja di Tabel Nilai Guru
+    // SORTIR TABEL NILAI GURU
     window.sortGuruTableBy = function(columnKey) {
         if (guruScoreSortKey === columnKey) {
-            guruScoreSortAsc = !guruScoreSortAsc; // Balik arah urutan jika kolom yang sama diklik lagi
+            guruScoreSortAsc = !guruScoreSortAsc;
         } else {
             guruScoreSortKey = columnKey;
-            // Untuk kolom angka (nilai & kehadiran), klik pertama otomatis urut dari Tertinggi ke Terendah
             const isTextCol = (columnKey === 'nisn' || columnKey === 'name' || columnKey === 'className' || columnKey === 'default');
             guruScoreSortAsc = isTextCol ? true : false;
         }
         renderTeacherTable();
     }
 
-    // 2. Pilih urutan dari dropdown
     window.selectGuruScoreSortFromDropdown = function(val) {
         const [key, dir] = val.split('|');
         guruScoreSortKey = key;
@@ -4087,53 +3614,48 @@
         renderTeacherTable();
     }
 
-    // 3. Helper untuk menampilkan ikon arah sortir pada header kolom
     function getGuruSortIcon(columnKey) {
         if (guruScoreSortKey !== columnKey) return '↕️';
         return guruScoreSortAsc ? '🔼' : '🔽';
     }
 
-    // 4. Helper untuk mengambil nilai dari kolom apa pun milik seorang siswa
     function getStudentSortValue(student, columnKey) {
         const sData = teacherScoresData[student.id] || { note: '', scores: {} };
 
         if (columnKey === 'nisn') return student.nisn || '';
         if (columnKey === 'name') return (student.name || '').toLowerCase();
         if (columnKey === 'className') return (student.className || '').toLowerCase();
-        
         if (columnKey === 'attendance') {
-            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+            const attCalc = attendanceStatsCache[student.id] || { percentage: "100.0" };
             return parseFloat(attCalc.percentage) || 0;
         }
-        
         if (columnKey === 'finalScore') {
             return parseFloat(calculateFinalScore(student.id, student.className, false)) || 0;
         }
-
-        // Jika kolom rata-rata kategori (format: avg_catId)
         if (columnKey.startsWith('avg_')) {
             const catId = parseInt(columnKey.replace('avg_', ''));
             const cat = categories.find(c => c.id === catId);
             if (!cat) return -1;
             const avg = getCategoryScore(student.id, cat, false);
-            return avg !== null ? avg : -1; // Nilai kosong ditaruh di bawah
+            return avg !== null ? avg : -1;
         }
-
-        // Jika kolom input nilai langsung (format: sub_id atau cat_id)
         if (sData.scores && sData.scores[columnKey] !== undefined && sData.scores[columnKey] !== '') {
             return parseFloat(sData.scores[columnKey]);
         }
-        return -1; // Siswa yang nilainya masih kosong dianggap -1 agar rapi saat disortir
+        return -1;
     }
 
-    // 5. Render Tabel Guru dengan Header Sortir di Semua Kolom
     window.renderTeacherTable = function() {
         const thead = document.getElementById('teacher-table-head');
         const tbody = document.getElementById('teacher-table-body');
+        if (!thead || !tbody) return;
+
+        // Pastikan cache kehadiran selalu up-to-date
+        attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
+
         const filterClass = document.getElementById('filter-class-score') ? document.getElementById('filter-class-score').value : 'ALL';
         const searchQuery = (document.getElementById('guru-search-score-student')?.value || '').toLowerCase().trim();
 
-        // Sinkronkan opsi dropdown sortir secara dinamis mengikuti kategori/tugas yang aktif
         const sortDropdown = document.getElementById('guru-score-sort-by');
         if (sortDropdown) {
             let dropHtml = `
@@ -4167,12 +3689,11 @@
             }
         }
 
-        // Bangun Header Tabel (Semua kolom bisa diklik untuk sortir)
         let headerHtml = `
-            <th class="sortable-header" onclick="sortGuruTableBy('nisn')" title="Urutkan NISN">NISN ${getGuruSortIcon('nisn')}</th>
-            <th class="sortable-header" onclick="sortGuruTableBy('name')" title="Urutkan Nama">Nama Murid ${getGuruSortIcon('name')}</th>
-            <th class="sortable-header" onclick="sortGuruTableBy('className')" title="Urutkan Kelas">Kelas ${getGuruSortIcon('className')}</th>
-            <th class="sortable-header" style="background:#fef3c7;" onclick="sortGuruTableBy('attendance')" title="Urutkan Kehadiran">Persentase Kehadiran (${attendanceWeight}%) ${getGuruSortIcon('attendance')}</th>
+            <th class="sortable-header" onclick="sortGuruTableBy('nisn')">NISN ${getGuruSortIcon('nisn')}</th>
+            <th class="sortable-header" onclick="sortGuruTableBy('name')">Nama Murid ${getGuruSortIcon('name')}</th>
+            <th class="sortable-header" onclick="sortGuruTableBy('className')">Kelas ${getGuruSortIcon('className')}</th>
+            <th class="sortable-header" style="background:#fef3c7;" onclick="sortGuruTableBy('attendance')">Persentase Kehadiran (${attendanceWeight}%) ${getGuruSortIcon('attendance')}</th>
         `;
 
         categories.forEach(c => {
@@ -4180,46 +3701,37 @@
                 c.subItems.forEach(s => {
                     const statusText = s.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
                     const key = `sub_${s.id}`;
-                    headerHtml += `<th class="sortable-header" style="background:#e0f2fe" onclick="sortGuruTableBy('${key}')" title="Urutkan ${s.name}">${s.name}${statusText} ${getGuruSortIcon(key)}</th>`;
+                    headerHtml += `<th class="sortable-header" style="background:#e0f2fe" onclick="sortGuruTableBy('${key}')">${s.name}${statusText} ${getGuruSortIcon(key)}</th>`;
                 });
                 const avgKey = `avg_${c.id}`;
-                headerHtml += `<th class="sortable-header" style="background:#bae6fd" onclick="sortGuruTableBy('${avgKey}')" title="Urutkan Rata-rata ${c.name}">Rata² ${c.name} ${getGuruSortIcon(avgKey)}</th>`;
+                headerHtml += `<th class="sortable-header" style="background:#bae6fd" onclick="sortGuruTableBy('${avgKey}')">Rata² ${c.name} ${getGuruSortIcon(avgKey)}</th>`;
             } else {
                 const statusText = c.visible ? '' : ' <span style="color:red; font-size:10px;">[Sembunyi]</span>';
                 const key = `cat_${c.id}`;
-                headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('${key}')" title="Urutkan ${c.name}">${c.name} (${c.weight}%)${statusText} ${getGuruSortIcon(key)}</th>`;
+                headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('${key}')">${c.name} (${c.weight}%)${statusText} ${getGuruSortIcon(key)}</th>`;
             }
         });
 
-        headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('finalScore')" title="Urutkan Nilai Akhir">Nilai Akhir ${getGuruSortIcon('finalScore')}</th>`;
+        headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('finalScore')">Nilai Akhir ${getGuruSortIcon('finalScore')}</th>`;
         headerHtml += `<th>Catatan Khusus / Keterangan Guru</th>`;
-        if (thead) thead.innerHTML = headerHtml;
-
-        if (!tbody) return;
-        tbody.innerHTML = '';
+        thead.innerHTML = headerHtml;
 
         const assignedClasses = getActiveGuruAssignedClasses();
-
         let filteredStudents = masterStudents.filter(s => {
             const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
             const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
             const matchSearch = !searchQuery || 
                 (s.name || '').toLowerCase().includes(searchQuery) || 
                 (s.nisn || '').toLowerCase().includes(searchQuery);
-
             return matchAssignedClass && matchFilterDropdown && matchSearch;
         });
 
-        // Terapkan Pengurutan pada Daftar Siswa
         if (guruScoreSortKey !== 'default') {
             filteredStudents.sort((a, b) => {
                 const valA = getStudentSortValue(a, guruScoreSortKey);
                 const valB = getStudentSortValue(b, guruScoreSortKey);
-
                 if (valA < valB) return guruScoreSortAsc ? -1 : 1;
                 if (valA > valB) return guruScoreSortAsc ? 1 : -1;
-
-                // Jika nilainya seri/sama, urutkan nama siswa dari A-Z
                 return (a.name || '').localeCompare(b.name || '');
             });
         }
@@ -4229,9 +3741,9 @@
             return;
         }
 
-        const rowsHtml = filteredStudents.map(student => {
+        tbody.innerHTML = filteredStudents.map(student => {
             const sData = teacherScoresData[student.id] || { note: '', scores: {} };
-            const attCalc = calculateStudentAttendanceStats(student.id, student.className);
+            const attCalc = attendanceStatsCache[student.id] || { percentage: "100.0" };
 
             let row = `<tr>
                 <td>${student.nisn}</td>
@@ -4265,7 +3777,6 @@
             });
 
             const currentNote = sData.note || '';
-
             row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
             row += `<td>
                 <input type="text" class="input-note" value="${currentNote}" 
@@ -4275,17 +3786,16 @@
             </td></tr>`;
 
             return row;
-        });
-
-        tbody.innerHTML = rowsHtml.join('');
+        }).join('');
     }
 	
+    // PRESENSI / ABSENSI
     function initAttendanceTab() {
         const dateInput = document.getElementById('attendance-date-input');
         if (dateInput && !dateInput.value) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
+            dateInput.value = new Date().toISOString().split('T')[0];
         }
+        attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
         renderAttendanceForm();
         renderAttendanceSummaryTable();
     }
@@ -4293,13 +3803,11 @@
     window.renderAttendanceForm = function() {
         const selectEl = document.getElementById('attendance-class-select');
         const dateEl = document.getElementById('attendance-date-input');
-        if (!selectEl || !dateEl) return;
+        const tbody = document.getElementById('attendance-form-body');
+        if (!selectEl || !dateEl || !tbody) return;
 
         const selectedClass = selectEl.value;
         const selectedDate = dateEl.value;
-        const tbody = document.getElementById('attendance-form-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
 
         if (!selectedClass || !selectedDate) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Pilih kelas dan tanggal terlebih dahulu.</td></tr>`;
@@ -4307,7 +3815,6 @@
         }
 
         const classStudents = masterStudents.filter(s => s.className === selectedClass);
-
         if (classStudents.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Belum ada murid di kelas ${selectedClass}.</td></tr>`;
             return;
@@ -4316,9 +3823,9 @@
         const existingSession = teacherAttendanceData.find(a => a.className === selectedClass && a.date === selectedDate);
         const existingRecords = existingSession ? existingSession.records : {};
 
-        classStudents.forEach((student, index) => {
+        tbody.innerHTML = classStudents.map((student, index) => {
             const status = existingRecords[student.id] || 'H';
-            tbody.innerHTML += `
+            return `
                 <tr>
                     <td>${index + 1}</td>
                     <td>${student.nisn}</td>
@@ -4336,13 +3843,12 @@
                     </td>
                 </tr>
             `;
-        });
+        }).join('');
     }
 
     window.saveCurrentAttendanceSession = function() {
         const selectedClass = document.getElementById('attendance-class-select').value;
         const selectedDate = document.getElementById('attendance-date-input').value;
-
         if (!selectedClass || !selectedDate) return alert('Harap pilih kelas dan tanggal pertemuan!');
 
         const classStudents = masterStudents.filter(s => s.className === selectedClass);
@@ -4351,33 +3857,25 @@
         const records = {};
         classStudents.forEach(student => {
             const selectEl = document.getElementById(`att_select_${student.id}`);
-            if (selectEl) {
-                records[student.id] = selectEl.value;
-            }
+            if (selectEl) records[student.id] = selectEl.value;
         });
 
         const existingIdx = teacherAttendanceData.findIndex(a => a.className === selectedClass && a.date === selectedDate);
         if (existingIdx !== -1) {
             teacherAttendanceData[existingIdx].records = records;
         } else {
-            teacherAttendanceData.push({
-                id: Date.now(),
-                className: selectedClass,
-                date: selectedDate,
-                records: records
-            });
+            teacherAttendanceData.push({ id: Date.now(), className: selectedClass, date: selectedDate, records });
         }
 
+        attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
         saveData();
         renderAttendanceSummaryTable();
-        renderTeacherTable();
         alert(`Kehadiran Kelas ${selectedClass} untuk tanggal ${selectedDate} berhasil disimpan!`);
     }
 
     window.deleteCurrentAttendanceSession = function() {
         const selectedClass = document.getElementById('attendance-class-select').value;
         const selectedDate = document.getElementById('attendance-date-input').value;
-
         if (!selectedClass || !selectedDate) return alert('Harap pilih kelas dan tanggal pertemuan!');
 
         const existingIdx = teacherAttendanceData.findIndex(a => a.className === selectedClass && a.date === selectedDate);
@@ -4387,15 +3885,19 @@
 
         if (confirm(`Apakah Anda yakin ingin menghapus data presensi Kelas ${selectedClass} pada tanggal ${selectedDate}?`)) {
             teacherAttendanceData.splice(existingIdx, 1);
+            attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
             saveData();
             renderAttendanceForm();
             renderAttendanceSummaryTable();
-            renderTeacherTable();
             alert(`Presensi Kelas ${selectedClass} pada tanggal ${selectedDate} telah berhasil dihapus!`);
         }
     }
 
     function calculateStudentAttendanceStats(studentId, studentClass, attDataList = teacherAttendanceData) {
+        if (attDataList === teacherAttendanceData && attendanceStatsCache[studentId]) {
+            return attendanceStatsCache[studentId];
+        }
+
         const classSessions = attDataList.filter(a => a.className === studentClass);
         classSessions.sort((a, b) => new Date(a.date) - new Date(b.date));
         const totalSessions = classSessions.length;
@@ -4411,23 +3913,18 @@
             else if (status === 'I') izin++;
             else if (status === 'S') sakit++;
             else if (status === 'A') alpa++;
-
             history.push({ date: session.date, status: status });
         });
 
-        let earnedPoints = (hadir * 1.0) + (dispen * 1.0) + (terlambat * 0.75) + (izin * 0.50) + (sakit * 0.50) + (alpa * 0);
+        const earnedPoints = (hadir * 1.0) + (dispen * 1.0) + (terlambat * 0.75) + (izin * 0.50) + (sakit * 0.50);
         const percentage = totalSessions > 0 ? ((earnedPoints / totalSessions) * 100).toFixed(1) : "100.0";
 
-        return {
-            total: totalSessions,
-            hadir, terlambat, dispen, izin, sakit, alpa, percentage, history
-        };
+        return { total: totalSessions, hadir, terlambat, dispen, izin, sakit, alpa, percentage, history };
     }
 
     window.renderAttendanceSummaryTable = function() {
         const tbody = document.getElementById('attendance-summary-body');
         if (!tbody) return;
-        tbody.innerHTML = '';
         const filterClass = document.getElementById('filter-class-att-rekap') ? document.getElementById('filter-class-att-rekap').value : 'ALL';
         const assignedClasses = getActiveGuruAssignedClasses();
 
@@ -4442,9 +3939,9 @@
             return;
         }
 
-        filteredStudents.forEach((student, index) => {
+        tbody.innerHTML = filteredStudents.map((student, index) => {
             const stats = calculateStudentAttendanceStats(student.id, student.className);
-            tbody.innerHTML += `
+            return `
                 <tr>
                     <td>${index + 1}</td>
                     <td>${student.nisn}</td>
@@ -4452,8 +3949,7 @@
                     <td>${student.className}</td>
                     <td>
                         <span class="class-badge clickable-badge" style="background:#2563eb; color:white; font-size:12px; padding:4px 8px;" 
-                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.className}')" 
-                              title="Klik untuk melihat riwayat tanggal pertemuan">
+                              onclick="openAttendanceHistoryModal(${student.id}, '${student.name.replace(/'/g, "\\'")}', '${student.className}')">
                             📅 ${stats.total} Pertemuan
                         </span>
                     </td>
@@ -4466,32 +3962,26 @@
                     <td><strong>${stats.percentage}%</strong></td>
                 </tr>
             `;
-        });
+        }).join('');
     }
 
     window.openAttendanceHistoryModal = function(studentId, studentName, className) {
         const stats = calculateStudentAttendanceStats(studentId, className);
-        
         document.getElementById('att-history-modal-title').innerText = `🗓️ Riwayat Kehadiran: ${studentName}`;
         document.getElementById('att-history-modal-sub').innerText = `Kelas: ${className} | Total Input Presensi: ${stats.total} Pertemuan`;
 
         const tbody = document.getElementById('att-history-modal-body');
-        tbody.innerHTML = '';
-
         if (!stats.history || stats.history.length === 0) {
             tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada tanggal pertemuan yang terinput untuk kelas ini.</td></tr>`;
         } else {
-            stats.history.forEach((item, index) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${formatDateIndo(item.date)}</strong></td>
-                        <td>${getStatusBadgeHtml(item.status)}</td>
-                    </tr>
-                `;
-            });
+            tbody.innerHTML = stats.history.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${formatDateIndo(item.date)}</strong></td>
+                    <td>${getStatusBadgeHtml(item.status)}</td>
+                </tr>
+            `).join('');
         }
-
         document.getElementById('att-history-modal').classList.remove('hidden');
     }
 
@@ -4514,29 +4004,24 @@
     function formatDateIndo(dateStr) {
         if (!dateStr) return '-';
         const parts = dateStr.split('-');
-        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        return dateStr;
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
     }
 
+    // HALAMAN SISWA
     function renderSiswaSubjectTabs() {
         const tabsContainer = document.getElementById('student-subject-tabs');
-        if (!tabsContainer) return;
-        tabsContainer.innerHTML = '';
-
-        if (!currentLoggedInStudent) return;
+        if (!tabsContainer || !currentLoggedInStudent) return;
 
         const availableGurus = gurus.filter(g => {
             const assignedClasses = g.assignedClasses || [];
             return assignedClasses.length === 0 || assignedClasses.includes(currentLoggedInStudent.className);
         });
 
-        let allActiveClass = activeSiswaSubjectTab === 'ALL' ? 'active' : '';
-        tabsContainer.innerHTML += `<button class="tab-btn ${allActiveClass}" onclick="switchSiswaSubjectTab('ALL')">📋 Semua Mapel</button>`;
-
-        availableGurus.forEach(g => {
-            let activeClass = activeSiswaSubjectTab === g.id ? 'active' : '';
-            tabsContainer.innerHTML += `<button class="tab-btn ${activeClass}" onclick="switchSiswaSubjectTab('${g.id}')">📘 ${g.subject}</button>`;
-        });
+        let html = `<button class="tab-btn ${activeSiswaSubjectTab === 'ALL' ? 'active' : ''}" onclick="switchSiswaSubjectTab('ALL')">📋 Semua Mapel</button>`;
+        html += availableGurus.map(g => 
+            `<button class="tab-btn ${activeSiswaSubjectTab === g.id ? 'active' : ''}" onclick="switchSiswaSubjectTab('${g.id}')">📘 ${g.subject}</button>`
+        ).join('');
+        tabsContainer.innerHTML = html;
     }
 
     window.switchSiswaSubjectTab = function(guruId) {
@@ -4554,7 +4039,6 @@
 
         const container = document.getElementById('student-subject-content');
         if (!container) return;
-        container.innerHTML = '';
 
         const targetGurus = gurus.filter(g => {
             const assignedClasses = g.assignedClasses || [];
@@ -4568,7 +4052,7 @@
             return;
         }
 
-        targetGurus.forEach(g => {
+        container.innerHTML = targetGurus.map(g => {
             const gStore = guruDataStore[g.id] || {};
             const gCats = gStore.categories || [];
             const gAttWgt = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
@@ -4580,45 +4064,35 @@
 
             const sData = gScoresData[currentLoggedInStudent.id] || { note: '', scores: {} };
             const attStats = calculateStudentAttendanceStats(currentLoggedInStudent.id, currentLoggedInStudent.className, gAttData);
+            const singleStudentCache = { [currentLoggedInStudent.id]: attStats };
 
-            let attendancePillsHtml = '';
+            const attendancePillsHtml = gShowAttDetail ? `
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <span class="attendance-stat-pill" style="color:#2563eb;">Persentase: ${attStats.percentage}%</span>
+                    <span class="attendance-stat-pill" style="color:#059669;">Hadir: ${attStats.hadir}/${attStats.total}</span>
+                    <span class="attendance-stat-pill" style="color:#d97706;">Terlambat: ${attStats.terlambat}</span>
+                    <span class="attendance-stat-pill" style="color:#7c3aed;">Rapat/Dispen: ${attStats.dispen}</span>
+                    <span class="attendance-stat-pill" style="color:#0284c7;">Izin: ${attStats.izin}</span>
+                    <span class="attendance-stat-pill" style="color:#f59e0b;">Sakit: ${attStats.sakit}</span>
+                    <span class="attendance-stat-pill" style="color:#dc2626;">Alpa: ${attStats.alpa}</span>
+                </div>
+            ` : `
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <span class="attendance-stat-pill" style="color:#2563eb; font-size:13px;">Persentase Kehadiran: ${attStats.percentage}%</span>
+                </div>
+            `;
+
             let attendanceHistoryTableHtml = '';
-
-            if (gShowAttDetail) {
-                attendancePillsHtml = `
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        <span class="attendance-stat-pill" style="color:#2563eb;">Persentase: ${attStats.percentage}%</span>
-                        <span class="attendance-stat-pill" style="color:#059669;">Hadir: ${attStats.hadir}/${attStats.total}</span>
-                        <span class="attendance-stat-pill" style="color:#d97706;">Terlambat: ${attStats.terlambat}</span>
-                        <span class="attendance-stat-pill" style="color:#7c3aed;">Rapat/Dispen: ${attStats.dispen}</span>
-                        <span class="attendance-stat-pill" style="color:#0284c7;">Izin: ${attStats.izin}</span>
-                        <span class="attendance-stat-pill" style="color:#f59e0b;">Sakit: ${attStats.sakit}</span>
-                        <span class="attendance-stat-pill" style="color:#dc2626;">Alpa: ${attStats.alpa}</span>
-                    </div>
-                `;
-            } else {
-                attendancePillsHtml = `
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        <span class="attendance-stat-pill" style="color:#2563eb; font-size:13px;">Persentase Kehadiran: ${attStats.percentage}%</span>
-                    </div>
-                `;
-            }
-
             if (gShowAttHistory) {
-                let rowsHistoryHtml = '';
-                if (attStats.history && attStats.history.length > 0) {
-                    attStats.history.forEach((item, idx) => {
-                        rowsHistoryHtml += `
-                            <tr>
-                                <td>${idx + 1}</td>
-                                <td><strong>${formatDateIndo(item.date)}</strong></td>
-                                <td>${getStatusBadgeHtml(item.status)}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    rowsHistoryHtml = `<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada catatan tanggal pertemuan.</td></tr>`;
-                }
+                const rowsHistoryHtml = (attStats.history && attStats.history.length > 0)
+                    ? attStats.history.map((item, idx) => `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td><strong>${formatDateIndo(item.date)}</strong></td>
+                            <td>${getStatusBadgeHtml(item.status)}</td>
+                        </tr>
+                    `).join('')
+                    : `<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada catatan tanggal pertemuan.</td></tr>`;
 
                 attendanceHistoryTableHtml = `
                     <div style="margin-top: 15px; margin-bottom: 20px;">
@@ -4632,16 +4106,58 @@
                                         <th style="width: 40%;">Status Kehadiran</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    ${rowsHistoryHtml}
-                                </tbody>
+                                <tbody>${rowsHistoryHtml}</tbody>
                             </table>
                         </div>
                     </div>
                 `;
             }
 
-            let tableHtml = `
+            let rowsScoresHtml = `
+                <tr style="background:#fffbeb; font-weight:bold;">
+                    <td>Persentase Kehadiran (Presensi)</td>
+                    ${gShowWeight ? `<td>${gAttWgt}%</td>` : ''}
+                    <td style="color:#b45309;">${attStats.percentage}%</td>
+                </tr>
+            `;
+
+            gCats.forEach(cat => {
+                if (cat.visible) {
+                    if (Array.isArray(cat.subItems) && cat.subItems.length > 0) {
+                        const visibleSubItems = cat.subItems.filter(s => s.visible);
+                        if (visibleSubItems.length > 0) {
+                            const avgCat = getCategoryScore(currentLoggedInStudent.id, cat, true, sData.scores);
+                            rowsScoresHtml += `<tr style="background:#f1f5f9; font-weight:bold;">
+                                <td>${cat.name} (Rata-Rata)</td>
+                                ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
+                                <td>${avgCat !== null ? avgCat.toFixed(1) : '-'}</td></tr>`;
+
+                            visibleSubItems.forEach(s => {
+                                const val = sData.scores[`sub_${s.id}`] !== undefined ? sData.scores[`sub_${s.id}`] : '-';
+                                rowsScoresHtml += `<tr>
+                                    <td style="padding-left: 25px; color:#475569;">↳ ${s.name}</td>
+                                    ${gShowWeight ? `<td style="color:#aaa;">-</td>` : ''}
+                                    <td>${val}</td></tr>`;
+                            });
+                        }
+                    } else {
+                        const val = sData.scores[`cat_${cat.id}`] !== undefined ? sData.scores[`cat_${cat.id}`] : '-';
+                        rowsScoresHtml += `<tr><td><strong>${cat.name}</strong></td>
+                            ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
+                            <td><strong>${val}</strong></td></tr>`;
+                    }
+                }
+            });
+
+            const finalScore = calculateFinalScore(currentLoggedInStudent.id, currentLoggedInStudent.className, true, gCats, sData.scores, gAttWgt, singleStudentCache);
+            const noteHtml = (sData.note && sData.note.trim() !== '') ? `
+                <div class="teacher-note-box">
+                    <strong>📌 Catatan Guru:</strong>
+                    <p style="margin-top: 4px;">${sData.note}</p>
+                </div>
+            ` : '';
+
+            return `
                 <div style="margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; background: #ffffff;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                         <div>
@@ -4671,71 +4187,15 @@
                                     <th>Nilai Anda</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr style="background:#fffbeb; font-weight:bold;">
-                                    <td>Persentase Kehadiran (Presensi)</td>
-                                    ${gShowWeight ? `<td>${gAttWgt}%</td>` : ''}
-                                    <td style="color:#b45309;">${attStats.percentage}%</td>
-                                </tr>
-            `;
-
-            gCats.forEach(cat => {
-                if (cat.visible) {
-                    if (cat.subItems && cat.subItems.length > 0) {
-                        const visibleSubItems = cat.subItems.filter(s => s.visible);
-                        if (visibleSubItems.length > 0) {
-                            const avgCat = getCategoryScore(currentLoggedInStudent.id, cat, true, sData.scores);
-
-                            tableHtml += `<tr style="background:#f1f5f9; font-weight:bold;">
-                                <td>${cat.name} (Rata-Rata)</td>
-                                ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
-                                <td>${avgCat !== null ? avgCat.toFixed(1) : '-'}</td></tr>`;
-
-                            visibleSubItems.forEach(s => {
-                                const scoreKey = `sub_${s.id}`;
-                                const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
-                                tableHtml += `<tr>
-                                    <td style="padding-left: 25px; color:#475569;">↳ ${s.name}</td>
-                                    ${gShowWeight ? `<td style="color:#aaa;">-</td>` : ''}
-                                    <td>${val}</td></tr>`;
-                            });
-                        }
-                    } else {
-                        const scoreKey = `cat_${cat.id}`;
-                        const val = sData.scores[scoreKey] !== undefined ? sData.scores[scoreKey] : '-';
-                        tableHtml += `<tr><td><strong>${cat.name}</strong></td>
-                            ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
-                            <td><strong>${val}</strong></td></tr>`;
-                    }
-                }
-            });
-
-            const finalScore = calculateFinalScore(currentLoggedInStudent.id, currentLoggedInStudent.className, true, gCats, sData.scores, gAttWgt, gAttData);
-
-            tableHtml += `
-                            </tbody>
+                            <tbody>${rowsScoresHtml}</tbody>
                         </table>
                     </div>
 
                     <div style="margin-top: 12px; font-weight: bold; font-size: 15px;">
                         Nilai Akhir Pelajaran: <span style="color: #2563eb;">${finalScore}</span>
                     </div>
+                    ${noteHtml}
+                </div>
             `;
-
-            if (sData.note && sData.note.trim() !== '') {
-                tableHtml += `
-                    <div class="teacher-note-box">
-                        <strong>📌 Catatan Guru:</strong>
-                        <p style="margin-top: 4px;">${sData.note}</p>
-                    </div>
-                `;
-            }
-
-            tableHtml += `</div>`;
-            container.innerHTML += tableHtml;
-        });
+        }).join('');
     }
-</script>
-
-</body>
-</html>
