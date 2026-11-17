@@ -644,7 +644,18 @@
             <img id="header-logo" src="https://via.placeholder.com/100x50?text=LOGO" alt="Logo Sekolah" class="school-logo">
             <div class="header-titles">
                 <h1 id="header-app-name">Portal Nilai & Kehadiran Sekolah</h1>
-                <p id="header-school-name">SMA Negeri 1 Indonesia</p>
+                <p id="header-school-name">SMP NEGERI 1 BATUJAJAR</p>
+                <!-- TAMBAHAN FILTER TAHUN AJARAN & SEMESTER -->
+                <div style="margin-top: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 12px; font-weight: bold; color: #2563eb;">📅 Periode:</span>
+                    <select id="global-academic-year" onchange="changeSelectedPeriod()" style="padding: 3px 8px; font-size: 12px; font-weight: bold; border-color: #93c5fd;">
+                        <option value="2026-2027">2026-2027</option>
+                    </select>
+                    <select id="global-semester" onchange="changeSelectedPeriod()" style="padding: 3px 8px; font-size: 12px; font-weight: bold; border-color: #93c5fd;">
+                        <option value="1">Semester 1 (Ganjil)</option>
+                        <option value="2">Semester 2 (Genap)</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -949,6 +960,30 @@
                     </div>
 
                     <button class="btn-success" onclick="saveAppIdentitySettings()" style="margin-top: 10px;">💾 Simpan Profil Aplikasi</button>
+					
+					<hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
+                    <h3>📅 Pengaturan Tahun Ajaran & Semester Aktif</h3>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Tentukan periode default yang langsung tampil saat Guru & Siswa masuk ke portal.</p>
+                    
+                    <div class="form-inline">
+                        <input type="text" id="new-academic-year-input" placeholder="Tambah Tahun (misal: 2027-2028)" style="width: 220px;">
+                        <button class="btn-info btn-sm" onclick="addAcademicYear()">+ Tambah Tahun</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tahun Ajaran Aktif (Default):</label>
+                        <select id="setting-active-year"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Semester Aktif (Default):</label>
+                        <select id="setting-active-semester">
+                            <option value="1">Semester 1 (Ganjil)</option>
+                            <option value="2">Semester 2 (Genap)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-success" onclick="saveActivePeriodSettings()">💾 Simpan Periode Aktif</button>
                     
                     <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e2e8f0;">
 
@@ -1550,6 +1585,85 @@
 </div>
 
 <script type="module">
+// 1. Tambahkan State Tahun Ajaran & Semester
+    let academicYears = ['2025-2026', '2026-2027'];
+    let activeAcademicYear = '2026-2027';
+    let activeSemester = '1'; // '1' = Ganjil, '2' = Genap
+
+    // Periode yang sedang dilihat user saat ini
+    let selectedAcademicYear = '2026-2027';
+    let selectedSemester = '1';
+
+    // Helper untuk membuat kunci unik penyimpanan per Guru + Tahun Ajaran + Semester
+    function getGuruPeriodKey(guruId, year = selectedAcademicYear, sem = selectedSemester) {
+        return `${guruId}__${year}__${sem}`;
+    }
+
+    // 2. Fungsi saat dropdown periode di Header diubah oleh Admin/Guru/Siswa
+    window.changeSelectedPeriod = function() {
+        selectedAcademicYear = document.getElementById('global-academic-year').value;
+        selectedSemester = document.getElementById('global-semester').value;
+
+        if (currentRole === 'guru' && currentGuruId) {
+            loadGuruDataFromStore(currentGuruId);
+            renderTeacherView();
+        } else if (currentRole === 'admin') {
+            renderAdminView();
+        } else if (currentRole === 'siswa' && currentLoggedInStudent) {
+            renderStudentView();
+        }
+    }
+
+    // 3. Fungsi Admin menambah & menyimpan periode aktif
+    window.addAcademicYear = function() {
+        const input = document.getElementById('new-academic-year-input');
+        const val = input.value.trim();
+        if (!val) return alert('Masukkan format tahun ajaran (contoh: 2026-2027)');
+        if (academicYears.includes(val)) return alert('Tahun ajaran tersebut sudah ada!');
+        
+        academicYears.push(val);
+        academicYears.sort();
+        input.value = '';
+        saveData();
+        renderPeriodDropdowns();
+        alert(`Tahun ajaran ${val} berhasil ditambahkan!`);
+    }
+
+    window.saveActivePeriodSettings = function() {
+        activeAcademicYear = document.getElementById('setting-active-year').value;
+        activeSemester = document.getElementById('setting-active-semester').value;
+        selectedAcademicYear = activeAcademicYear;
+        selectedSemester = activeSemester;
+        
+        saveData();
+        renderPeriodDropdowns();
+        alert(`Periode aktif diubah ke Tahun Ajaran ${activeAcademicYear} - Semester ${activeSemester}!`);
+    }
+
+    function renderPeriodDropdowns() {
+        const optionsHtml = academicYears.map(y => `<option value="${y}">${y}</option>`).join('');
+        
+        const globalYearEl = document.getElementById('global-academic-year');
+        const globalSemEl = document.getElementById('global-semester');
+        if (globalYearEl) {
+            globalYearEl.innerHTML = optionsHtml;
+            globalYearEl.value = selectedAcademicYear;
+        }
+        if (globalSemEl) {
+            globalSemEl.value = selectedSemester;
+        }
+
+        const settingYearEl = document.getElementById('setting-active-year');
+        const settingSemEl = document.getElementById('setting-active-semester');
+        if (settingYearEl) {
+            settingYearEl.innerHTML = optionsHtml;
+            settingYearEl.value = activeAcademicYear;
+        }
+        if (settingSemEl) {
+            settingSemEl.value = activeSemester;
+        }
+    }
+
 // Mematikan menu Klik Kanan
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
@@ -1710,6 +1824,15 @@
                 }
             }
             if (data.gurus) gurus = data.gurus;
+			if (data.academicYears) academicYears = data.academicYears;
+            if (data.activeAcademicYear) activeAcademicYear = data.activeAcademicYear;
+            if (data.activeSemester) activeSemester = data.activeSemester;
+
+            if (currentRole === 'none') {
+                selectedAcademicYear = activeAcademicYear;
+                selectedSemester = activeSemester;
+            }
+            renderPeriodDropdowns();
             if (data.guruDataStore) {
                 guruDataStore = data.guruDataStore;
                 if (currentRole === 'guru' && currentGuruId && guruDataStore[currentGuruId]) {
@@ -1742,8 +1865,13 @@
     });
 
     function loadGuruDataFromStore(guruId) {
+		const periodKey = getGuruPeriodKey(guruId);
+		if (!guruDataStore[periodKey] && guruDataStore[guruId] && selectedAcademicYear === '2026-2027' && selectedSemester === '1') {
+			guruDataStore[periodKey] = guruDataStore[guruId];
+		}
+		const gStore = guruDataStore[periodKey] || {};
         currentGuruId = guruId;
-        const gStore = guruDataStore[guruId] || {};
+        const gStore = guruDataStore[getGuruPeriodKey(guruId)] || {};
         categories = gStore.categories || [
             { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
             { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
@@ -1761,8 +1889,10 @@
     function saveData() {
         sortMasterStudents();
 
+        // 1. Simpan data guru ke KUNCI PERIODE AKTIF (misal: "g1__2026-2027__1")
         if (currentRole === 'guru' && currentGuruId) {
-            guruDataStore[currentGuruId] = {
+            const periodKey = getGuruPeriodKey(currentGuruId);
+            guruDataStore[periodKey] = {
                 categories: categories,
                 attendanceWeight: attendanceWeight,
                 scoresData: teacherScoresData,
@@ -1773,14 +1903,19 @@
             };
         }
 
+        // 2. Sertakan daftar tahun ajaran & semester aktif ke dalam PAYLOAD
         const payload = {
             appProfile: appProfile,
             masterClasses: masterClasses,
             masterStudents: masterStudents,
             gurus: gurus,
-            guruDataStore: guruDataStore
+            guruDataStore: guruDataStore,
+            academicYears: academicYears,             // <-- TAMBAHAN BARU
+            activeAcademicYear: activeAcademicYear,   // <-- TAMBAHAN BARU
+            activeSemester: activeSemester            // <-- TAMBAHAN BARU
         };
 
+        // Simpan Data Ke Firebase Realtime Database
         set(ref(db, 'portal_database'), payload);
         renderDashboards();
     }
@@ -1895,7 +2030,7 @@
         let rekapList = [];
 
         gurus.forEach(g => {
-            const gStore = guruDataStore[g.id] || {};
+            const gStore = guruDataStore[getGuruPeriodKey(g.id)] || {};
             const cats = gStore.categories || [];
             const attWgt = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
             const scoresData = gStore.scoresData || {};
@@ -3113,7 +3248,7 @@
     window.deleteGuru = function(guruId) {
         if (confirm('Hapus akun guru ini? Semua data nilai dan absensi guru ini akan terhapus.')) {
             gurus = gurus.filter(g => g.id !== guruId);
-            delete guruDataStore[guruId];
+            delete guruDataStore[getGuruPeriodKey(guruId)];
             saveData();
             renderAdminView();
         }
@@ -3548,7 +3683,8 @@
 
         if (currentGuruId) {
             isLocalInputActive = true;
-            const scoreRef = ref(db, `portal_database/guruDataStore/${currentGuruId}/scoresData/${studentId}/scores`);
+            const periodKey = getGuruPeriodKey(currentGuruId);
+			const scoreRef = ref(db, `portal_database/guruDataStore/${periodKey}/scoresData/${studentId}/scores`);
             update(scoreRef, { [key]: numericVal });
         }
     }
@@ -3560,7 +3696,8 @@
 
         if (currentGuruId) {
             isLocalInputActive = true;
-            const noteRef = ref(db, `portal_database/guruDataStore/${currentGuruId}/scoresData/${studentId}`);
+            const periodKey = getGuruPeriodKey(currentGuruId);
+			const scoreRef = ref(db, `portal_database/guruDataStore/${periodKey}/scoresData/${studentId}/scores`);
             update(noteRef, { note: cleanNote });
         }
     }
@@ -4067,7 +4204,7 @@
         }
 
         container.innerHTML = targetGurus.map(g => {
-            const gStore = guruDataStore[g.id] || {};
+            const gStore = guruDataStore[getGuruPeriodKey(g.id)] || {};
             const gCats = gStore.categories || [];
             const gAttWgt = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
             const gScoresData = gStore.scoresData || {};
