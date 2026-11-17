@@ -1689,11 +1689,25 @@
         if (data) {
             if (data.appProfile) appProfile = data.appProfile;
             if (data.masterClasses) masterClasses = data.masterClasses;
-            if (data.masterStudents) {
-                masterStudents = data.masterStudents.map(s => {
+			if (data.masterStudents) {
+                const seenIds = new Set();
+                let needsIdFix = false;
+
+                masterStudents = data.masterStudents.map((s, idx) => {
                     if (!s.password) s.password = '123';
+                    // Jika ID kosong atau sudah dipakai siswa lain, buat ID unik baru
+                    if (!s.id || seenIds.has(s.id)) {
+                        s.id = Date.now() + idx + Math.floor(Math.random() * 100000);
+                        needsIdFix = true;
+                    }
+                    seenIds.add(s.id);
                     return s;
                 });
+
+                // Simpan otomatis ke Firebase jika ditemukan ID kembar yang diperbaiki
+                if (needsIdFix) {
+                    set(ref(db, 'portal_database/masterStudents'), masterStudents);
+                }
             }
             if (data.gurus) gurus = data.gurus;
             if (data.guruDataStore) {
@@ -2771,7 +2785,7 @@
                         } else {
                             if (!masterClasses.includes(className)) masterClasses.push(className);
                             masterStudents.push({
-                                id: Date.now() + Math.floor(Math.random() * 1000),
+                                id: Number(`${Date.now()}${i}`),
                                 nisn, name, className, password
                             });
                             count++;
