@@ -1585,6 +1585,18 @@
 </div>
 
 <script type="module">
+	setTimeout(() => {
+		const overlay = document.getElementById('firebase-loading-overlay');
+		if (overlay && overlay.style.display !== 'none') {
+			overlay.innerHTML = `
+				<div style="text-align:center; padding:20px;">
+					<p style="color:#dc2626; margin-bottom:10px;">⚠️ Koneksi ke Firebase memakan waktu terlalu lama.</p>
+					<p style="font-size:13px; color:#475569; margin-bottom:15px;">Periksa koneksi internet Anda atau pastikan Rules di Firebase Realtime Database sudah diatur ke <code>read: true, write: true</code>.</p>
+					<button onclick="document.getElementById('firebase-loading-overlay').style.display='none'">Tutup & Lanjutkan Offline</button>
+				</div>
+			`;
+		}
+	}, 8000);
 // 1. Tambahkan State Tahun Ajaran & Semester
     let academicYears = ['2025-2026', '2026-2027'];
     let activeAcademicYear = '2026-2027';
@@ -1834,11 +1846,11 @@
             }
             renderPeriodDropdowns();
             if (data.guruDataStore) {
-                guruDataStore = data.guruDataStore;
-                if (currentRole === 'guru' && currentGuruId && guruDataStore[currentGuruId]) {
-                    loadGuruDataFromStore(currentGuruId);
-                }
-            }
+				guruDataStore = data.guruDataStore;
+				if (currentRole === 'guru' && currentGuruId) {
+					loadGuruDataFromStore(currentGuruId);
+				}
+			}
         } else {
             saveData();
         }
@@ -1864,27 +1876,27 @@
         }
     });
 
-    function loadGuruDataFromStore(guruId) {
+		function loadGuruDataFromStore(guruId) {
+		currentGuruId = guruId;
 		const periodKey = getGuruPeriodKey(guruId);
 		if (!guruDataStore[periodKey] && guruDataStore[guruId] && selectedAcademicYear === '2026-2027' && selectedSemester === '1') {
 			guruDataStore[periodKey] = guruDataStore[guruId];
 		}
 		const gStore = guruDataStore[periodKey] || {};
-        currentGuruId = guruId;
-        const gStore = guruDataStore[getGuruPeriodKey(guruId)] || {};
-        categories = gStore.categories || [
-            { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
-            { id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
-            { id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
-        ];
-        attendanceWeight = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
-        teacherScoresData = gStore.scoresData || {};
-        teacherAttendanceData = gStore.attendanceData || [];
-        showWeightToStudent = gStore.showWeight !== undefined ? gStore.showWeight : true;
-        showAttDetailToStudent = gStore.showAttDetail !== undefined ? gStore.showAttDetail : true;
-        showAttHistoryToStudent = gStore.showAttHistory !== undefined ? gStore.showAttHistory : true;
-        attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
-    }
+
+		categories = gStore.categories || [
+			{ id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
+			{ id: 2, name: 'UTS', weight: 30, visible: true, subItems: [] },
+			{ id: 3, name: 'UAS', weight: 30, visible: true, subItems: [] }
+		];
+		attendanceWeight = gStore.attendanceWeight !== undefined ? parseFloat(gStore.attendanceWeight) : 10;
+		teacherScoresData = gStore.scoresData || {};
+		teacherAttendanceData = gStore.attendanceData || [];
+		showWeightToStudent = gStore.showWeight !== undefined ? gStore.showWeight : true;
+		showAttDetailToStudent = gStore.showAttDetail !== undefined ? gStore.showAttDetail : true;
+		showAttHistoryToStudent = gStore.showAttHistory !== undefined ? gStore.showAttHistory : true;
+		attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
+}
 
     function saveData() {
         sortMasterStudents();
@@ -1923,13 +1935,14 @@
     // DASHBOARD SUMMARY
     window.renderDashboards = function() {
         if (currentRole === 'admin') {
-            let totalAdminScoresCount = 0;
-            gurus.forEach(g => {
-                const scoresData = (guruDataStore[g.id] && guruDataStore[g.id].scoresData) ? guruDataStore[g.id].scoresData : {};
-                Object.values(scoresData).forEach(st => {
-                    if (st.scores) totalAdminScoresCount += Object.keys(st.scores).length;
-                });
-            });
+			let totalAdminScoresCount = 0;
+			gurus.forEach(g => {
+				const pKey = getGuruPeriodKey(g.id);
+				const scoresData = (guruDataStore[pKey] && guruDataStore[pKey].scoresData) ? guruDataStore[pKey].scoresData : {};
+				Object.values(scoresData).forEach(st => {
+					if (st.scores) totalAdminScoresCount += Object.keys(st.scores).length;
+				});
+			});
 
             const elAdminStu = document.getElementById('dash-admin-students');
             const elAdminGuru = document.getElementById('dash-admin-gurus');
@@ -3690,17 +3703,17 @@
     }
 
     window.updateStudentNote = function(studentId, noteValue) {
-        const sData = getStudentScoreObj(studentId);
-        const cleanNote = noteValue.trim();
-        sData.note = cleanNote;
+    const sData = getStudentScoreObj(studentId);
+    const cleanNote = noteValue.trim();
+    sData.note = cleanNote;
 
-        if (currentGuruId) {
-            isLocalInputActive = true;
-            const periodKey = getGuruPeriodKey(currentGuruId);
-			const scoreRef = ref(db, `portal_database/guruDataStore/${periodKey}/scoresData/${studentId}/scores`);
-            update(noteRef, { note: cleanNote });
-        }
-    }
+		if (currentGuruId) {
+			isLocalInputActive = true;
+			const periodKey = getGuruPeriodKey(currentGuruId);
+			const studentNodeRef = ref(db, `portal_database/guruDataStore/${periodKey}/scoresData/${studentId}`);
+			update(studentNodeRef, { note: cleanNote });
+		}
+	}
 
     function getCategoryScore(studentId, cat, onlyVisible = false, scoresOverride = null) {
         const scores = scoresOverride !== null ? scoresOverride : (teacherScoresData[studentId] ? teacherScoresData[studentId].scores : {});
