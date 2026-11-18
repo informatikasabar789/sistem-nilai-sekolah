@@ -3701,6 +3701,36 @@
         }
     }
 
+    // FUNGSI GESER URUTAN KATEGORI UTAMA
+    window.moveCategoryOrder = function(index, direction) {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+        // Tukar posisi elemen
+        const temp = categories[index];
+        categories[index] = categories[targetIndex];
+        categories[targetIndex] = temp;
+
+        saveData();
+        renderTeacherView();
+    }
+
+    // FUNGSI GESER URUTAN SUB-ITEM
+    window.moveSubItemOrder = function(catId, subIndex, direction) {
+        const cat = categories.find(c => c.id === catId);
+        if (!cat || !Array.isArray(cat.subItems)) return;
+
+        const targetIndex = subIndex + direction;
+        if (targetIndex < 0 || targetIndex >= cat.subItems.length) return;
+
+        const temp = cat.subItems[subIndex];
+        cat.subItems[subIndex] = cat.subItems[targetIndex];
+        cat.subItems[targetIndex] = temp;
+
+        saveData();
+        renderTeacherView();
+    }
+
     function renderCategoryTable() {
         const tbody = document.getElementById('category-table-body');
         if (!tbody) return;
@@ -3717,13 +3747,20 @@
             return;
         }
 
-        tbody.innerHTML = categories.map(c => {
+        tbody.innerHTML = categories.map((c, index) => {
             let subBadges = '';
             if (Array.isArray(c.subItems) && c.subItems.length > 0) {
-                subBadges = c.subItems.map(s => {
+                subBadges = c.subItems.map((s, subIdx) => {
                     const statusBadge = s.visible ? `<span class="badge-visible">Tampil</span>` : `<span class="badge-hidden">Sembunyi</span>`;
+                    const isFirstSub = subIdx === 0;
+                    const isLastSub = subIdx === c.subItems.length - 1;
+
                     return `
                         <div class="sub-item-badge">
+                            <button class="btn-secondary btn-sm" style="padding: 1px 5px; font-size: 10px;" 
+                                    onclick="moveSubItemOrder(${c.id}, ${subIdx}, -1)" ${isFirstSub ? 'disabled style="opacity:0.4; padding:1px 5px; font-size:10px; cursor:not-allowed;"' : ''} title="Geser Kiri">◀️</button>
+                            <button class="btn-secondary btn-sm" style="padding: 1px 5px; font-size: 10px;" 
+                                    onclick="moveSubItemOrder(${c.id}, ${subIdx}, 1)" ${isLastSub ? 'disabled style="opacity:0.4; padding:1px 5px; font-size:10px; cursor:not-allowed;"' : ''} title="Geser Kanan">▶️</button>
                             <strong>${s.name}</strong> ${statusBadge}
                             <button class="btn-warning btn-sm" onclick="openEditSubItemModal(${c.id}, ${s.id})">Edit</button>
                             <button class="btn-secondary btn-sm" onclick="toggleSubItemVisibility(${c.id}, ${s.id})">Ubah</button>
@@ -3736,10 +3773,22 @@
             }
 
             const catStatus = c.visible ? `<span class="badge-visible">Tampil ke Siswa</span>` : `<span class="badge-hidden">Disembunyikan</span>`;
+            const isFirstCat = index === 0;
+            const isLastCat = index === categories.length - 1;
 
             return `
                 <tr>
-                    <td><strong>${c.name}</strong></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <button class="btn-secondary btn-sm" style="padding: 1px 6px; font-size: 10px;" 
+                                        onclick="moveCategoryOrder(${index}, -1)" ${isFirstCat ? 'disabled style="opacity:0.4; padding:1px 6px; font-size:10px; cursor:not-allowed;"' : ''} title="Naikkan Urutan">⬆️</button>
+                                <button class="btn-secondary btn-sm" style="padding: 1px 6px; font-size: 10px;" 
+                                        onclick="moveCategoryOrder(${index}, 1)" ${isLastCat ? 'disabled style="opacity:0.4; padding:1px 6px; font-size:10px; cursor:not-allowed;"' : ''} title="Turunkan Urutan">⬇️</button>
+                            </div>
+                            <strong>${c.name}</strong>
+                        </div>
+                    </td>
                     <td>${c.weight}%</td>
                     <td>
                         ${catStatus} <br>
@@ -4003,13 +4052,21 @@
       return formatScoreNumber((totalWeightedScore / totalActiveWeight) * 100);
     }
 
-    // SORTIR TABEL NILAI GURU
+    // SORTIR TABEL NILAI GURU (SIKLUS 3 KLIK: ARAH 1 -> ARAH 2 -> DEFAULT)
     window.sortGuruTableBy = function(columnKey) {
+        const isTextCol = (columnKey === 'nisn' || columnKey === 'name' || columnKey === 'className');
+
         if (guruScoreSortKey === columnKey) {
-            guruScoreSortAsc = !guruScoreSortAsc;
+            // Untuk kolom teks (NISN/Nama/Kelas): Klik 1 = A-Z (true) -> Klik 2 = Z-A (false) -> Klik 3 = Default
+            // Untuk kolom angka (Nilai/Kehadiran): Klik 1 = Tertinggi (false) -> Klik 2 = Terendah (true) -> Klik 3 = Default
+            if ((isTextCol && guruScoreSortAsc === true) || (!isTextCol && guruScoreSortAsc === false)) {
+                guruScoreSortAsc = !guruScoreSortAsc;
+            } else {
+                guruScoreSortKey = 'default';
+                guruScoreSortAsc = true;
+            }
         } else {
             guruScoreSortKey = columnKey;
-            const isTextCol = (columnKey === 'nisn' || columnKey === 'name' || columnKey === 'className' || columnKey === 'default');
             guruScoreSortAsc = isTextCol ? true : false;
         }
         renderTeacherTable();
