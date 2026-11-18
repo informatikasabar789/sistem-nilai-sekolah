@@ -2416,7 +2416,8 @@
                             errors.push(`• Baris ${rowNumber} (${student.name}): Nilai "${rawVal}" pada kolom "${map.label}" tidak valid (harus angka 0 - 100).`);
                             rowHasScoreError = true;
                         } else {
-                            parsedScores[map.key] = numVal;
+                            // Pembulatan maksimal 2 digit di belakang koma (bulat tetap bulat)
+							parsedScores[map.key] = Math.round((numVal + Number.EPSILON) * 100) / 100;
                         }
                     }
                 });
