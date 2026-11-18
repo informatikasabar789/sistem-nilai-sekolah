@@ -3111,49 +3111,125 @@
     window.importGurusFromCSV = function() {
         const fileInput = document.getElementById('admin-guru-csv-file-input');
         const file = fileInput.files[0];
-        if (!file) return alert('Silakan pilih file CSV guru!');
+        if (!file) return alert('Silakan pilih file CSV guru terlebih dahulu!');
+
+        const btnUpload = event?.target;
+        const originalBtnText = btnUpload ? btnUpload.innerText : '';
+        if (btnUpload) {
+            btnUpload.disabled = true;
+            btnUpload.innerText = '⏳ Memproses...';
+        }
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const lines = e.target.result.split(/\r\n|\n/);
-            let count = 0, invalidCount = 0, duplicateCount = 0;
+        reader.onload = async function(e) {
+            try {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+                if (lines.length < 2) {
+                    return alert('File CSV kosong atau tidak memiliki baris data guru!');
+                }
 
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line) {
-                    const delimiter = line.includes(';') ? ';' : ',';
-                    const cols = line.split(delimiter);
-
-                    const name = cols[0] ? cols[0].trim().replace(/^"|"$/g, '') : '';
-                    const subject = cols[1] ? cols[1].trim().replace(/^"|"$/g, '') : '';
-                    const username = cols[2] ? cols[2].trim().replace(/^"|"$/g, '') : '';
-                    const password = cols[3] ? cols[3].trim().replace(/^"|"$/g, '') : '';
-                    const rawClasses = cols[4] ? cols[4].trim().replace(/^"|"$/g, '') : '';
-
-                    if (name && subject && username && password) {
-                        if (gurus.some(g => g.username.toLowerCase() === username.toLowerCase())) {
-                            duplicateCount++;
+                // Deteksi delimiter otomatis (koma atau titik koma) di luar tanda kutip
+                const delimiter = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
+                
+                // Parser CSV yang aman terhadap tanda kutip ("10 IPA 1, 10 IPA 2")
+                const parseCSVLine = (str) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < str.length; i++) {
+                        const char = str[i];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === delimiter && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
                         } else {
-                            const assignedClasses = rawClasses ? rawClasses.split(/[,|]/).map(c => c.trim()).filter(c => c !== '') : [];
-                            assignedClasses.forEach(cls => {
-                                if (!masterClasses.includes(cls)) masterClasses.push(cls);
-                            });
-
-                            gurus.push({
-                                id: 'g_' + (Date.now() + Math.floor(Math.random() * 1000)),
-                                name, subject, username, password, assignedClasses
-                            });
-                            count++;
+                            current += char;
                         }
-                    } else invalidCount++;
+                    }
+                    result.push(current.trim());
+                    return result.map(col => col.replace(/^"|"$/g, '').trim());
+                };
+
+                let count = 0;
+                let duplicateCount = 0;
+                let invalidRows = [];
+                let classesAdded = false;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = parseCSVLine(lines[i]);
+                    const name = cols[0] || '';
+                    const subject = cols[1] || '';
+                    const username = cols[2] || '';
+                    const password = cols[3] || '';
+                    const rawClasses = cols[4] || '';
+
+                    if (!name || !subject || !username || !password) {
+                        invalidRows.push(`Baris ${i + 1}: Data wajib (Nama/Mapel/Username/Password) tidak lengkap.`);
+                        continue;
+                    }
+
+                    if (gurus.some(g => g.username.toLowerCase() === username.toLowerCase())) {
+                        duplicateCount++;
+                        continue;
+                    }
+
+                    const assignedClasses = rawClasses
+                        ? rawClasses.split(/[,|;]/).map(c => c.trim()).filter(c => c !== '')
+                        : [];
+
+                    assignedClasses.forEach(cls => {
+                        if (!masterClasses.includes(cls)) {
+                            masterClasses.push(cls);
+                            classesAdded = true;
+                        }
+                    });
+
+                    gurus.push({
+                        id: 'g_' + Date.now() + '_' + i,
+                        name,
+                        subject,
+                        username,
+                        password,
+                        assignedClasses
+                    });
+                    count++;
+                }
+
+                if (classesAdded) {
+                    masterClasses.sort();
+                }
+
+                // HANYA simpan node gurus & masterClasses (jauh lebih ringan & cepat daripada saveData() penuh)
+                const updates = {
+                    'portal_database/gurus': gurus
+                };
+                if (classesAdded) {
+                    updates['portal_database/masterClasses'] = masterClasses;
+                }
+
+                await update(ref(db), updates);
+
+                fileInput.value = '';
+                renderAdminView();
+
+                let summaryMsg = `✅ Import Data Guru Selesai!\n• Berhasil ditambahkan: ${count} guru`;
+                if (duplicateCount > 0) summaryMsg += `\n• Dilewati (Username sudah ada): ${duplicateCount}`;
+                if (invalidRows.length > 0) {
+                    summaryMsg += `\n• Baris dilewati karena tidak lengkap: ${invalidRows.length}\n  (${invalidRows.slice(0, 3).join(', ')})`;
+                }
+                alert(summaryMsg);
+
+            } catch (err) {
+                console.error(err);
+                alert('❌ Terjadi kesalahan saat mengunggah data guru: ' + err.message);
+            } finally {
+                if (btnUpload) {
+                    btnUpload.disabled = false;
+                    btnUpload.innerText = originalBtnText;
                 }
             }
-
-            masterClasses.sort();
-            fileInput.value = '';
-            saveData();
-            renderAdminView();
-            alert(`Import Data Guru selesai!\n- Berhasil: ${count}\n- Duplikat: ${duplicateCount}\n- Tidak Lengkap: ${invalidCount}`);
         };
         reader.readAsText(file);
     }
