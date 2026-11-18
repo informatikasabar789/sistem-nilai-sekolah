@@ -851,12 +851,18 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
                 <h3>Daftar Seluruh Murid</h3>
-                <div class="filter-container" style="margin-bottom: 0;">
-                    <label for="admin-filter-class"><strong>Filter Kelas:</strong></label>
-                    <select id="admin-filter-class" onchange="renderAdminStudentCrudTable()">
-                        <option value="ALL">-- Semua Kelas --</option>
-                    </select>
-                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+					 <h3>Daftar Seluruh Murid</h3>
+					 <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+						 <input type="text" id="admin-search-student" placeholder="🔍 Cari Nama atau NISN..." onkeyup="renderAdminStudentCrudTable()" style="width: 230px;">
+						 <div class="filter-container" style="margin-bottom: 0;">
+							 <label for="admin-filter-class"><strong>Filter Kelas:</strong></label>
+							 <select id="admin-filter-class" onchange="renderAdminStudentCrudTable()">
+								 <option value="ALL">-- Semua Kelas --</option>
+							 </select>
+						 </div>
+					 </div>
+				 </div>
             </div>
 
             <div class="table-scroll-container">
@@ -1274,6 +1280,18 @@
                 <div style="align-self: flex-end; display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn-success" onclick="saveCurrentAttendanceSession()">💾 Simpan Presensi Pertemuan Ini</button>
                     <button class="btn-danger" onclick="deleteCurrentAttendanceSession()">🗑️ Hapus Presensi Tanggal Ini</button>
+                </div>
+            </div>
+			
+			<div class="import-box" style="margin-top: 15px; background: #f8fafc;">
+                <h4 style="font-size: 13px; color: #1e293b; margin-bottom: 6px;">⚡ Import Absensi Massal via Excel / CSV</h4>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+                    Unduh template kelas terpilih, isi kode kehadiran (<strong>H</strong> = Hadir, <strong>T</strong> = Terlambat, <strong>D</strong> = Dispen, <strong>I</strong> = Izin, <strong>S</strong> = Sakit, <strong>A</strong> = Alpa) di Excel. Anda juga bisa menambah kolom tanggal baru di sebelah kanan (Format header tanggal: <code>YYYY-MM-DD</code>, contoh: <code>2026-11-18</code>).
+                </p>
+                <div class="form-inline" style="margin-bottom: 0;">
+                    <button class="btn-success btn-sm" onclick="downloadGuruAttendanceTemplate()">📥 Unduh Template Absensi (CSV)</button>
+                    <input type="file" id="guru-att-csv-input" accept=".csv, .txt" style="padding: 4px 8px; font-size: 13px;">
+                    <button class="btn-purple btn-sm" onclick="importGuruAttendanceFromCSV()">📤 Upload & Import Absensi</button>
                 </div>
             </div>
 
@@ -2245,11 +2263,29 @@
         const file = fileInput.files[0];
         if (!file) return alert('Silakan pilih file CSV template nilai terlebih dahulu!');
 
+        const filterClass = document.getElementById('filter-class-score').value;
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        // Tentukan daftar siswa yang diharapkan berdasarkan filter kelas yang sedang aktif
+        const expectedStudents = masterStudents.filter(s => {
+            const matchAssignedClass = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchFilterDropdown = (filterClass === "ALL" || s.className === filterClass);
+            return matchAssignedClass && matchFilterDropdown;
+        });
+
+        if (expectedStudents.length === 0) {
+            fileInput.value = '';
+            return alert('❌ Tidak ada data murid pada filter kelas yang dipilih!');
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
             const text = e.target.result;
             const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
-            if (lines.length < 2) return alert('File CSV kosong atau tidak memiliki baris data!');
+            if (lines.length < 2) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nFile CSV kosong atau tidak memiliki baris data siswa.');
+            }
 
             const delimiter = lines[0].includes(';') ? ';' : ',';
             const parseCSVLine = (str) => {
@@ -2270,8 +2306,18 @@
 
             const headerCols = parseCSVLine(lines[0]);
             const nisnColIndex = headerCols.findIndex(h => h.toLowerCase() === 'nisn');
-            if (nisnColIndex === -1) return alert('Kolom "NISN" tidak ditemukan pada baris pertama file CSV!');
+            const nameColIndex = headerCols.findIndex(h => h.toLowerCase().includes('nama'));
 
+            if (nisnColIndex === -1) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nKolom "NISN" tidak ditemukan pada baris judul (header) file.');
+            }
+            if (nameColIndex === -1) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nKolom "Nama Murid" tidak ditemukan pada baris judul (header) file.');
+            }
+
+            // Cocokkan kolom kategori / sub-item penilaian
             let expectedScoreFields = [];
             categories.forEach(c => {
                 if (Array.isArray(c.subItems) && c.subItems.length > 0) {
@@ -2281,45 +2327,150 @@
                 }
             });
 
-            const columnMappings = expectedScoreFields.map((field, idx) => {
+            if (expectedScoreFields.length === 0) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nAnda belum membuat kategori penilaian di Tab 1.');
+            }
+
+            const errors = [];
+            const columnMappings = [];
+            expectedScoreFields.forEach(field => {
                 const matchIdx = headerCols.findIndex(h => h.toLowerCase() === field.label.toLowerCase());
-                return { key: field.key, colIndex: matchIdx !== -1 ? matchIdx : (3 + idx) };
+                if (matchIdx === -1) {
+                    errors.push(`• Kolom penilaian "${field.label}" tidak ditemukan di file CSV. Pastikan Anda menggunakan template terbaru.`);
+                } else {
+                    columnMappings.push({ key: field.key, label: field.label, colIndex: matchIdx });
+                }
             });
 
-            const noteColIndex = headerCols.findIndex(h => h.toLowerCase().includes('catatan'));
-            let updatedCount = 0, notFoundCount = 0;
+            if (errors.length > 0) {
+                fileInput.value = '';
+                return alert(`❌ UPLOAD DIBATALKAN! Struktur kolom template tidak cocok:\n\n${errors.join('\n')}`);
+            }
 
+            const noteColIndex = headerCols.findIndex(h => h.toLowerCase().includes('catatan'));
+            const processedStudentIds = new Set();
+            const validatedRows = [];
+
+            // --- MULAI VALIDASI SETIAP BARIS SISWA ---
             for (let i = 1; i < lines.length; i++) {
+                const rowNumber = i + 1;
                 const cols = parseCSVLine(lines[i]);
+
                 let rawNisn = cols[nisnColIndex] || '';
                 if (/^\d{8,9}$/.test(rawNisn)) rawNisn = rawNisn.padStart(10, '0');
-                if (!rawNisn) continue;
+                const csvName = cols[nameColIndex] || '';
 
+                // 1. Cek NISN & Nama kosong
+                if (!rawNisn) {
+                    errors.push(`• Baris ${rowNumber}: Kolom NISN kosong.`);
+                    continue;
+                }
+                if (!csvName) {
+                    errors.push(`• Baris ${rowNumber} (NISN: ${rawNisn}): Kolom Nama Murid kosong.`);
+                    continue;
+                }
+
+                // 2. Cek apakah NISN terdaftar di sistem
                 const student = masterStudents.find(s => s.nisn === rawNisn);
-                if (!student) { notFoundCount++; continue; }
+                if (!student) {
+                    errors.push(`• Baris ${rowNumber}: NISN "${rawNisn}" (${csvName}) tidak terdaftar di sistem.`);
+                    continue;
+                }
 
-                const sData = getStudentScoreObj(student.id);
-                if (!sData.scores) sData.scores = {};
+                // 3. Cek apakah siswa termasuk dalam kelas yang diampu / difilter
+                if (!isStudentInAssignedClasses(student.className, assignedClasses)) {
+                    errors.push(`• Baris ${rowNumber}: "${student.name}" (${student.className}) bukan merupakan murid di kelas yang Anda ampu.`);
+                    continue;
+                }
+                if (filterClass !== "ALL" && student.className !== filterClass) {
+                    errors.push(`• Baris ${rowNumber}: "${student.name}" berada di kelas "${student.className}", sedangkan filter kelas aktif saat ini adalah "${filterClass}".`);
+                    continue;
+                }
+
+                // 4. Cek kesesuaian Nama Murid
+                if (student.name.trim().toLowerCase() !== csvName.trim().toLowerCase()) {
+                    errors.push(`• Baris ${rowNumber}: Nama tidak cocok untuk NISN ${rawNisn}. Di file tertulis "${csvName}", seharusnya "${student.name}".`);
+                    continue;
+                }
+
+                // 5. Cek duplikat siswa di dalam file
+                if (processedStudentIds.has(student.id)) {
+                    errors.push(`• Baris ${rowNumber}: Data ganda/duplikat untuk siswa "${student.name}" (${rawNisn}).`);
+                    continue;
+                }
+
+                // 6. Cek validitas angka nilai (boleh kosong, tapi jika diisi wajib angka 0 - 100)
+                const parsedScores = {};
+                let rowHasScoreError = false;
 
                 columnMappings.forEach(map => {
-                    if (cols[map.colIndex] !== undefined) {
-                        const rawVal = cols[map.colIndex].replace(',', '.');
-                        if (rawVal === '' || rawVal === '-') delete sData.scores[map.key];
-                        else if (!isNaN(parseFloat(rawVal))) sData.scores[map.key] = parseFloat(rawVal);
+                    const rawVal = (cols[map.colIndex] !== undefined ? cols[map.colIndex] : '').trim();
+                    if (rawVal === '' || rawVal === '-') {
+                        parsedScores[map.key] = null; // Kosong diizinkan (belum dinilai)
+                    } else {
+                        const normalizedNumStr = rawVal.replace(',', '.');
+                        const numVal = Number(normalizedNumStr);
+                        if (isNaN(numVal) || numVal < 0 || numVal > 100) {
+                            errors.push(`• Baris ${rowNumber} (${student.name}): Nilai "${rawVal}" pada kolom "${map.label}" tidak valid (harus angka 0 - 100).`);
+                            rowHasScoreError = true;
+                        } else {
+                            parsedScores[map.key] = numVal;
+                        }
                     }
                 });
 
-                if (noteColIndex !== -1 && cols[noteColIndex] !== undefined) {
-                    sData.note = cols[noteColIndex];
+                if (!rowHasScoreError) {
+                    processedStudentIds.add(student.id);
+                    const noteVal = (noteColIndex !== -1 && cols[noteColIndex] !== undefined) ? cols[noteColIndex] : undefined;
+                    validatedRows.push({ student, parsedScores, noteVal });
                 }
-                updatedCount++;
             }
+
+            // 7. Cek kesesuaian jumlah siswa dengan filter aktif
+            if (validatedRows.length !== expectedStudents.length && errors.length === 0) {
+                const missingStudents = expectedStudents
+                    .filter(s => !processedStudentIds.has(s.id))
+                    .map(s => `${s.name} (${s.nisn})`);
+                
+                const scopeLabel = filterClass === "ALL" ? "semua kelas diampu" : `kelas "${filterClass}"`;
+                errors.push(`• Jumlah siswa tidak sesuai! Total siswa pada ${scopeLabel} adalah ${expectedStudents.length} siswa, tetapi di file hanya ada ${validatedRows.length} siswa.`);
+                if (missingStudents.length > 0) {
+                    errors.push(`• Siswa yang belum tercantum di file: ${missingStudents.slice(0, 5).join(', ')}${missingStudents.length > 5 ? ', dll.' : ''}`);
+                }
+            }
+
+            // JIKA ADA KESALAHAN, TOLAK UPLOAD & TAMPILKAN PESAN DETAIL
+            if (errors.length > 0) {
+                fileInput.value = '';
+                const maxShow = 12;
+                const shownErrors = errors.slice(0, maxShow).join('\n');
+                const extraMsg = errors.length > maxShow ? `\n...dan ${errors.length - maxShow} kesalahan lainnya.` : '';
+                return alert(`❌ UPLOAD NILAI DIBATALKAN! Ditemukan ketidaksesuaian data:\n\n${shownErrors}${extraMsg}\n\nSilakan perbaiki file Excel Anda lalu unggah kembali.`);
+            }
+
+            // --- JIKA 100% VALID, SIMPAN SEMUA NILAI KE DATABASE ---
+            validatedRows.forEach(item => {
+                const sData = getStudentScoreObj(item.student.id);
+                if (!sData.scores) sData.scores = {};
+
+                Object.keys(item.parsedScores).forEach(key => {
+                    if (item.parsedScores[key] === null) {
+                        delete sData.scores[key];
+                    } else {
+                        sData.scores[key] = item.parsedScores[key];
+                    }
+                });
+
+                if (item.noteVal !== undefined) {
+                    sData.note = item.noteVal;
+                }
+            });
 
             saveData();
             renderTeacherTable();
             fileInput.value = '';
-            alert(`Import Nilai Selesai!\n✅ Berhasil diperbarui: ${updatedCount} siswa` + 
-                  (notFoundCount > 0 ? `\n⚠️ NISN tidak ditemukan: ${notFoundCount} baris` : ''));
+            alert(`✅ Import Nilai Berhasil!\nSeluruh data nilai (${validatedRows.length} siswa) telah tervalidasi dan tersimpan.`);
         };
         reader.readAsText(file);
     }
@@ -3007,15 +3158,23 @@
     }
 
     window.renderAdminStudentCrudTable = function() {
-        const tbody = document.getElementById('admin-student-crud-table-body');
-        if (!tbody) return;
-        const filterClass = document.getElementById('admin-filter-class').value;
-        const filtered = masterStudents.filter(s => filterClass === 'ALL' || s.className === filterClass);
+     const tbody = document.getElementById('admin-student-crud-table-body');
+     if (!tbody) return;
+     const filterClass = document.getElementById('admin-filter-class').value;
+     const searchQuery = (document.getElementById('admin-search-student')?.value || '').toLowerCase().trim();
 
-        if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">Belum ada data murid.</td></tr>`;
-            return;
-        }
+     const filtered = masterStudents.filter(s => {
+         const matchClass = (filterClass === 'ALL' || s.className === filterClass);
+         const matchSearch = !searchQuery || 
+             (s.name || '').toLowerCase().includes(searchQuery) || 
+             (s.nisn || '').toLowerCase().includes(searchQuery);
+         return matchClass && matchSearch;
+     });
+
+     if (filtered.length === 0) {
+         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">Data murid tidak ditemukan.</td></tr>`;
+         return;
+     }
 
         tbody.innerHTML = filtered.map((s, idx) => `
             <tr>
@@ -3952,6 +4111,247 @@
             return row;
         }).join('');
     }
+	
+	// UNDUH TEMPLATE ABSENSI CSV
+    window.downloadGuruAttendanceTemplate = function() {
+        const selectedClass = document.getElementById('attendance-class-select').value;
+        const selectedDate = document.getElementById('attendance-date-input').value || new Date().toISOString().split('T')[0];
+        
+        if (!selectedClass) return alert('Pilih kelas terlebih dahulu!');
+
+        const classStudents = masterStudents.filter(s => s.className === selectedClass);
+        if (classStudents.length === 0) return alert(`Belum ada data murid di kelas ${selectedClass}.`);
+
+        // Ambil tanggal-tanggal yang sudah pernah diinput untuk kelas ini, atau gunakan tanggal yang sedang dipilih
+        const existingSessions = teacherAttendanceData
+            .filter(a => a.className === selectedClass)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let dateColumns = existingSessions.map(s => s.date);
+        if (!dateColumns.includes(selectedDate)) {
+            dateColumns.push(selectedDate);
+        }
+
+        const headers = ["NISN", "Nama Murid", "Kelas", ...dateColumns];
+        let csv = headers.map(h => `"${h}"`).join(",") + "\n";
+
+        const rows = classStudents.map(student => {
+            let row = [`"'${student.nisn}"`, `"${student.name}"`, `"${student.className}"`];
+            dateColumns.forEach(dateStr => {
+                const session = existingSessions.find(s => s.date === dateStr);
+                const status = (session && session.records && session.records[student.id]) ? session.records[student.id] : 'H';
+                row.push(`"${status}"`);
+            });
+            return row.join(",");
+        });
+
+        csv += rows.join("\n");
+        downloadCSV(csv, `template_absensi_${selectedClass.replace(/\s+/g, '_')}.csv`);
+    }
+
+    // IMPORT ABSENSI DARI CSV / EXCEL (DENGAN VALIDASI KETAT)
+    window.importGuruAttendanceFromCSV = function() {
+        const fileInput = document.getElementById('guru-att-csv-input');
+        const file = fileInput.files[0];
+        if (!file) return alert('Silakan pilih file CSV template absensi terlebih dahulu!');
+
+        const selectedClass = document.getElementById('attendance-class-select').value;
+        if (!selectedClass) return alert('Pilih kelas terlebih dahulu pada dropdown di atas!');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+            if (lines.length < 2) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nFile CSV kosong atau tidak memiliki data siswa.');
+            }
+
+            const delimiter = lines[0].includes(';') ? ';' : ',';
+            const parseCSVLine = (str) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === delimiter && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else current += char;
+                }
+                result.push(current.trim());
+                return result.map(col => col.replace(/^"|"$/g, '').replace(/^'/, '').trim());
+            };
+
+            const headerCols = parseCSVLine(lines[0]);
+            const nisnColIndex = headerCols.findIndex(h => h.toLowerCase() === 'nisn');
+            const nameColIndex = headerCols.findIndex(h => h.toLowerCase().includes('nama'));
+
+            if (nisnColIndex === -1) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nKolom "NISN" tidak ditemukan pada baris judul (header) file.');
+            }
+            if (nameColIndex === -1) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nKolom "Nama Murid" tidak ditemukan pada baris judul (header) file.');
+            }
+
+            // Deteksi kolom tanggal
+            const dateColumns = [];
+            headerCols.forEach((colName, idx) => {
+                if (idx <= 2) return;
+                let normalizedDate = '';
+                if (/^\d{4}-\d{2}-\d{2}$/.test(colName)) {
+                    normalizedDate = colName;
+                } else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(colName)) {
+                    const parts = colName.split(/[\/\-]/);
+                    normalizedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+                if (normalizedDate) {
+                    dateColumns.push({ colIndex: idx, date: normalizedDate, rawHeader: colName });
+                }
+            });
+
+            if (dateColumns.length === 0) {
+                fileInput.value = '';
+                return alert('❌ Upload Ditolak!\nTidak ada kolom tanggal yang valid.\nPastikan judul kolom tanggal berformat YYYY-MM-DD (contoh: 2026-11-18).');
+            }
+
+            // --- MULAI PROSES VALIDASI KETAT ---
+            const errors = [];
+            const validStatuses = ['H', 'T', 'D', 'I', 'S', 'A'];
+            const expectedStudents = masterStudents.filter(s => s.className === selectedClass);
+            const processedStudentIds = new Set();
+            const validatedRows = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const rowNumber = i + 1; // Nomor baris sesuai tampilan di Excel
+                const cols = parseCSVLine(lines[i]);
+
+                let rawNisn = cols[nisnColIndex] || '';
+                if (/^\d{8,9}$/.test(rawNisn)) rawNisn = rawNisn.padStart(10, '0');
+                const csvName = cols[nameColIndex] || '';
+
+                // 1. Cek NISN & Nama kosong
+                if (!rawNisn) {
+                    errors.push(`• Baris ${rowNumber}: Kolom NISN kosong.`);
+                    continue;
+                }
+                if (!csvName) {
+                    errors.push(`• Baris ${rowNumber} (NISN: ${rawNisn}): Kolom Nama Murid kosong.`);
+                    continue;
+                }
+
+                // 2. Cek apakah NISN ada di database
+                const student = masterStudents.find(s => s.nisn === rawNisn);
+                if (!student) {
+                    errors.push(`• Baris ${rowNumber}: NISN "${rawNisn}" (${csvName}) tidak terdaftar di sistem.`);
+                    continue;
+                }
+
+                // 3. Cek apakah siswa berada di kelas yang dipilih
+                if (student.className !== selectedClass) {
+                    errors.push(`• Baris ${rowNumber}: "${student.name}" terdaftar di kelas "${student.className}", bukan kelas "${selectedClass}".`);
+                    continue;
+                }
+
+                // 4. Cek kesesuaian Nama Murid di CSV dengan Database
+                if (student.name.trim().toLowerCase() !== csvName.trim().toLowerCase()) {
+                    errors.push(`• Baris ${rowNumber}: Nama tidak cocok untuk NISN ${rawNisn}. Di file tertulis "${csvName}", seharusnya "${student.name}".`);
+                    continue;
+                }
+
+                // 5. Cek duplikat siswa dalam satu file CSV
+                if (processedStudentIds.has(student.id)) {
+                    errors.push(`• Baris ${rowNumber}: Data ganda/duplikat untuk siswa "${student.name}" (${rawNisn}).`);
+                    continue;
+                }
+
+                // 6. Cek validitas kode status kehadiran pada setiap tanggal
+                const rowStatuses = {};
+                let rowHasStatusError = false;
+
+                dateColumns.forEach(dc => {
+                    let rawStatus = (cols[dc.colIndex] || '').trim().toUpperCase();
+                    if (!rawStatus) {
+                        errors.push(`• Baris ${rowNumber} (${student.name}): Status kehadiran kosong pada tanggal ${dc.rawHeader}.`);
+                        rowHasStatusError = true;
+                        return;
+                    }
+
+                    if (rawStatus === 'HADIR') rawStatus = 'H';
+                    else if (rawStatus === 'TERLAMBAT') rawStatus = 'T';
+                    else if (rawStatus === 'DISPEN' || rawStatus === 'RAPAT') rawStatus = 'D';
+                    else if (rawStatus === 'IZIN') rawStatus = 'I';
+                    else if (rawStatus === 'SAKIT') rawStatus = 'S';
+                    else if (rawStatus === 'ALPA' || rawStatus === 'ALPHA') rawStatus = 'A';
+
+                    if (!validStatuses.includes(rawStatus)) {
+                        errors.push(`• Baris ${rowNumber} (${student.name}): Kode kehadiran "${cols[dc.colIndex]}" tidak valid pada tanggal ${dc.rawHeader}. Gunakan H, T, D, I, S, atau A.`);
+                        rowHasStatusError = true;
+                    } else {
+                        rowStatuses[dc.date] = rawStatus;
+                    }
+                });
+
+                if (!rowHasStatusError) {
+                    processedStudentIds.add(student.id);
+                    validatedRows.push({ student, rowStatuses });
+                }
+            }
+
+            // 7. Cek kesesuaian jumlah siswa & daftar siswa yang belum tercantum
+            if (validatedRows.length !== expectedStudents.length && errors.length === 0) {
+                const missingStudents = expectedStudents
+                    .filter(s => !processedStudentIds.has(s.id))
+                    .map(s => `${s.name} (${s.nisn})`);
+                
+                errors.push(`• Jumlah siswa tidak sesuai! Kelas "${selectedClass}" memiliki ${expectedStudents.length} siswa, tetapi di file hanya ada ${validatedRows.length} siswa.`);
+                if (missingStudents.length > 0) {
+                    errors.push(`• Siswa yang belum tercantum di file: ${missingStudents.slice(0, 5).join(', ')}${missingStudents.length > 5 ? ', dll.' : ''}`);
+                }
+            }
+
+            // JIKA ADA KESALAHAN, BATALKAN UPLOAD & TAMPILKAN DETAILNYA
+            if (errors.length > 0) {
+                fileInput.value = '';
+                const maxShow = 12;
+                const shownErrors = errors.slice(0, maxShow).join('\n');
+                const extraMsg = errors.length > maxShow ? `\n...dan ${errors.length - maxShow} kesalahan lainnya.` : '';
+                return alert(`❌ UPLOAD DIBATALKAN! Ditemukan ketidaksesuaian data:\n\n${shownErrors}${extraMsg}\n\nSilakan perbaiki file Excel Anda lalu unggah kembali.`);
+            }
+
+            // --- JIKA 100% VALID, SIMPAN KE DATABASE ---
+            dateColumns.forEach(dc => {
+                const newRecords = {};
+                validatedRows.forEach(item => {
+                    newRecords[item.student.id] = item.rowStatuses[dc.date];
+                });
+
+                const existingIdx = teacherAttendanceData.findIndex(a => a.className === selectedClass && a.date === dc.date);
+                if (existingIdx !== -1) {
+                    teacherAttendanceData[existingIdx].records = newRecords;
+                } else {
+                    teacherAttendanceData.push({
+                        id: Date.now() + Math.floor(Math.random() * 10000),
+                        className: selectedClass,
+                        date: dc.date,
+                        records: newRecords
+                    });
+                }
+            });
+
+            attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
+            saveData();
+            renderAttendanceForm();
+            renderAttendanceSummaryTable();
+            fileInput.value = '';
+            alert(`✅ Import Absensi Berhasil!\nSeluruh data (${validatedRows.length} siswa pada ${dateColumns.length} pertemuan) tervalidasi dan tersimpan.`);
+        };
+        reader.readAsText(file);
+    }
+    
 	
     // PRESENSI / ABSENSI
     function initAttendanceTab() {
