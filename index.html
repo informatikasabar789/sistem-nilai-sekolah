@@ -852,7 +852,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
                 <h3>Daftar Seluruh Murid</h3>
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-					 <h3>Cari</h3>
+					 <h3>🔍</h3>
 					 <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
 						 <input type="text" id="admin-search-student" placeholder="🔍 Cari Nama atau NISN..." onkeyup="renderAdminStudentCrudTable()" style="width: 230px;">
 						 <div class="filter-container" style="margin-bottom: 0;">
@@ -1379,13 +1379,14 @@
         <h3 id="att-history-modal-title">🗓️ Riwayat Tanggal Pertemuan Presensi</h3>
         <p id="att-history-modal-sub" style="font-size: 13px; color: #64748b; margin-bottom: 15px;"></p>
 
-        <div class="table-scroll-container" style="max-height: 300px; margin-bottom: 15px;">
+        <div class="table-scroll-container" style="max-height: 320px; margin-bottom: 15px;">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 15%;">No</th>
-                        <th style="width: 45%;">Tanggal Pertemuan</th>
-                        <th style="width: 40%;">Status Kehadiran</th>
+                        <th style="width: 10%;">No</th>
+                        <th style="width: 30%;">Tanggal Pertemuan</th>
+                        <th style="width: 28%;">Status Saat Ini</th>
+                        <th style="width: 32%;">Ubah Status (Edit)</th>
                     </tr>
                 </thead>
                 <tbody id="att-history-modal-body">
@@ -4532,21 +4533,50 @@
     window.openAttendanceHistoryModal = function(studentId, studentName, className) {
         const stats = calculateStudentAttendanceStats(studentId, className);
         document.getElementById('att-history-modal-title').innerText = `🗓️ Riwayat Kehadiran: ${studentName}`;
-        document.getElementById('att-history-modal-sub').innerText = `Kelas: ${className} | Total Input Presensi: ${stats.total} Pertemuan`;
+        document.getElementById('att-history-modal-sub').innerText = `Kelas: ${className} | Total Pertemuan: ${stats.total} | Persentase Saat Ini: ${stats.percentage}%`;
 
         const tbody = document.getElementById('att-history-modal-body');
         if (!stats.history || stats.history.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">Belum ada tanggal pertemuan yang terinput untuk kelas ini.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">Belum ada tanggal pertemuan yang terinput untuk kelas ini.</td></tr>`;
         } else {
+            const safeName = studentName.replace(/'/g, "\\'");
             tbody.innerHTML = stats.history.map((item, index) => `
                 <tr>
                     <td>${index + 1}</td>
                     <td><strong>${formatDateIndo(item.date)}</strong></td>
                     <td>${getStatusBadgeHtml(item.status)}</td>
+                    <td>
+                        <select onchange="updateSingleAttendanceStatus(${studentId}, '${safeName}', '${className}', '${item.date}', this.value)" 
+                                style="padding: 4px 8px; font-size: 12px; font-weight: bold; width: 100%;">
+                            <option value="H" ${item.status === 'H' ? 'selected' : ''}>Hadir (H)</option>
+                            <option value="T" ${item.status === 'T' ? 'selected' : ''}>Terlambat (T)</option>
+                            <option value="D" ${item.status === 'D' ? 'selected' : ''}>Dispen/Rapat (D)</option>
+                            <option value="I" ${item.status === 'I' ? 'selected' : ''}>Izin (I)</option>
+                            <option value="S" ${item.status === 'S' ? 'selected' : ''}>Sakit (S)</option>
+                            <option value="A" ${item.status === 'A' ? 'selected' : ''}>Alpa (A)</option>
+                        </select>
+                    </td>
                 </tr>
             `).join('');
         }
         document.getElementById('att-history-modal').classList.remove('hidden');
+    }
+
+    window.updateSingleAttendanceStatus = function(studentId, studentName, className, dateStr, newStatus) {
+        const session = teacherAttendanceData.find(a => a.className === className && a.date === dateStr);
+        if (!session) return alert('Data sesi pertemuan tidak ditemukan!');
+
+        if (!session.records) session.records = {};
+        session.records[studentId] = newStatus;
+
+        // Perbarui cache, simpan ke Firebase, dan segarkan tampilan tabel
+        attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
+        saveData();
+        renderAttendanceForm();
+        renderAttendanceSummaryTable();
+
+        // Segarkan isi pop-up modal agar badge status dan persentase langsung berubah
+        openAttendanceHistoryModal(studentId, studentName, className);
     }
 
     window.closeAttendanceHistoryModal = function() {
