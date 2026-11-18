@@ -1271,7 +1271,7 @@
             <div class="form-inline" style="background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
                 <div>
                     <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Pilih Kelas Diampu:</label>
-                    <select id="attendance-class-select" onchange="renderAttendanceForm()"></select>
+                    <select id="attendance-class-select" onchange="savedAttendanceFormClass = this.value; renderAttendanceForm()"></select>
                 </div>
                 <div>
                     <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Tanggal Pertemuan:</label>
@@ -1319,7 +1319,7 @@
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <div class="filter-container" style="margin-bottom:0;">
                         <label for="filter-class-att-rekap"><strong>Filter Kelas Rekap:</strong></label>
-                        <select id="filter-class-att-rekap" onchange="renderAttendanceSummaryTable()"></select>
+                        <select id="filter-class-att-rekap" onchange="savedAttendanceRekapClass = this.value; renderAttendanceSummaryTable()"></select>
                     </div>
 
                     <div class="action-btns no-print">
@@ -1762,6 +1762,8 @@
     let isLocalInputActive = false;
     let guruScoreSortKey = 'default';
     let guruScoreSortAsc = true;
+	let savedAttendanceFormClass = '';
+	let savedAttendanceRekapClass = 'ALL';
 
     let categories = [
         { id: 1, name: 'Ulangan Harian', weight: 30, visible: true, subItems: [{ id: 101, name: 'Ulangan 1', visible: true }] },
@@ -3657,11 +3659,13 @@
 
         const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
         const currentScoreVal = filterScore ? filterScore.value : 'ALL';
-        const currentAttVal = selectAtt ? selectAtt.value : '';
-        const currentAttRekapVal = filterAttRekap ? filterAttRekap.value : 'ALL';
+
+        if (resetAttendanceToDefault) {
+            savedAttendanceFormClass = '';
+            savedAttendanceRekapClass = 'ALL';
+        }
 
         const classList = assignedClasses.length > 0 ? assignedClasses : masterClasses;
-
         const selectOptionsHtml = classList.map(cls => `<option value="${cls}">${cls}</option>`).join('');
         const optionsHtml = `<option value="ALL">-- Semua Kelas Diampu --</option>` + selectOptionsHtml;
 
@@ -3675,17 +3679,19 @@
         }
         if (filterAttRekap) {
             filterAttRekap.innerHTML = optionsHtml;
-            if (!resetAttendanceToDefault && currentAttRekapVal && Array.from(filterAttRekap.options).some(o => o.value === currentAttRekapVal)) {
-                filterAttRekap.value = currentAttRekapVal;
+            if (savedAttendanceRekapClass && Array.from(filterAttRekap.options).some(o => o.value === savedAttendanceRekapClass)) {
+                filterAttRekap.value = savedAttendanceRekapClass;
             } else {
+                savedAttendanceRekapClass = "ALL";
                 filterAttRekap.value = "ALL";
             }
         }
         if (selectAtt) {
             selectAtt.innerHTML = selectOptionsHtml;
-            if (!resetAttendanceToDefault && currentAttVal && Array.from(selectAtt.options).some(o => o.value === currentAttVal)) {
-                selectAtt.value = currentAttVal;
+            if (savedAttendanceFormClass && Array.from(selectAtt.options).some(o => o.value === savedAttendanceFormClass)) {
+                selectAtt.value = savedAttendanceFormClass;
             } else if (classList.length > 0) {
+                savedAttendanceFormClass = classList[0];
                 selectAtt.value = classList[0];
             }
         }
