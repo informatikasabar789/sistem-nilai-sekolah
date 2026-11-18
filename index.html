@@ -2071,7 +2071,7 @@
 
             const assignedClasses = g.assignedClasses || [];
             const filteredStus = masterStudents.filter(s => {
-                const isAssigned = (assignedClasses.length === 0 || assignedClasses.includes(s.className));
+                const isAssigned = assignedClasses.includes(s.className);
                 const matchClassFilter = (filterClass === 'ALL' || s.className === filterClass);
                 return isAssigned && matchClassFilter;
             });
@@ -3850,9 +3850,9 @@
     }
 
     function isStudentInAssignedClasses(studentClass, assignedClasses) {
-        if (!assignedClasses || assignedClasses.length === 0) return true;
-        return assignedClasses.includes(studentClass);
-    }
+		if (!assignedClasses || assignedClasses.length === 0) return false;
+		return assignedClasses.includes(studentClass);
+	}
 
     window.renderStudentCrudTable = function() {
         const tbody = document.getElementById('student-crud-table-body');
@@ -4682,9 +4682,10 @@
         const tabsContainer = document.getElementById('student-subject-tabs');
         if (!tabsContainer || !currentLoggedInStudent) return;
 
+        // HANYA tampilkan guru yang sudah dialokasikan ke kelas siswa ini
         const availableGurus = gurus.filter(g => {
             const assignedClasses = g.assignedClasses || [];
-            return assignedClasses.length === 0 || assignedClasses.includes(currentLoggedInStudent.className);
+            return assignedClasses.includes(currentLoggedInStudent.className);
         });
 
         let html = `<button class="tab-btn ${activeSiswaSubjectTab === 'ALL' ? 'active' : ''}" onclick="switchSiswaSubjectTab('ALL')">📋 Semua Mapel</button>`;
@@ -4710,9 +4711,10 @@
         const container = document.getElementById('student-subject-content');
         if (!container) return;
 
+        // HANYA tampilkan guru yang sudah dialokasikan ke kelas siswa ini
         const targetGurus = gurus.filter(g => {
             const assignedClasses = g.assignedClasses || [];
-            const matchClass = assignedClasses.length === 0 || assignedClasses.includes(currentLoggedInStudent.className);
+            const matchClass = assignedClasses.includes(currentLoggedInStudent.className);
             const matchTab = (activeSiswaSubjectTab === 'ALL' || g.id === activeSiswaSubjectTab);
             return matchClass && matchTab;
         });
