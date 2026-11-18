@@ -3659,11 +3659,10 @@
 
         const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
         const currentScoreVal = filterScore ? filterScore.value : 'ALL';
-
-        if (resetAttendanceToDefault) {
-            savedAttendanceFormClass = '';
-            savedAttendanceRekapClass = 'ALL';
-        }
+        
+        // Baca langsung pilihan yang sedang aktif di layar saat ini!
+        const currentAttVal = (selectAtt && selectAtt.value) ? selectAtt.value : savedAttendanceFormClass;
+        const currentAttRekapVal = (filterAttRekap && filterAttRekap.value) ? filterAttRekap.value : savedAttendanceRekapClass;
 
         const classList = assignedClasses.length > 0 ? assignedClasses : masterClasses;
         const selectOptionsHtml = classList.map(cls => `<option value="${cls}">${cls}</option>`).join('');
@@ -3679,20 +3678,22 @@
         }
         if (filterAttRekap) {
             filterAttRekap.innerHTML = optionsHtml;
-            if (savedAttendanceRekapClass && Array.from(filterAttRekap.options).some(o => o.value === savedAttendanceRekapClass)) {
-                filterAttRekap.value = savedAttendanceRekapClass;
+            if (!resetAttendanceToDefault && currentAttRekapVal && Array.from(filterAttRekap.options).some(o => o.value === currentAttRekapVal)) {
+                filterAttRekap.value = currentAttRekapVal;
+                savedAttendanceRekapClass = currentAttRekapVal;
             } else {
-                savedAttendanceRekapClass = "ALL";
                 filterAttRekap.value = "ALL";
+                savedAttendanceRekapClass = "ALL";
             }
         }
         if (selectAtt) {
             selectAtt.innerHTML = selectOptionsHtml;
-            if (savedAttendanceFormClass && Array.from(selectAtt.options).some(o => o.value === savedAttendanceFormClass)) {
-                selectAtt.value = savedAttendanceFormClass;
+            if (!resetAttendanceToDefault && currentAttVal && Array.from(selectAtt.options).some(o => o.value === currentAttVal)) {
+                selectAtt.value = currentAttVal;
+                savedAttendanceFormClass = currentAttVal;
             } else if (classList.length > 0) {
-                savedAttendanceFormClass = classList[0];
                 selectAtt.value = classList[0];
+                savedAttendanceFormClass = classList[0];
             }
         }
 
@@ -4738,13 +4739,15 @@
         if (!session.records) session.records = {};
         session.records[studentId] = newStatus;
 
-        // Perbarui cache, simpan ke Firebase, dan segarkan tampilan tabel
+        // Mencegah listener Firebase mereset ulang tampilan saat proses simpan
+        isLocalInputActive = true;
+
         attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
         saveData();
         renderAttendanceForm();
         renderAttendanceSummaryTable();
 
-        // Segarkan isi pop-up modal agar badge status dan persentase langsung berubah
+        // Segarkan isi pop-up modal
         openAttendanceHistoryModal(studentId, studentName, className);
     }
 
