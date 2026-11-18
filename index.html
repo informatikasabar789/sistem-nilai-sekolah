@@ -3579,6 +3579,11 @@
 
         document.getElementById(tabId).classList.remove('hidden');
         btnElement.classList.add('active');
+		
+		// Jika menu Tab 4 Absensi diklik langsung, kembalikan pilihan kelas ke default awal
+		 if (tabId === 'tab-absensi') {
+			 updateClassFilterDropdowns(true);
+		 }
 
         renderActiveGuruTabContent();
     }
@@ -3643,7 +3648,7 @@
         return (currentGuru && currentGuru.assignedClasses) ? currentGuru.assignedClasses : [];
     }
 
-    function updateClassFilterDropdowns() {
+    function updateClassFilterDropdowns(resetAttendanceToDefault = false) {
         const assignedClasses = getActiveGuruAssignedClasses();
         const filterCrud = document.getElementById('filter-class-crud');
         const filterScore = document.getElementById('filter-class-score');
@@ -3652,6 +3657,9 @@
 
         const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
         const currentScoreVal = filterScore ? filterScore.value : 'ALL';
+        const currentAttVal = selectAtt ? selectAtt.value : '';
+        const currentAttRekapVal = filterAttRekap ? filterAttRekap.value : 'ALL';
+
         const classList = assignedClasses.length > 0 ? assignedClasses : masterClasses;
 
         const selectOptionsHtml = classList.map(cls => `<option value="${cls}">${cls}</option>`).join('');
@@ -3665,8 +3673,22 @@
             filterScore.innerHTML = optionsHtml;
             filterScore.value = currentScoreVal && Array.from(filterScore.options).some(o => o.value === currentScoreVal) ? currentScoreVal : "ALL";
         }
-        if (filterAttRekap) filterAttRekap.innerHTML = optionsHtml;
-        if (selectAtt) selectAtt.innerHTML = selectOptionsHtml;
+        if (filterAttRekap) {
+            filterAttRekap.innerHTML = optionsHtml;
+            if (!resetAttendanceToDefault && currentAttRekapVal && Array.from(filterAttRekap.options).some(o => o.value === currentAttRekapVal)) {
+                filterAttRekap.value = currentAttRekapVal;
+            } else {
+                filterAttRekap.value = "ALL";
+            }
+        }
+        if (selectAtt) {
+            selectAtt.innerHTML = selectOptionsHtml;
+            if (!resetAttendanceToDefault && currentAttVal && Array.from(selectAtt.options).some(o => o.value === currentAttVal)) {
+                selectAtt.value = currentAttVal;
+            } else if (classList.length > 0) {
+                selectAtt.value = classList[0];
+            }
+        }
 
         const classesDisplay = document.getElementById('guru-allocated-classes-display');
         if (classesDisplay) {
