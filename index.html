@@ -430,6 +430,81 @@
         .sortable-header:hover {
             background-color: #e2e8f0;
         }
+		
+		/* =========================================================
+		   FREEZE 3 KOLOM PERTAMA (NISN, NAMA, KELAS) PADA TABEL NILAI
+		   ========================================================= */
+		#teacher-table {
+			border-collapse: separate; /* Wajib agar border & sticky tidak hilang saat di-scroll */
+			border-spacing: 0;
+		}
+
+		#teacher-table th,
+		#teacher-table td {
+			border-right: 1px solid #cbd5e1;
+			border-bottom: 1px solid #cbd5e1;
+			border-left: none;
+			border-top: none;
+			white-space: nowrap; /* Mencegah teks turun baris sehingga lebar kolom konsisten */
+		}
+
+		/* 1. Kolom NISN (Lebar: 115px, posisi kiri: 0px) */
+		#teacher-table th:nth-child(1),
+		#teacher-table td:nth-child(1) {
+			position: sticky;
+			left: 0px;
+			width: 115px;
+			min-width: 115px;
+			max-width: 115px;
+			z-index: 15;
+		}
+
+		/* 2. Kolom NAMA MURID (Lebar: 210px, posisi kiri: 115px) */
+		#teacher-table th:nth-child(2),
+		#teacher-table td:nth-child(2) {
+			position: sticky;
+			left: 115px;
+			width: 210px;
+			min-width: 210px;
+			max-width: 210px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			z-index: 15;
+		}
+
+		/* 3. Kolom KELAS (Lebar: 105px, posisi kiri: 115 + 210 = 325px) */
+		#teacher-table th:nth-child(3),
+		#teacher-table td:nth-child(3) {
+			position: sticky;
+			left: 325px;
+			width: 105px;
+			min-width: 105px;
+			max-width: 105px;
+			z-index: 15;
+			/* Garis pembatas tegas + bayangan di ujung kolom ke-3 */
+			border-right: 2px solid #94a3b8;
+			box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.12);
+		}
+
+		/* Warna latar belakang sel data agar kolom di belakangnya tidak tembus pandang */
+		#teacher-table td:nth-child(1),
+		#teacher-table td:nth-child(2),
+		#teacher-table td:nth-child(3) {
+			background-color: #ffffff;
+		}
+
+		/* Efek hover baris tetap menyatu dengan kolom yang di-freeze */
+		#teacher-table tbody tr:hover td {
+			background-color: #f8fafc;
+		}
+
+		/* Z-index tertinggi untuk Header (pertemuan Sticky Top + Sticky Left) */
+		#teacher-table thead th:nth-child(1),
+		#teacher-table thead th:nth-child(2),
+		#teacher-table thead th:nth-child(3) {
+			z-index: 25;
+			background-color: #f1f5f9;
+		}
 
         .input-score { width: 65px; text-align: center; }
         .input-note { width: 180px; }
@@ -627,6 +702,23 @@
             .form-inline input, .form-inline select, .form-inline button { width: 100% !important; }
             .login-box { margin: 10px auto; padding: 18px; }
             .form-grid { grid-template-columns: 1fr; }
+			/* Di layar HP kecil, perkecil kolom NISN & Kelas atau freeze Nama saja */
+			#teacher-table th:nth-child(1),
+			#teacher-table td:nth-child(1),
+			#teacher-table th:nth-child(3),
+			#teacher-table td:nth-child(3) {
+				position: static;
+				box-shadow: none;
+			}
+			#teacher-table th:nth-child(2),
+			#teacher-table td:nth-child(2) {
+				left: 0px;
+				width: 150px;
+				min-width: 150px;
+				max-width: 150px;
+				border-right: 2px solid #94a3b8;
+				box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.12);
+			}
         }
     </style>
 </head>
