@@ -398,6 +398,8 @@
 
         .table-scroll-container-lg {
             max-height: 500px;
+            contain: content;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
@@ -481,9 +483,18 @@
 			min-width: 105px;
 			max-width: 105px;
 			z-index: 15;
-			/* Garis pembatas tegas + bayangan di ujung kolom ke-3 */
 			border-right: 2px solid #94a3b8;
-			box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.12);
+		}
+
+		/* Percepat rendering saat tabel digeser (GPU Acceleration) */
+		#teacher-table th:nth-child(1),
+		#teacher-table td:nth-child(1),
+		#teacher-table th:nth-child(2),
+		#teacher-table td:nth-child(2),
+		#teacher-table th:nth-child(3),
+		#teacher-table td:nth-child(3) {
+			will-change: transform;
+			transform: translateZ(0);
 		}
 
 		/* Warna latar belakang sel data agar kolom di belakangnya tidak tembus pandang */
