@@ -4376,14 +4376,7 @@
 
             const currentNote = sData.note || '';
             row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
-			row += `<td style="background:#eff6ff; text-align:center;"><strong id="final_student_${student.id}" style="color:#2563eb;">${calculateFinalScore(student.id, student.className, true)}</strong></td>`;
-            row += `<td>
-                <input type="text" class="input-note" value="${currentNote}" 
-                placeholder="misal: Belum Tugas 1" 
-                onchange="updateStudentNote(${student.id}, this.value)" 
-                onkeydown="checkEnter(event, () => this.blur())">
-            </td></tr>`;
-			row += `<td style="background:#eff6ff; text-align:center;"><strong id="final_student_${student.id}" style="color:#2563eb;">${calculateFinalScore(student.id, student.className, true)}</strong></td>`;
+            row += `<td style="background:#eff6ff; text-align:center;"><strong id="final_student_${student.id}" style="color:#2563eb;">${calculateFinalScore(student.id, student.className, true)}</strong></td>`;
             row += `<td>
                 <input type="text" class="input-note" value="${currentNote}" 
                 placeholder="misal: Belum Tugas 1" 
