@@ -2262,7 +2262,7 @@
                 headers.push(`${c.name} (${c.weight}%)`);
             }
         });
-        headers.push("Nilai Akhir", "Catatan Guru");
+        headers.push("Nilai Akhir (Guru)", "Nilai Akhir (Tampil di Murid)", "Catatan Guru");
 
         let csv = headers.map(h => `"${h}"`).join(",") + "\n";
 
@@ -2293,7 +2293,8 @@
             });
 
             row.push(`"${calculateFinalScore(student.id, student.className, false)}"`);
-            row.push(`"${sData.note || ''}"`);
+			row.push(`"${calculateFinalScore(student.id, student.className, true)}"`);
+			row.push(`"${sData.note || ''}"`);
             return row.join(",");
         });
 
@@ -4102,16 +4103,23 @@
                 }
             });
 
+            // Update Nilai Akhir (Versi Guru)
             const finalEl = document.getElementById(`final_${studentId}`);
             if (finalEl) {
                 finalEl.innerText = calculateFinalScore(studentId, student.className, false);
+            }
+
+            // TAMBAHAN: Update Nilai Akhir (Versi yang tampil di Murid)
+            const finalStudentEl = document.getElementById(`final_student_${studentId}`);
+            if (finalStudentEl) {
+                finalStudentEl.innerText = calculateFinalScore(studentId, student.className, true);
             }
         }
 
         if (currentGuruId) {
             isLocalInputActive = true;
             const periodKey = getGuruPeriodKey(currentGuruId);
-			const scoreRef = ref(db, `portal_database/guruDataStore/${periodKey}/scoresData/${studentId}/scores`);
+            const scoreRef = ref(db, `portal_database/guruDataStore/${periodKey}/scoresData/${studentId}/scores`);
             update(scoreRef, { [key]: numericVal });
         }
     }
@@ -4218,6 +4226,9 @@
         if (columnKey === 'finalScore') {
             return parseFloat(calculateFinalScore(student.id, student.className, false)) || 0;
         }
+		if (columnKey === 'finalStudentScore') {
+         return parseFloat(calculateFinalScore(student.id, student.className, true)) || 0;
+		}
         if (columnKey.startsWith('avg_')) {
             const catId = parseInt(columnKey.replace('avg_', ''));
             const cat = categories.find(c => c.id === catId);
@@ -4298,8 +4309,9 @@
             }
         });
 
-        headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('finalScore')">Nilai Akhir ${getGuruSortIcon('finalScore')}</th>`;
-        headerHtml += `<th>Catatan Khusus / Keterangan Guru</th>`;
+        headerHtml += `<th class="sortable-header" onclick="sortGuruTableBy('finalScore')">Nilai Akhir (Guru) ${getGuruSortIcon('finalScore')}</th>`;
+		headerHtml += `<th class="sortable-header" style="background:#dbeafe; color:#1e40af;" onclick="sortGuruTableBy('finalStudentScore')">Nilai Akhir (Murid) ${getGuruSortIcon('finalStudentScore')}</th>`;
+		headerHtml += `<th>Catatan Khusus / Keterangan Guru</th>`;
         thead.innerHTML = headerHtml;
 
         const assignedClasses = getActiveGuruAssignedClasses();
@@ -4364,6 +4376,14 @@
 
             const currentNote = sData.note || '';
             row += `<td><strong id="final_${student.id}">${calculateFinalScore(student.id, student.className, false)}</strong></td>`;
+			row += `<td style="background:#eff6ff; text-align:center;"><strong id="final_student_${student.id}" style="color:#2563eb;">${calculateFinalScore(student.id, student.className, true)}</strong></td>`;
+            row += `<td>
+                <input type="text" class="input-note" value="${currentNote}" 
+                placeholder="misal: Belum Tugas 1" 
+                onchange="updateStudentNote(${student.id}, this.value)" 
+                onkeydown="checkEnter(event, () => this.blur())">
+            </td></tr>`;
+			row += `<td style="background:#eff6ff; text-align:center;"><strong id="final_student_${student.id}" style="color:#2563eb;">${calculateFinalScore(student.id, student.className, true)}</strong></td>`;
             row += `<td>
                 <input type="text" class="input-note" value="${currentNote}" 
                 placeholder="misal: Belum Tugas 1" 
