@@ -1524,10 +1524,16 @@
     </div>
 
     <!-- HALAMAN SISWA -->
+    <!-- HALAMAN SISWA -->
     <div id="view-siswa" class="hidden">
         <div class="card">
-            <h2 id="student-display-name">Transkrip Nilai Siswa</h2>
-            <p id="student-info-detail" style="font-size: 14px; color: #64748b; margin-bottom: 15px;"></p>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <h2 id="student-display-name" style="margin-bottom: 4px;">Transkrip Nilai Siswa</h2>
+                    <p id="student-info-detail" style="font-size: 14px; color: #64748b;"></p>
+                </div>
+                <button class="btn-info btn-sm" onclick="refreshStudentData()">🔄 Muat Ulang Nilai Terbaru</button>
+            </div>
             
             <div id="student-subject-tabs" class="nav-tabs">
             </div>
@@ -5117,6 +5123,18 @@
         activeSiswaSubjectTab = guruId;
         renderSiswaSubjectTabs();
         renderStudentView();
+    }
+	
+	window.refreshStudentData = async function() {
+        if (!currentLoggedInStudent) return;
+        const refreshed = await loadSpecificDataForStudent(
+            currentLoggedInStudent.nisn, 
+            currentLoggedInStudent.password || '123'
+        );
+        if (refreshed) {
+            renderStudentView();
+            alert('✅ Data nilai dan presensi terbaru berhasil dimuat!');
+        }
     }
 
     function renderStudentView() {
