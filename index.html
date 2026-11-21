@@ -814,12 +814,14 @@
         </div>
     </header>
 
-    <div class="form-group">
+    <div id="view-login" class="login-box">
+        <h2>Pintu Masuk Portal</h2>
+        <div class="form-group">
             <label>Pilih Mode Akses / User:</label>
             <select id="login-role" onchange="toggleLoginInputs()">
-                <option value="siswa">Siswa</option>
-                <option value="guru">Guru</option>
-                <option value="admin">Admin Utama</option>
+                <option value="siswa">Siswa (Lihat Nilai & Presensi)</option>
+                <option value="guru">Guru (Admin Kelas)</option>
+                <option value="admin">Admin Utama (Sistem)</option>
             </select>
         </div>
 
@@ -833,6 +835,10 @@
                 <input type="password" id="login-password" placeholder="Masukkan Password Siswa" onkeydown="checkEnter(event, processLogin)">
             </div>
         </div>
+
+        <button style="width: 100%; margin-top: 10px;" onclick="processLogin()">Masuk Portal</button>
+        <a id="forgot-admin-link" class="forgot-link hidden" onclick="openForgotAdminModal()">Lupa Password Admin?</a>
+    </div>
 
     <!-- HALAMAN ADMIN -->
     <div id="view-admin" class="hidden">
