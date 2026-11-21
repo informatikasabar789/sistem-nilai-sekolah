@@ -2170,10 +2170,10 @@
     function saveData() {
         sortMasterStudents();
 
-        // 1. Simpan data guru ke KUNCI PERIODE AKTIF (misal: "g1__2026-2027__1")
+        // 1. Jika yang login adalah GURU, simpan HANYA ke folder guru tersebut (Aman untuk 70 guru bersamaan)
         if (currentRole === 'guru' && currentGuruId) {
             const periodKey = getGuruPeriodKey(currentGuruId);
-            guruDataStore[periodKey] = {
+            const guruPayload = {
                 categories: categories,
                 attendanceWeight: attendanceWeight,
                 scoresData: teacherScoresData,
@@ -2181,23 +2181,29 @@
                 showWeight: showWeightToStudent,
                 showAttDetail: showAttDetailToStudent,
                 showAttHistory: showAttHistoryToStudent,
-				showFinalScore: showFinalScoreToStudent // <-- TAMBAHKAN INI
+                showFinalScore: showFinalScoreToStudent
             };
+            guruDataStore[periodKey] = guruPayload;
+
+            // HANYA menimpa node milik guru ini sendiri, tidak menyentuh data guru lain atau master data
+            isLocalInputActive = true;
+            set(ref(db, `portal_database/guruDataStore/${periodKey}`), guruPayload);
+            renderDashboards();
+            return;
         }
 
-        // 2. Sertakan daftar tahun ajaran & semester aktif ke dalam PAYLOAD
+        // 2. Jika yang login adalah ADMIN (atau inisialisasi awal), simpan seluruh struktur database
         const payload = {
             appProfile: appProfile,
             masterClasses: masterClasses,
             masterStudents: masterStudents,
             gurus: gurus,
             guruDataStore: guruDataStore,
-            academicYears: academicYears,             // <-- TAMBAHAN BARU
-            activeAcademicYear: activeAcademicYear,   // <-- TAMBAHAN BARU
-            activeSemester: activeSemester            // <-- TAMBAHAN BARU
+            academicYears: academicYears,
+            activeAcademicYear: activeAcademicYear,
+            activeSemester: activeSemester
         };
 
-        // Simpan Data Ke Firebase Realtime Database
         set(ref(db, 'portal_database'), payload);
         renderDashboards();
     }
