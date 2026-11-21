@@ -814,32 +814,25 @@
         </div>
     </header>
 
-    <div id="view-login" class="login-box">
-        <h2>Pintu Masuk Portal</h2>
-        <div class="form-group">
+    <div class="form-group">
             <label>Pilih Mode Akses / User:</label>
             <select id="login-role" onchange="toggleLoginInputs()">
                 <option value="siswa">Siswa</option>
-				<option value="guru">Guru</option>
+                <option value="guru">Guru</option>
                 <option value="admin">Admin Utama</option>
-                
             </select>
         </div>
 
         <div id="login-auth-fields">
             <div class="form-group">
-                <label id="login-username-label">Username / ID Guru:</label>
-                <input type="text" id="login-username" placeholder="Masukkan Username" onkeydown="checkEnter(event, processLogin)">
+                <label id="login-username-label">Nomor NISN Siswa (10 Digit):</label>
+                <input type="text" id="login-username" maxlength="10" placeholder="Masukkan NISN Anda" onkeydown="checkEnter(event, processLogin)">
             </div>
             <div class="form-group" id="login-password-group">
-                <label id="login-password-label">Password:</label>
-                <input type="password" id="login-password" placeholder="Masukkan Password" onkeydown="checkEnter(event, processLogin)">
+                <label id="login-password-label">Password Siswa:</label>
+                <input type="password" id="login-password" placeholder="Masukkan Password Siswa" onkeydown="checkEnter(event, processLogin)">
             </div>
         </div>
-
-        <button style="width: 100%; margin-top: 10px;" onclick="processLogin()">Masuk Portal</button>
-        <a id="forgot-admin-link" class="forgot-link hidden" onclick="openForgotAdminModal()">Lupa Password Admin?</a>
-    </div>
 
     <!-- HALAMAN ADMIN -->
     <div id="view-admin" class="hidden">
@@ -1797,7 +1790,7 @@
     }
 
     // 2. Fungsi saat dropdown periode di Header diubah oleh Admin/Guru/Siswa
-    window.changeSelectedPeriod = function() {
+    window.changeSelectedPeriod = async function() {
         selectedAcademicYear = document.getElementById('global-academic-year').value;
         selectedSemester = document.getElementById('global-semester').value;
 
@@ -1807,6 +1800,8 @@
         } else if (currentRole === 'admin') {
             renderAdminView();
         } else if (currentRole === 'siswa' && currentLoggedInStudent) {
+            // Tarik nilai siswa khusus untuk periode yang baru dipilih
+            await loadSpecificDataForStudent(currentLoggedInStudent.nisn, currentLoggedInStudent.password || '123');
             renderStudentView();
         }
     }
@@ -1879,7 +1874,7 @@
     });
 	
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, set, update, onValue, get, child } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBy0ADhUC2fungksqs4y1TLF8Nn0B-TzAI",
@@ -1997,72 +1992,156 @@
     }
 
     // Mendengarkan Sinkronisasi Realtime Firebase
+    // --- OPTIMASI SKALA 1500 SISWA: PEMUATAN RINGAN SAAT AWAL DIBUKA ---
     const dbRef = ref(db, 'portal_database');
-    onValue(dbRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            if (data.appProfile) appProfile = data.appProfile;
-            if (data.masterClasses) masterClasses = data.masterClasses;
-			if (data.masterStudents) {
-                const seenIds = new Set();
-                let needsIdFix = false;
+    let realtimeListenerUnsubscribe = null;
 
-                masterStudents = data.masterStudents.map((s, idx) => {
-                    if (!s.password) s.password = '123';
-                    // Jika ID kosong atau sudah dipakai siswa lain, buat ID unik baru
-                    if (!s.id || seenIds.has(s.id)) {
-                        s.id = Date.now() + idx + Math.floor(Math.random() * 100000);
-                        needsIdFix = true;
+    // 1. Saat halaman login pertama kali dibuka, HANYA ambil profil sekolah & tahun ajaran (~1 KB)
+    async function initLightweightPortal() {
+        try {
+            const [profSnap, yearsSnap, actYearSnap, actSemSnap] = await Promise.all([
+                get(child(dbRef, 'appProfile')),
+                get(child(dbRef, 'academicYears')),
+                get(child(dbRef, 'activeAcademicYear')),
+                get(child(dbRef, 'activeSemester'))
+            ]);
+
+            if (profSnap.exists()) appProfile = profSnap.val();
+            if (yearsSnap.exists()) academicYears = yearsSnap.val();
+            if (actYearSnap.exists()) activeAcademicYear = actYearSnap.val();
+            if (actSemSnap.exists()) activeSemester = actSemSnap.val();
+
+            selectedAcademicYear = activeAcademicYear;
+            selectedSemester = activeSemester;
+            renderPeriodDropdowns();
+            applyAppProfile();
+        } catch (err) {
+            console.error("Gagal memuat profil awal:", err);
+        } finally {
+            const overlay = document.getElementById('firebase-loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+    }
+    initLightweightPortal();
+
+    // 2. Fungsi Listener Realtime (HANYA diaktifkan jika yang login adalah ADMIN atau GURU)
+    function startRealtimeSyncForStaff() {
+        if (realtimeListenerUnsubscribe) return; // Sudah aktif
+        
+        realtimeListenerUnsubscribe = onValue(dbRef, (snapshot) => {
+            if (currentRole !== 'admin' && currentRole !== 'guru') return;
+
+            const data = snapshot.val();
+            if (data) {
+                if (data.appProfile) appProfile = data.appProfile;
+                if (data.masterClasses) masterClasses = data.masterClasses;
+                if (data.masterStudents) {
+                    const seenIds = new Set();
+                    let needsIdFix = false;
+
+                    masterStudents = data.masterStudents.map((s, idx) => {
+                        if (!s.password) s.password = '123';
+                        if (!s.id || seenIds.has(s.id)) {
+                            s.id = Date.now() + idx + Math.floor(Math.random() * 100000);
+                            needsIdFix = true;
+                        }
+                        seenIds.add(s.id);
+                        return s;
+                    });
+
+                    if (needsIdFix) {
+                        set(ref(db, 'portal_database/masterStudents'), masterStudents);
                     }
-                    seenIds.add(s.id);
-                    return s;
-                });
+                }
+                if (data.gurus) gurus = data.gurus;
+                if (data.academicYears) academicYears = data.academicYears;
+                if (data.activeAcademicYear) activeAcademicYear = data.activeAcademicYear;
+                if (data.activeSemester) activeSemester = data.activeSemester;
 
-                // Simpan otomatis ke Firebase jika ditemukan ID kembar yang diperbaiki
-                if (needsIdFix) {
-                    set(ref(db, 'portal_database/masterStudents'), masterStudents);
+                renderPeriodDropdowns();
+                if (data.guruDataStore) {
+                    guruDataStore = data.guruDataStore;
+                    if (currentRole === 'guru' && currentGuruId) {
+                        loadGuruDataFromStore(currentGuruId);
+                    }
                 }
             }
-            if (data.gurus) gurus = data.gurus;
-			if (data.academicYears) academicYears = data.academicYears;
-            if (data.activeAcademicYear) activeAcademicYear = data.activeAcademicYear;
-            if (data.activeSemester) activeSemester = data.activeSemester;
 
-            if (currentRole === 'none') {
-                selectedAcademicYear = activeAcademicYear;
-                selectedSemester = activeSemester;
+            if (isLocalInputActive && currentRole === 'guru') {
+                isLocalInputActive = false;
+                renderDashboards();
+                return;
             }
-            renderPeriodDropdowns();
-            if (data.guruDataStore) {
-				guruDataStore = data.guruDataStore;
-				if (currentRole === 'guru' && currentGuruId) {
-					loadGuruDataFromStore(currentGuruId);
-				}
-			}
-        } else {
-            saveData();
-        }
 
+            if (currentRole === 'admin') {
+                renderAdminView();
+            } else if (currentRole === 'guru') {
+                renderTeacherView();
+            }
+        });
+    }
+
+    // 3. Fungsi Khusus Siswa: Tarik Data 1x Saja (Hemat Kuota & Tanpa Batas 100 Koneksi)
+    async function loadSpecificDataForStudent(nisn, password) {
         const overlay = document.getElementById('firebase-loading-overlay');
-        if (overlay) overlay.style.display = 'none';
-
-        if (isLocalInputActive && currentRole === 'guru') {
-            isLocalInputActive = false;
-            renderDashboards();
-            return; 
+        if (overlay) {
+            overlay.querySelector('div:last-child').innerText = 'Memverifikasi NISN & Mengambil Nilai Anda...';
+            overlay.style.display = 'flex';
         }
 
-        if (currentRole === 'admin') {
-            renderAdminView();
-        } else if (currentRole === 'guru') {
-            renderTeacherView();
-        } else if (currentRole === 'siswa' && currentLoggedInStudent) {
-            renderSiswaSubjectTabs();
-            renderStudentView();
-        } else {
-            applyAppProfile();
+        try {
+            const studentsSnap = await get(child(dbRef, 'masterStudents'));
+            if (!studentsSnap.exists()) {
+                alert('Data siswa belum tersedia di sistem!');
+                return null;
+            }
+
+            const allStudents = studentsSnap.val() || [];
+            const foundStudent = allStudents.find(s => s && s.nisn === nisn);
+
+            if (!foundStudent) {
+                alert(`Siswa dengan NISN "${nisn}" tidak ditemukan!`);
+                return null;
+            }
+
+            const studentPass = foundStudent.password || '123';
+            if (password !== studentPass) {
+                alert('Login Siswa gagal! Password Anda salah.');
+                return null;
+            }
+
+            // Simpan array masterStudents di memori lokal (untuk keperluan ganti password mandiri siswa)
+            masterStudents = allStudents;
+
+            // Ambil daftar guru
+            const gurusSnap = await get(child(dbRef, 'gurus'));
+            gurus = gurusSnap.exists() ? (gurusSnap.val() || []) : [];
+
+            // Filter HANYA guru yang mengajar di kelas siswa ini
+            const classGurus = gurus.filter(g => (g.assignedClasses || []).includes(foundStudent.className));
+
+            // Ambil nilai HANYA dari guru-guru kelas siswa tersebut pada periode terpilih
+            const periodPromises = classGurus.map(async (g) => {
+                const pKey = getGuruPeriodKey(g.id);
+                let snap = await get(child(dbRef, `guruDataStore/${pKey}`));
+                if (!snap.exists() && selectedAcademicYear === '2026-2027' && selectedSemester === '1') {
+                    snap = await get(child(dbRef, `guruDataStore/${g.id}`));
+                }
+                if (snap.exists()) {
+                    guruDataStore[pKey] = snap.val();
+                }
+            });
+
+            await Promise.all(periodPromises);
+            return foundStudent;
+        } catch (err) {
+            console.error(err);
+            alert('Terjadi gangguan koneksi saat mengambil data nilai. Silakan coba lagi.');
+            return null;
+        } finally {
+            if (overlay) overlay.style.display = 'none';
         }
-    });
+    }
 
 		function loadGuruDataFromStore(guruId) {
 		currentGuruId = guruId;
@@ -2215,14 +2294,18 @@
             alert('Password akun Guru Anda berhasil diperbarui!');
         } else if (currentRole === 'siswa') {
             if (!currentLoggedInStudent) return alert('Data siswa tidak ditemukan!');
-            const student = masterStudents.find(s => s.id === currentLoggedInStudent.id);
-            if (!student) return alert('Data siswa tidak ditemukan di master data!');
+            const stuIndex = masterStudents.findIndex(s => s && s.id === currentLoggedInStudent.id);
+            if (stuIndex === -1) return alert('Data siswa tidak ditemukan di master data!');
             
-            const curPass = student.password || '123';
+            const curPass = masterStudents[stuIndex].password || '123';
             if (curPass !== oldPass) return alert('Password lama Anda salah!');
-            student.password = newPass;
+            
+            masterStudents[stuIndex].password = newPass;
             currentLoggedInStudent.password = newPass;
-            saveData();
+
+            // Update HANYA node password siswa tersebut di Firebase (super ringan & aman)
+            set(ref(db, `portal_database/masterStudents/${stuIndex}/password`), newPass);
+            
             closeSelfChangePassModal();
             alert('Password akun Siswa Anda berhasil diperbarui!');
         }
@@ -3028,7 +3111,7 @@
         }
     }
 
-    window.processLogin = function() {
+    window.processLogin = async function() {
         const role = document.getElementById('login-role').value;
         const u = document.getElementById('login-username').value.trim();
         const p = document.getElementById('login-password').value.trim();
@@ -3036,40 +3119,68 @@
         if (role === 'admin') {
             if (u === 'admin' && p === appProfile.adminPassword) {
                 currentRole = 'admin';
+                const overlay = document.getElementById('firebase-loading-overlay');
+                if (overlay) overlay.style.display = 'flex';
+                
+                // Tarik data penuh & aktifkan realtime khusus Admin
+                const snap = await get(dbRef);
+                if (snap.exists()) {
+                    const data = snap.val();
+                    if (data.masterClasses) masterClasses = data.masterClasses;
+                    if (data.masterStudents) masterStudents = data.masterStudents;
+                    if (data.gurus) gurus = data.gurus;
+                    if (data.guruDataStore) guruDataStore = data.guruDataStore;
+                }
+                if (overlay) overlay.style.display = 'none';
+                startRealtimeSyncForStaff();
                 openAdminView();
             } else {
                 alert('Login Admin gagal! Username atau Password salah.');
             }
         } else if (role === 'guru') {
+            const overlay = document.getElementById('firebase-loading-overlay');
+            if (overlay) overlay.style.display = 'flex';
+
+            const gurusSnap = await get(child(dbRef, 'gurus'));
+            if (gurusSnap.exists()) gurus = gurusSnap.val() || [];
+
             const foundGuru = gurus.find(g => g.username === u && g.password === p);
             if (foundGuru) {
                 currentRole = 'guru';
+                const snap = await get(dbRef);
+                if (snap.exists()) {
+                    const data = snap.val();
+                    if (data.masterClasses) masterClasses = data.masterClasses;
+                    if (data.masterStudents) masterStudents = data.masterStudents;
+                    if (data.guruDataStore) guruDataStore = data.guruDataStore;
+                }
+                if (overlay) overlay.style.display = 'none';
+                startRealtimeSyncForStaff();
                 loadGuruDataFromStore(foundGuru.id);
                 openGuruView(foundGuru);
             } else {
+                if (overlay) overlay.style.display = 'none';
                 alert('Login Guru gagal! Username atau Password tidak ditemukan.');
             }
         } else {
             if (!validateNISN(u)) return alert('Harap masukkan 10 digit NISN yang valid!');
             if (!p) return alert('Harap masukkan Password Siswa!');
-            const foundStudent = masterStudents.find(s => s.nisn === u);
+
+            const foundStudent = await loadSpecificDataForStudent(u, p);
             if (foundStudent) {
-                const studentPass = foundStudent.password || '123';
-                if (p === studentPass) {
-                    currentRole = 'siswa';
-                    currentLoggedInStudent = foundStudent;
-                    openSiswaView();
-                } else {
-                    alert('Login Siswa gagal! Password Anda salah.');
-                }
-            } else {
-                alert(`Siswa dengan NISN "${u}" tidak ditemukan!`);
+                currentRole = 'siswa';
+                currentLoggedInStudent = foundStudent;
+                openSiswaView();
             }
         }
     }
 
     window.logout = function() {
-        currentRole = 'none';
+        if (realtimeListenerUnsubscribe) {
+            realtimeListenerUnsubscribe();
+            realtimeListenerUnsubscribe = null;
+        }
+		currentRole = 'none';
         currentLoggedInStudent = null;
         document.getElementById('view-login').classList.remove('hidden');
         document.getElementById('view-admin').classList.add('hidden');
