@@ -1103,6 +1103,28 @@
                         <label>Nama Sekolah / Lembaga:</label>
                         <input type="text" id="setting-school-name" placeholder="misal: SMA Negeri 1 Indonesia">
                     </div>
+					
+					<div class="form-group">
+                        <label>Keterangan Pengembang (Footer Bawah):</label>
+                        <input type="text" id="setting-developer-text" placeholder="misal: Aplikasi ini dikembangkan oleh Nama Anda">
+                    </div>
+					
+					<div class="setting-box" style="margin-top: 10px;">
+                        <div class="toggle-switch-wrapper">
+                            <div>
+                                <label for="setting-show-footer" style="cursor:pointer;">
+                                    <strong>Tampilkan Footer Pengembang di Bawah Halaman</strong>
+                                </label>
+                                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                                    Status: <span id="status-show-footer-label" style="font-weight:bold; color:#059669;">ON (Ditampilkan)</span>
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="setting-show-footer" checked onchange="toggleShowFooterSetting(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
 
                     <div class="form-group">
                         <label>Upload Logo Sekolah (Format Gambar):</label>
@@ -1607,6 +1629,9 @@
             </div>
         </div>
     </div>
+	<footer id="app-footer" style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #64748b;" class="no-print">
+        <p id="footer-developer-text">Aplikasi ini dikembangkan oleh <strong>Tim IT Sekolah</strong></p>
+    </footer>
 </div>
 
 <!-- MODAL POP-UP RIWAYAT TANGGAL PRESENSI GURU -->
@@ -2991,6 +3016,29 @@
         if (logoPreview) logoPreview.src = appProfile.logoUrl;
         if (secQuestionSelect && appProfile.secQuestion) secQuestionSelect.value = appProfile.secQuestion;
         if (secAnswerInput && appProfile.secAnswer) secAnswerInput.value = appProfile.secAnswer;
+		
+		// --- TAMBAHKAN 5 BARIS INI DI SINI ---
+        const devText = appProfile.developerText || 'Aplikasi ini dikembangkan oleh Tim IT Sekolah';
+        const footerEl = document.getElementById('footer-developer-text');
+        const inputDev = document.getElementById('setting-developer-text');
+        if (footerEl) footerEl.innerText = devText;
+        if (inputDev) inputDev.value = devText;
+        // ------------------------------------
+		
+		const isFooterVisible = appProfile.showFooter !== undefined ? appProfile.showFooter : true;
+		 const appFooterEl = document.getElementById('app-footer');
+		 const toggleFooterEl = document.getElementById('setting-show-footer');
+		 const labelFooterEl = document.getElementById('status-show-footer-label');
+
+		 if (appFooterEl) {
+			 if (isFooterVisible) appFooterEl.classList.remove('hidden');
+			 else appFooterEl.classList.add('hidden');
+		 }
+		 if (toggleFooterEl) toggleFooterEl.checked = isFooterVisible;
+		 if (labelFooterEl) {
+			 labelFooterEl.innerText = isFooterVisible ? 'ON (Ditampilkan)' : 'OFF (Disembunyikan)';
+			 labelFooterEl.style.color = isFooterVisible ? '#059669' : '#dc2626';
+		 }
     }
 
     window.previewSelectedLogo = function(event) {
@@ -3012,6 +3060,15 @@
 
         appProfile.appName = appName;
         appProfile.schoolName = schoolName;
+		
+		// --- TAMBAHKAN 2 BARIS INI DI SINI ---
+        const devInputVal = document.getElementById('setting-developer-text')?.value.trim();
+        if (devInputVal) appProfile.developerText = devInputVal;
+        // ------------------------------------
+		
+		const showFooterChecked = document.getElementById('setting-show-footer')?.checked;
+		appProfile.showFooter = showFooterChecked !== undefined ? showFooterChecked : true;
+		
         if (tempLogoDataUrl) {
             appProfile.logoUrl = tempLogoDataUrl;
             tempLogoDataUrl = null;
@@ -3021,6 +3078,12 @@
         applyAppProfile();
         alert('Profil aplikasi dan sekolah berhasil disimpan!');
     }
+	
+	window.toggleShowFooterSetting = function(isChecked) {
+     appProfile.showFooter = isChecked;
+     saveData();
+     applyAppProfile();
+	}
 
     window.saveAdminPasswordSettings = function() {
         const newPass = document.getElementById('setting-admin-new-pass').value.trim();
