@@ -1238,6 +1238,7 @@
             <button class="tab-btn" onclick="switchTab('tab-murid', this)">2. Daftar Murid Anda</button>
             <button class="tab-btn" onclick="switchTab('tab-nilai', this)">3. Input & Rekap Nilai Murid</button>
             <button class="tab-btn" onclick="switchTab('tab-absensi', this)">📅 4. Absensi & Kehadiran Pertemuan</button>
+            <button class="tab-btn" onclick="switchTab('tab-aktivitas', this)">👁️ 5. Pantau Akses Siswa</button>
         </div>
 
         <div id="tab-kategori" class="tab-content card">
@@ -1537,7 +1538,56 @@
         </div>
     </div>
 
-    <!-- HALAMAN SISWA -->
+    <div id="tab-aktivitas" class="tab-content card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <h2 style="margin-bottom: 4px;">👁️ 5. Monitoring Riwayat Akses Portal Siswa</h2>
+                    <p style="font-size: 13px; color: #64748b;">Pantau murid di kelas Anda yang sudah mengecek nilai maupun yang belum pernah membuka portal sama sekali.</p>
+                </div>
+                <div class="action-btns no-print">
+                    <button class="btn-info btn-sm" onclick="refreshStudentActivityLogs()">🔄 Segarkan Data Akses</button>
+                    <button class="btn-success btn-sm" onclick="exportGuruActivityCSV()">📊 Export Excel/CSV</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;">
+                <input type="text" id="guru-search-activity" placeholder="🔍 Cari Nama / NISN..." onkeyup="renderGuruActivityTable()" style="width: 210px;">
+                
+                <div class="filter-container" style="margin-bottom: 0;">
+                    <label for="filter-class-activity"><strong>Kelas:</strong></label>
+                    <select id="filter-class-activity" onchange="renderGuruActivityTable()">
+                        <option value="ALL">-- Semua Kelas Diampu --</option>
+                    </select>
+                </div>
+
+                <div class="filter-container" style="margin-bottom: 0;">
+                    <label for="filter-status-activity"><strong>Status Akses:</strong></label>
+                    <select id="filter-status-activity" onchange="renderGuruActivityTable()">
+                        <option value="ALL">Semua Siswa</option>
+                        <option value="ACCESSED">🟢 Sudah Pernah Akses</option>
+                        <option value="NEVER">🔴 Belum Pernah Akses</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-scroll-container-lg">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">No</th>
+                            <th style="width: 13%;">NISN</th>
+                            <th style="width: 22%;">Nama Murid</th>
+                            <th style="width: 11%;">Kelas</th>
+                            <th style="width: 15%;">Status Akses</th>
+                            <th style="width: 10%;">Total Buka</th>
+                            <th style="width: 24%;">Waktu & Aktivitas Terakhir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guru-activity-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
     <!-- HALAMAN SISWA -->
     <div id="view-siswa" class="hidden">
         <div class="card">
@@ -1937,6 +1987,7 @@
     ];
 
     let guruDataStore = {};
+    let studentActivityLogs = {}; // Menyimpan riwayat akses seluruh siswa
     let currentGuruId = 'g1';
     let currentRole = 'none';
     let currentLoggedInStudent = null;
@@ -2094,6 +2145,11 @@
                         loadGuruDataFromStore(currentGuruId);
                     }
                 }
+				// --- TAMBAHKAN 3 BARIS INI DI SINI ---
+                if (data.studentActivityLogs) {
+                    studentActivityLogs = data.studentActivityLogs;
+                }
+                // ------------------------------------
             }
 
             if (isLocalInputActive && currentRole === 'guru') {
@@ -2162,6 +2218,7 @@
             });
 
             await Promise.all(periodPromises);
+            logStudentActivity(foundStudent, 'Login & Membuka Portal Nilai'); // <-- TAMBAHKAN BARIS INI
             return foundStudent;
         } catch (err) {
             console.error(err);
@@ -3194,6 +3251,7 @@
                     if (data.masterClasses) masterClasses = data.masterClasses;
                     if (data.masterStudents) masterStudents = data.masterStudents;
                     if (data.guruDataStore) guruDataStore = data.guruDataStore;
+                    if (data.studentActivityLogs) studentActivityLogs = data.studentActivityLogs; // <-- TAMBAHKAN INI
                 }
                 if (overlay) overlay.style.display = 'none';
                 startRealtimeSyncForStaff();
@@ -3923,6 +3981,8 @@
             renderTeacherTable();
         } else if (activeGuruTab === 'tab-absensi') {
             initAttendanceTab();
+        } else if (activeGuruTab === 'tab-aktivitas') {
+            renderGuruActivityTable();
         }
     }
 
@@ -4037,7 +4097,8 @@
         const assignedClasses = getActiveGuruAssignedClasses();
         const filterCrud = document.getElementById('filter-class-crud');
         const filterScore = document.getElementById('filter-class-score');
-        const selectAtt = document.getElementById('attendance-class-select');
+        const filterActivity = document.getElementById('filter-class-activity'); // <-- TAMBAHKAN INI
+		const selectAtt = document.getElementById('attendance-class-select');
         const filterAttRekap = document.getElementById('filter-class-att-rekap');
 
         const currentCrudVal = filterCrud ? filterCrud.value : 'ALL';
@@ -4055,9 +4116,10 @@
             filterCrud.innerHTML = optionsHtml;
             filterCrud.value = currentCrudVal && Array.from(filterCrud.options).some(o => o.value === currentCrudVal) ? currentCrudVal : "ALL";
         }
-        if (filterScore) {
-            filterScore.innerHTML = optionsHtml;
-            filterScore.value = currentScoreVal && Array.from(filterScore.options).some(o => o.value === currentScoreVal) ? currentScoreVal : "ALL";
+        if (filterActivity) {
+            const curActVal = filterActivity.value;
+            filterActivity.innerHTML = optionsHtml;
+            filterActivity.value = curActVal && Array.from(filterActivity.options).some(o => o.value === curActVal) ? curActVal : "ALL";
         }
         if (filterAttRekap) {
             filterAttRekap.innerHTML = optionsHtml;
@@ -5170,7 +5232,109 @@
         return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
     }
 
-    // HALAMAN SISWA
+    // PANTAU AKTIVITAS AKSES SISWA (GURU)
+    window.refreshStudentActivityLogs = async function() {
+        try {
+            const snap = await get(child(dbRef, 'studentActivityLogs'));
+            studentActivityLogs = snap.exists() ? (snap.val() || {}) : {};
+            renderGuruActivityTable();
+            alert('✅ Data riwayat akses siswa berhasil diperbarui!');
+        } catch (err) {
+            alert('Gagal menyegarkan data akses siswa.');
+        }
+    }
+
+    window.renderGuruActivityTable = function() {
+        const tbody = document.getElementById('guru-activity-table-body');
+        if (!tbody) return;
+
+        const filterClass = document.getElementById('filter-class-activity') ? document.getElementById('filter-class-activity').value : 'ALL';
+        const filterStatus = document.getElementById('filter-status-activity') ? document.getElementById('filter-status-activity').value : 'ALL';
+        const searchQuery = (document.getElementById('guru-search-activity')?.value || '').toLowerCase().trim();
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssigned = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchClass = (filterClass === 'ALL' || s.className === filterClass);
+            const matchSearch = !searchQuery || 
+                (s.name || '').toLowerCase().includes(searchQuery) || 
+                (s.nisn || '').toLowerCase().includes(searchQuery);
+
+            const log = studentActivityLogs[s.nisn];
+            const hasAccessed = log && log.count > 0;
+            const matchStatus = (filterStatus === 'ALL') ||
+                (filterStatus === 'ACCESSED' && hasAccessed) ||
+                (filterStatus === 'NEVER' && !hasAccessed);
+
+            return matchAssigned && matchClass && matchSearch && matchStatus;
+        });
+
+        if (filteredStudents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">Tidak ada data siswa yang cocok dengan filter.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filteredStudents.map((s, idx) => {
+            const log = studentActivityLogs[s.nisn];
+            const hasAccessed = log && log.count > 0;
+
+            const statusBadge = hasAccessed
+                ? `<span class="badge-att-h">🟢 Sudah Akses</span>`
+                : `<span class="badge-att-a">🔴 Belum Pernah</span>`;
+
+            const countText = hasAccessed ? `<strong>${log.count}x</strong>` : `<span style="color:#94a3b8;">0x</span>`;
+
+            let detailHtml = `<span style="color:#94a3b8; font-style:italic;">Belum pernah membuka portal</span>`;
+            if (hasAccessed) {
+                const recentList = (log.history || []).slice(1).map(h => 
+                    `<div style="font-size:11px; color:#64748b;">• ${h.time} — ${h.action}</div>`
+                ).join('');
+
+                detailHtml = `
+                    <div style="font-size:12px;"><strong>${log.lastTime}</strong> — <span style="color:#2563eb;">${log.lastAction}</span></div>
+                    ${recentList ? `<div style="margin-top:4px; padding-top:4px; border-top:1px dotted #e2e8f0;">${recentList}</div>` : ''}
+                `;
+            }
+
+            return `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${s.nisn}</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td><span class="class-badge">${s.className}</span></td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align:center;">${countText}</td>
+                    <td>${detailHtml}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    window.exportGuruActivityCSV = function() {
+        const filterClass = document.getElementById('filter-class-activity').value;
+        const assignedClasses = getActiveGuruAssignedClasses();
+
+        const filteredStudents = masterStudents.filter(s => {
+            const matchAssigned = isStudentInAssignedClasses(s.className, assignedClasses);
+            const matchClass = (filterClass === 'ALL' || s.className === filterClass);
+            return matchAssigned && matchClass;
+        });
+
+        let csv = "No,NISN,Nama Murid,Kelas,Status Akses,Total Buka,Waktu Terakhir Akses,Aktivitas Terakhir\n";
+        csv += filteredStudents.map((s, idx) => {
+            const log = studentActivityLogs[s.nisn];
+            const hasAccessed = log && log.count > 0;
+            const status = hasAccessed ? "Sudah Akses" : "Belum Pernah Akses";
+            const count = hasAccessed ? log.count : 0;
+            const lastTime = hasAccessed ? log.lastTime : "-";
+            const lastAction = hasAccessed ? log.lastAction : "-";
+            return `"${idx + 1}","'${s.nisn}","${s.name}","${s.className}","${status}","${count}","${lastTime}","${lastAction}"`;
+        }).join("\n");
+
+        downloadCSV(csv, `riwayat_akses_siswa_${filterClass}_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+	
+	// HALAMAN SISWA
     function renderSiswaSubjectTabs() {
         const tabsContainer = document.getElementById('student-subject-tabs');
         if (!tabsContainer || !currentLoggedInStudent) return;
@@ -5192,6 +5356,46 @@
         activeSiswaSubjectTab = guruId;
         renderSiswaSubjectTabs();
         renderStudentView();
+
+        if (currentLoggedInStudent) {
+            if (guruId === 'ALL') {
+                logStudentActivity(currentLoggedInStudent, 'Melihat Tab: Semua Mapel');
+            } else {
+                const targetGuru = gurus.find(g => g.id === guruId);
+                const mapelName = targetGuru ? targetGuru.subject : guruId;
+                logStudentActivity(currentLoggedInStudent, `Membuka Mapel: ${mapelName}`);
+            }
+        }
+    }
+	
+	// Mencatat aktivitas siswa ke Firebase secara ringan (tidak membebani server)
+    function logStudentActivity(student, actionText) {
+        if (!student || !student.nisn) return;
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const timeStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+        const prevLog = studentActivityLogs[student.nisn] || { count: 0, history: [] };
+        const newCount = (prevLog.count || 0) + 1;
+
+        // Simpan maksimal 5 riwayat terakhir agar ukuran database tetap kecil
+        const updatedHistory = [
+            { time: timeStr, action: actionText },
+            ...(Array.isArray(prevLog.history) ? prevLog.history : [])
+        ].slice(0, 5);
+
+        const logPayload = {
+            nisn: student.nisn,
+            name: student.name,
+            className: student.className,
+            count: newCount,
+            lastTime: timeStr,
+            lastAction: actionText,
+            history: updatedHistory
+        };
+
+        studentActivityLogs[student.nisn] = logPayload;
+        update(ref(db, `portal_database/studentActivityLogs/${student.nisn}`), logPayload).catch(() => {});
     }
 	
 	window.refreshStudentData = async function() {
