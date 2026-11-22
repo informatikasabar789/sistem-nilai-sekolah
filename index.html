@@ -819,9 +819,9 @@
         <div class="form-group">
             <label>Pilih Mode Akses / User:</label>
             <select id="login-role" onchange="toggleLoginInputs()">
-                <option value="siswa">Siswa (Lihat Nilai & Presensi)</option>
-                <option value="guru">Guru (Admin Kelas)</option>
-                <option value="admin">Admin Utama (Sistem)</option>
+                <option value="siswa">Siswa</option>
+                <option value="guru">Guru</option>
+                <option value="admin">Admin Utama</option>
             </select>
         </div>
 
@@ -1260,21 +1260,35 @@
             </div>
 
             <div style="margin-top: 15px;">
-				<!-- TAMBAHAN BARU: TOMBOL ON/OFF NILAI AKHIR -->
-				<div class="setting-box" style="border-left: 4px solid #2563eb;">
+				<!-- TAMBAHAN BARU: MODE STATUS SELESAI / TUNTAS (SEMBUNYIKAN ANGKA NILAI) -->
+				<div class="setting-box" style="border-left: 4px solid #8b5cf6; flex-direction: column; align-items: stretch;">
 					<div class="toggle-switch-wrapper">
 						<div>
-							<label for="show-final-score-toggle" style="cursor:pointer;">
-								<strong>🎯 Tampilkan Nilai Akhir Pelajaran di Portal Siswa</strong>
+							<label for="status-only-mode-toggle" style="cursor:pointer;">
+								<strong>🏷️ Mode Status Tugas (Sembunyikan Angka Nilai, Tampilkan Status Saja)</strong>
 							</label>
 							<div style="font-size: 12px; color: #64748b; margin-top: 2px;">
-								Status saat ini: <span id="status-final-score-label" style="font-weight:bold; color:#059669;">ON (Ditampilkan)</span>
+								Status saat ini: <span id="status-only-mode-label" style="font-weight:bold; color:#64748b;">OFF (Menampilkan Angka Nilai)</span>
 							</div>
 						</div>
 						<label class="switch">
-							<input type="checkbox" id="show-final-score-toggle" checked onchange="toggleShowFinalScore(this.checked)">
+							<input type="checkbox" id="status-only-mode-toggle" onchange="toggleStatusOnlyMode(this.checked)">
 							<span class="slider"></span>
 						</label>
+					</div>
+
+					<div id="status-mode-options" class="hidden" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1; display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+						<div>
+							<label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Pilih Label Status:</label>
+							<select id="status-label-type" onchange="updateStatusModeSettings()" style="padding: 5px 10px; font-size: 13px;">
+								<option value="selesai">Selesai / Belum Selesai (Berdasarkan Nilai Terisi)</option>
+								<option value="tuntas">Tuntas / Belum Tuntas (Berdasarkan KKM)</option>
+							</select>
+						</div>
+						<div id="status-kkm-wrapper" class="hidden">
+							<label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Batas Nilai Tuntas (KKM):</label>
+							<input type="number" id="status-kkm-input" value="75" min="0" max="100" onchange="updateStatusModeSettings()" style="width: 90px; padding: 5px 8px; font-size: 13px;">
+						</div>
 					</div>
 				</div>
 			
@@ -1953,6 +1967,9 @@
     let showAttDetailToStudent = true;
     let showAttHistoryToStudent = true;
 	let showFinalScoreToStudent = true;
+    let statusOnlyMode = false;
+    let statusLabelType = 'selesai'; // 'selesai' atau 'tuntas'
+    let statusKkmValue = 75;
 
     // Cache Perhitungan Presensi agar tidak dihitung berulang kali
     let attendanceStatsCache = {};
@@ -2174,7 +2191,10 @@
 		showWeightToStudent = gStore.showWeight !== undefined ? gStore.showWeight : true;
 		showAttDetailToStudent = gStore.showAttDetail !== undefined ? gStore.showAttDetail : true;
 		showAttHistoryToStudent = gStore.showAttHistory !== undefined ? gStore.showAttHistory : true;
-		showFinalScoreToStudent = gStore.showFinalScore !== undefined ? gStore.showFinalScore : true; // <-- TAMBAHKAN INI
+		showFinalScoreToStudent = gStore.showFinalScore !== undefined ? gStore.showFinalScore : true;
+		statusOnlyMode = gStore.statusOnlyMode !== undefined ? gStore.statusOnlyMode : false;
+		statusLabelType = gStore.statusLabelType || 'selesai';
+		statusKkmValue = gStore.statusKkmValue !== undefined ? parseFloat(gStore.statusKkmValue) : 75;
 		attendanceStatsCache = buildAttendanceCache(teacherAttendanceData);
 		
 }
@@ -2193,7 +2213,10 @@
                 showWeight: showWeightToStudent,
                 showAttDetail: showAttDetailToStudent,
                 showAttHistory: showAttHistoryToStudent,
-                showFinalScore: showFinalScoreToStudent
+                showFinalScore: showFinalScoreToStudent,
+                statusOnlyMode: statusOnlyMode,
+                statusLabelType: statusLabelType,
+                statusKkmValue: statusKkmValue
             };
             guruDataStore[periodKey] = guruPayload;
 
@@ -3959,6 +3982,51 @@
 			labelEl.style.color = showFinalScoreToStudent ? '#059669' : '#dc2626';
 		}
 	}
+	
+	window.toggleStatusOnlyMode = function(isChecked) {
+		statusOnlyMode = isChecked;
+		updateStatusModeUI();
+		saveData();
+	}
+
+	window.updateStatusModeSettings = function() {
+		const typeEl = document.getElementById('status-label-type');
+		const kkmEl = document.getElementById('status-kkm-input');
+		if (typeEl) statusLabelType = typeEl.value;
+		if (kkmEl) statusKkmValue = parseFloat(kkmEl.value) || 75;
+		updateStatusModeUI();
+		saveData();
+	}
+
+	function updateStatusModeUI() {
+		const toggleEl = document.getElementById('status-only-mode-toggle');
+		const labelEl = document.getElementById('status-only-mode-label');
+		const optionsBox = document.getElementById('status-mode-options');
+		const typeEl = document.getElementById('status-label-type');
+		const kkmWrap = document.getElementById('status-kkm-wrapper');
+		const kkmEl = document.getElementById('status-kkm-input');
+
+		if (toggleEl) toggleEl.checked = statusOnlyMode;
+		if (typeEl) typeEl.value = statusLabelType;
+		if (kkmEl) kkmEl.value = statusKkmValue;
+
+		if (labelEl) {
+			labelEl.innerText = statusOnlyMode 
+				? `ON (Hanya Menampilkan Status: ${statusLabelType === 'tuntas' ? 'Tuntas / Belum Tuntas' : 'Selesai / Belum Selesai'})` 
+				: 'OFF (Menampilkan Angka Nilai)';
+			labelEl.style.color = statusOnlyMode ? '#7c3aed' : '#64748b';
+		}
+
+		if (optionsBox) {
+			if (statusOnlyMode) optionsBox.classList.remove('hidden');
+			else optionsBox.classList.add('hidden');
+		}
+
+		if (kkmWrap) {
+			if (statusLabelType === 'tuntas') kkmWrap.classList.remove('hidden');
+			else kkmWrap.classList.add('hidden');
+		}
+	}
 
     function getActiveGuruAssignedClasses() {
         const currentGuru = gurus.find(g => g.id === currentGuruId);
@@ -4086,6 +4154,7 @@
         document.getElementById('show-att-detail-checkbox').checked = showAttDetailToStudent;
         document.getElementById('show-att-history-checkbox').checked = showAttHistoryToStudent;
 		updateFinalScoreToggleLabel(); // <-- TAMBAHKAN 1 BARIS INI SAJA
+		updateStatusModeUI(); // <-- TAMBAHKAN BARIS INI
 
         if (categories.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">Belum ada kategori akademik.</td></tr>`;
@@ -5221,10 +5290,32 @@
                 `;
             }
 
+            const gStatusOnlyMode = gStore.statusOnlyMode !== undefined ? gStore.statusOnlyMode : false;
+            const gStatusLabelType = gStore.statusLabelType || 'selesai';
+            const gStatusKkmValue = gStore.statusKkmValue !== undefined ? parseFloat(gStore.statusKkmValue) : 75;
+
+            const formatStudentScoreOrStatus = (rawVal) => {
+                if (!gStatusOnlyMode) {
+                    return rawVal !== null && rawVal !== undefined && rawVal !== '' ? formatScoreNumber(rawVal) : '-';
+                }
+
+                const hasScore = rawVal !== null && rawVal !== undefined && rawVal !== '' && !isNaN(parseFloat(rawVal));
+                if (gStatusLabelType === 'tuntas') {
+                    const isPassed = hasScore && parseFloat(rawVal) >= gStatusKkmValue;
+                    return isPassed
+                        ? `<span class="badge-att-h">✅ Tuntas</span>`
+                        : `<span class="badge-att-a">❌ Belum Tuntas</span>`;
+                } else {
+                    return hasScore
+                        ? `<span class="badge-att-h">✅ Selesai</span>`
+                        : `<span class="badge-att-a">⏳ Belum Selesai</span>`;
+                }
+            };
+
             let rowsScoresHtml = `
                 <tr style="background:#fffbeb; font-weight:bold;">
                     <td>Persentase Kehadiran (Presensi)</td>
-                    ${gShowWeight ? `<td>${gAttWgt}%</td>` : ''}
+                    ${gShowWeight && !gStatusOnlyMode ? `<td>${gAttWgt}%</td>` : ''}
                     <td style="color:#b45309;">${attStats.percentage}%</td>
                 </tr>
             `;
@@ -5237,22 +5328,22 @@
                             const avgCat = getCategoryScore(currentLoggedInStudent.id, cat, true, sData.scores);
                             rowsScoresHtml += `<tr style="background:#f1f5f9; font-weight:bold;">
                                 <td>${cat.name} (Rata-Rata)</td>
-                                ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
-                                <td>${avgCat !== null ? formatScoreNumber(avgCat) : '-'}</td></tr>`;
+                                ${gShowWeight && !gStatusOnlyMode ? `<td>${cat.weight}%</td>` : ''}
+                                <td>${formatStudentScoreOrStatus(avgCat)}</td></tr>`;
 
                             visibleSubItems.forEach(s => {
-                                const val = sData.scores[`sub_${s.id}`] !== undefined ? sData.scores[`sub_${s.id}`] : '-';
+                                const val = sData.scores[`sub_${s.id}`];
                                 rowsScoresHtml += `<tr>
                                     <td style="padding-left: 25px; color:#475569;">↳ ${s.name}</td>
-                                    ${gShowWeight ? `<td style="color:#aaa;">-</td>` : ''}
-                                    <td>${val}</td></tr>`;
+                                    ${gShowWeight && !gStatusOnlyMode ? `<td style="color:#aaa;">-</td>` : ''}
+                                    <td>${formatStudentScoreOrStatus(val)}</td></tr>`;
                             });
                         }
                     } else {
-                        const val = sData.scores[`cat_${cat.id}`] !== undefined ? sData.scores[`cat_${cat.id}`] : '-';
+                        const val = sData.scores[`cat_${cat.id}`];
                         rowsScoresHtml += `<tr><td><strong>${cat.name}</strong></td>
-                            ${gShowWeight ? `<td>${cat.weight}%</td>` : ''}
-                            <td><strong>${val}</strong></td></tr>`;
+                            ${gShowWeight && !gStatusOnlyMode ? `<td>${cat.weight}%</td>` : ''}
+                            <td><strong>${formatStudentScoreOrStatus(val)}</strong></td></tr>`;
                     }
                 }
             });
@@ -5299,8 +5390,8 @@
                             <thead>
                                 <tr>
                                     <th>Kategori / Penilaian</th>
-                                    ${gShowWeight ? '<th>Bobot</th>' : ''}
-                                    <th>Nilai Anda</th>
+                                    ${gShowWeight && !gStatusOnlyMode ? '<th>Bobot</th>' : ''}
+                                    <th>${gStatusOnlyMode ? 'Status Tugas / Penilaian' : 'Nilai Anda'}</th>
                                 </tr>
                             </thead>
                             <tbody>${rowsScoresHtml}</tbody>
