@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Sistem Manajemen Nilai & Kehadiran Sekolah</title>
+    <link id="page-favicon" rel="icon" type="image/png" href="https://via.placeholder.com/32x32?text=S">
     <style>
         * {
             box-sizing: border-box;
@@ -2973,6 +2974,11 @@
         document.getElementById('header-school-name').innerText = appProfile.schoolName;
         document.getElementById('header-logo').src = appProfile.logoUrl;
         document.getElementById('page-title').innerText = appProfile.appName;
+		
+		// --- TAMBAHKAN 2 BARIS INI ---
+        const faviconEl = document.getElementById('page-favicon');
+        if (faviconEl && appProfile.logoUrl) faviconEl.href = appProfile.logoUrl;
+        // -----------------------------
 
         const inputAppName = document.getElementById('setting-app-name');
         const inputSchoolName = document.getElementById('setting-school-name');
